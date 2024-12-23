@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchedulAI Login</title>
+    <style>
+        body {
+            background-color: #010c07;  
+            display: flex; 
+            height: 100vh; 
+            margin: 0;  
+            color: white; 
+            font-family: Arial, sans-serif;  
+        }
+        .container {
+            display: flex;  
+            flex-direction: column;
+            align-items: flex-start; /* Align content to the left */
+            justify-content: center; /* Center vertically */
+            width: 30%;
+            margin-left: 5%; /* Reduced margin for alignment */
+        }
+        .second-container {
+        width: 70%;
+        height: 100%;
+        background-color: black; /* Black background */
+        background-image: url('background.png');
+        background-size: cover; /* Make the image cover the container */
+        background-position: center; /* Center the image */
+        background-repeat: no-repeat; /* Prevent tiling */
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        img {
+            max-width: 60px;  
+            margin-right: 10px;  
+            border-radius: 14%;  
+        }
+        h1 {
+            font-size: 40px;  
+            margin: 0;  
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align form fields to the left */
+        }
+        input {
+            width: 250px;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 250px;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: white;
+            color: #00BF63;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #e6e6e6;
+        }
+        a {
+            margin-top: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.jpg" alt="Logo">
+            <h1>SchedulAI</h1>
+        </div>
+        <form>
+            <input type="email" placeholder="Email" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <a href="register.html">Create</a>
+    </div>
+    <div class="second-container"></div>
+</body>
+</html>
