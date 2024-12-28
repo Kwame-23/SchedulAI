@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Active Lecturers</title>
+</head>
+<body>
+    <h1>Select Active Lecturers</h1>
+    <form method="POST">
+        {% for lec in lecturers %}
+    <div>
+        <!-- lec[0] is LecturerID, lec[1] is LecturerName -->
+        <input type="checkbox" id="lec_{{ lec[0] }}" name="lecturer_ids" value="{{ lec[0] }}">
+        <label for="lec_{{ lec[0] }}">{{ lec[1] }}</label>
+    </div>
+{% endfor %}
+        <button type="submit">Next (Rooms)</button>
+    </form>
+</body>
+</html>

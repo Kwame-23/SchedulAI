@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Populate Session Assignments</title>
+    <script>
+        let sessionCounter = 0;
+        
+        function addSessionRow() {
+            const table = document.getElementById('sessionsTable').getElementsByTagName('tbody')[0];
+            const row = table.insertRow();
+
+            // Create cells:
+            let courseCell = row.insertCell();
+            let lecturerCell = row.insertCell();
+            let cohortCell = row.insertCell();
+            let sessionTypeCell = row.insertCell();
+            let durationCell = row.insertCell();
+
+            // Populate each cell with a <select> or <input>
+            courseCell.innerHTML = `
+                <select name="course_id_${sessionCounter}">
+                    <option value="">-- Select Course --</option>
+                    {% for c in courses %}
+                        <!-- c is a tuple like (CourseID, CourseCode, CourseName) -->
+                        <option value="{{ c[0] }}">{{ c[1] }} - {{ c[2] }}</option>
+                    {% endfor %}
+                </select>
+            `;
+            
+            lecturerCell.innerHTML = `
+                <select name="lecturer_id_${sessionCounter}">
+                    <option value="">-- Select Lecturer --</option>
+                    {% for l in lecturers %}
+                        <!-- l is a tuple like (LecturerID, LecturerName) -->
+                        <option value="{{ l[0] }}">{{ l[1] }}</option>
+                    {% endfor %}
+                </select>
+            `;
+
+            cohortCell.innerHTML = `
+                <select name="cohort_id_${sessionCounter}">
+                    <option value="">-- Select Cohort --</option>
+                    {% for co in cohorts %}
+                        <!-- co is a tuple like (CohortID, CohortName) -->
+                        <option value="{{ co[0] }}">{{ co[1] }}</option>
+                    {% endfor %}
+                </select>
+            `;
+
+            sessionTypeCell.innerHTML = `
+                <select name="session_type_id_${sessionCounter}">
+                    <option value="">-- Select Session Type --</option>
+                    {% for s in session_types %}
+                        <!-- s is a tuple like (SessionTypeID, SessionTypeName) -->
+                        <option value="{{ s[0] }}">{{ s[1] }}</option>
+                    {% endfor %}
+                </select>
+            `;
+
+            durationCell.innerHTML = `
+                <select name="duration_id_${sessionCounter}">
+                    <option value="">-- Select Duration --</option>
+                    {% for d in durations %}
+                        <!-- d is a tuple like (DurationID, Duration) -->
+                        <option value="{{ d[0] }}">{{ d[1] }}</option>
+                    {% endfor %}
+                </select>
+            `;
+
+            sessionCounter++;
+            document.getElementById('session_count').value = sessionCounter;
+        }
+    </script>
+</head>
+<body>
+    <h1>Assign Sessions</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for msg in messages %}
+            <li>{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <input type="hidden" id="session_count" name="session_count" value="0">
+        
+        <table id="sessionsTable" border="1">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Lecturer</th>
+                    <th>Cohort</th>
+                    <th>Session Type</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows added by JavaScript -->
+            </tbody>
+        </table>
+        
+        <button type="button" onclick="addSessionRow()">Add Another Session</button>
+        <br><br>
+        <button type="submit">Save Assignments</button>
+    </form>
+</body>
+</html>

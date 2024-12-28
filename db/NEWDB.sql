@@ -1,226 +1,6 @@
--- Create SessionType table
-CREATE TABLE SessionType (
-    SessionTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SessionTypeName TEXT NOT NULL UNIQUE
-);
-
--- Populate SessionType table
-INSERT INTO SessionType (SessionTypeID, SessionTypeName)
+INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES
-(1, 'Discussion'),
-(2, 'Independent Study'),
-(3, 'Lab'),
-(4, 'Lecture'),
-(5, 'Period'),
-(6, 'Seminar'),
-(7, 'Set up for grading only');
-
--- Create FacultyType table
-CREATE TABLE FacultyType (
-    FacultyTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
-    FacultyTypeName TEXT NOT NULL UNIQUE
-);
-
--- Populate FacultyType table
-INSERT INTO FacultyType (FacultyTypeID, FacultyTypeName)
-VALUES
-(1, 'Lecturer'),
-(2, 'Adjunct Faculty'),
-(3, 'Faculty Intern');
-
--- Create Lecturer table
-CREATE TABLE Lecturer (
-    LecturerID INTEGER PRIMARY KEY AUTOINCREMENT,
-    LecturerName TEXT NOT NULL,
-    FacultyTypeID INTEGER NOT NULL,
-    FOREIGN KEY (FacultyTypeID) REFERENCES FacultyType(FacultyTypeID)
-);
-
--- Populate Lecturer table with extracted lecturer names
-INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
-VALUES
-(1, 'Abigail Awuah', 1),
-(2, 'Acheampong Antwi Afari', 1),
-(3, 'Adjunct Lecturer', 2),
-(4, 'Adjunct Lecturer (Engr)', 2),
-(5, 'Affum Alhassan', 1),
-(6, 'Akosua Obeng', 1),
-(7, 'Albert Agyepong', 1),
-(8, 'Albert Akatom Bensusan', 1),
-(9, 'Albert Cofie', 1),
-(10, 'Alhassan Sullaiman', 1),
-(11, 'Alimsiwen Ayaawan', 1),
-(12, 'Aminu Shittu', 1),
-(13, 'Anthony Aninagyei', 1),
-(14, 'Anthony Essel-Anderson', 1),
-(15, 'Anthony Spio', 1),
-(16, 'Aurelia Ayisi', 1),
-(17, 'Awingot Richard Akparibo', 1),
-(18, 'Ayawoa Dagbovie', 1),
-(19, 'Ayorkor Korsah', 1),
-(20, 'Brian Botchway', 1),
-(21, 'Bright Tetteh', 1),
-(22, 'Danyuo Yiporo', 1),
-(23, 'David Amatey Sampah', 1),
-(24, 'David Asiamah Boateng', 1),
-(25, 'David Ebo Adjepon-Yamoah', 1),
-(26, 'David Hutchful', 1),
-(27, 'Dennis Owusu Asamoah', 1),
-(28, 'Disraeli Asante-Darko', 1),
-(29, 'Dominic Ayiquaye', 1),
-(30, 'Ebenezer Obiri Addo', 1),
-(31, 'Edgar Francis Cooke', 1),
-(32, 'Elaine Eyram Roberts', 1),
-(33, 'Elena Victoria Rosca', 1),
-(34, 'Elizabeth Johnson', 1),
-(35, 'Elsie Aminarh', 1),
-(36, 'Emmanuel Darko', 1),
-(37, 'Emmanuel Kojo Aidoo', 1),
-(38, 'Emmanuel Obeng Ntow', 1),
-(39, 'Enock Opoku', 1),
-(40, 'Enyonam Kudonoo', 1),
-(41, 'Eric Gadzi', 1),
-(42, 'Eric Acheampong', 1),
-(43, 'Eric Ocran', 1),
-(44, 'Esther Afoley Laryea', 1),
-(45, 'Eugene Daniels', 1),
-(46, 'Evans Ghansah', 1),
-(47, 'Ewura Abena Asmah', 1),
-(48, 'Faculty (New Hire 1)', 3),
-(49, 'Freda Dzradosi', 1),
-(50, 'George Francois', 1),
-(51, 'Gideon Osabutey', 1),
-(52, 'Godwin Ayetor', 1),
-(53, 'Govindha Ramaiah Yeluripati', 1),
-(54, 'Hassan Wahab', 1),
-(55, 'Heather Beem', 1),
-(56, 'Hyder Ali Segu Mohamed', 1),
-(57, 'Iréné Amessouwoe', 1),
-(58, 'Jean Avaala', 1),
-(59, 'Jesse Korku Seyram Agbenya', 1),
-(60, 'Jewel Thompson', 1),
-(61, 'Joel Bortey', 1),
-(62, 'Joojo Afun', 1),
-(63, 'Joseph Adjei', 1),
-(64, 'Joseph Atatsi', 1),
-(65, 'Joseph Mensah', 1),
-(66, 'Joseph Oduro-Frimpong', 1),
-(67, 'Josephine Djan', 1),
-(68, 'Jude Samuel Acquaah', 1),
-(69, 'Justice Kwame Appati', 1),
-(70, 'Katelyn Aba Dadzie', 1),
-(71, 'Knowledge Ahadzitse', 1),
-(72, 'Kofi Adu-Labi', 1),
-(73, 'Kwabena Ampadu Bamfo', 1),
-(74, 'Kwaku Asante', 1),
-(75, 'Kweku Yamoah', 1),
-(76, 'Kweku Dwomoh', 1),
-(77, 'Lecturer New Hire', 3),
-(78, 'Maame Mensa-Bonsu', 1),
-(79, 'Maame Yaa Mensa-Bonsu', 1),
-(80, 'Mariam Korankye', 1),
-(81, 'Mary Magdalene Eliason', 1),
-(82, 'Mensimah Thompson Kwaffo', 1),
-(83, 'Michael Effah Asamoah', 1),
-(84, 'Millicent Adjei', 1),
-(85, 'Millicent Awuku', 1),
-(86, 'Miriam Abade-Abugre', 1),
-(87, 'Naa Adjeley Doamekpor', 1),
-(88, 'Nana Yaa Annorbea Frempong', 1),
-(89, 'Natalie Fordwor', 1),
-(90, 'Nathan Nyarko Amanquah', 1),
-(91, 'New Hire (HSS)', 3),
-(92, 'New Hire_Faculty', 3),
-(93, 'Noelle Naa Kai Kotei', 1),
-(94, 'Owuraku Obeng Osei-Dwammena', 1),
-(95, 'Patrick Dwomfuor', 1),
-(96, 'Prince Tetteh', 1),
-(97, 'Prince Acquaye', 1),
-(98, 'Prince Aning', 1),
-(99, 'Prince Baah', 1),
-(100, 'Rebecca Awuah', 1),
-(101, 'Robert Sowah', 1),
-(102, 'Rosemary Abowine', 1),
-(103, 'Sampson Dankyi Asare', 1),
-(104, 'Samuel Darko', 1),
-(105, 'Shefi Nelson', 1),
-(106, 'Sihaam Mohammed Sayuti', 1),
-(107, 'Stephane Nwolley', 1),
-(108, 'Stephen Emmanuel Armah', 1),
-(109, 'Stephen K. Armah', 1),
-(110, 'Tatenda Kavu', 1),
-(111, 'Theodora Aryee', 1),
-(112, 'Umut Tosun', 1),
-(113, 'William Hoskins', 1),
-(114, 'Yaw Mpeani-Brantuo', 1),
-(115, 'Yayra Azaglo', 1),
-(116, 'Yvonne Dewortor', 1);
-
--- Create Cohort table
-CREATE TABLE Cohort (
-    CohortID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CohortName TEXT NOT NULL UNIQUE
-);
-
--- Populate Cohort table with Cohorts A to Z
-INSERT INTO Cohort (CohortID, CohortName)
-VALUES
-(1, 'Cohort A'),
-(2, 'Cohort B'),
-(3, 'Cohort C'),
-(4, 'Cohort D'),
-(5, 'Cohort E'),
-(6, 'Cohort F'),
-(7, 'Cohort G'),
-(8, 'Cohort H'),
-(9, 'Cohort I'),
-(10, 'Cohort J'),
-(11, 'Cohort K'),
-(12, 'Cohort L'),
-(13, 'Cohort M'),
-(14, 'Cohort N'),
-(15, 'Cohort O'),
-(16, 'Cohort P'),
-(17, 'Cohort Q'),
-(18, 'Cohort R'),
-(19, 'Cohort S'),
-(20, 'Cohort T'),
-(21, 'Cohort U'),
-(22, 'Cohort V'),
-(23, 'Cohort W'),
-(24, 'Cohort X'),
-(25, 'Cohort Y'),
-(26, 'Cohort Z');
-
--- Create Duration table
-CREATE TABLE Duration (
-    DurationID INT PRIMARY KEY AUTO_INCREMENT,
-    Duration TIME NOT NULL
-);
-
--- Insert durations into the Duration table
-INSERT INTO Duration (Duration) VALUES 
-    ('01:00:00'),
-    ('01:30:00'),
-    ('03:00:00'),
-    ('02:00:00'),
-    ('01:45:00'),
-    ('03:15:00');
-
--- Create Course table
-CREATE TABLE Course (
-    CourseID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CourseCode TEXT NOT NULL UNIQUE,
-    CourseName TEXT NOT NULL,
-    RequirementType TEXT NOT NULL,
-    ActiveFlag INTEGER NOT NULL CHECK (ActiveFlag IN (0, 1)), -- Ensures ActiveFlag is 0 or 1
-    Credits REAL NOT NULL
-);
-
-INSERT INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
-VALUES
--- Extracted from various datasets
-(1, 'ENGL112', 'Written and Oral Communication', 'Core', 1, 3.0),
+(1, 'ENGL112', 'Written and Oral Communication', 'Core', 1, 1.0),
 (2, 'ENGL113', 'Text & Meaning', 'Core', 1, 3.0),
 (3, 'BUSA161_A', 'Foundations of Design and Entrepreneurship I', 'Core', 1, 3.0),
 (4, 'BUSA161_B', 'Foundations of Design and Entrepreneurship II', 'Core', 1, 3.0),
@@ -260,7 +40,6 @@ VALUES
 (38, 'EE301', 'Power Systems', 'Core', 1, 3.0),
 (39, 'ME101', 'Introduction to Mechanics', 'Core', 1, 3.0),
 (40, 'ME201', 'Thermodynamics', 'Core', 1, 3.0),
-(41, 'MIS101', 'Management Information Systems', 'Core', 1, 3.0),
 (42, 'MIS201', 'Enterprise Systems', 'Core', 1, 3.0),
 (43, 'BUSA341', 'Organizational Behavior', 'Core', 1, 3.0),
 (44, 'BUSA311', 'International Trade and Policy', 'Core', 1, 3.0),
@@ -269,7 +48,6 @@ VALUES
 (47, 'BUSA332', 'Business Law', 'Core', 1, 3.0),
 (48, 'SC231', 'Introduction to Chemistry', 'Core', 1, 3.0),
 (49, 'ENG101', 'English Composition', 'Core', 1, 3.0),
-(50, 'EE421', 'Signal Processing', 'Elective', 1, 3.0),
 (51, 'EE451', 'Advanced Circuits', 'Elective', 1, 3.0),
 (52, 'CS453', 'Robotics', 'Elective', 1, 3.0),
 (53, 'ME411', 'Fluid Mechanics', 'Core', 1, 3.0),
@@ -286,13 +64,10 @@ VALUES
 (64, 'ENGR312', 'Control Systems', 'Core', 1, 3.0),
 (65, 'ENGR413', 'Project Management', 'Core', 1, 3.0),
 (66, 'CS454', 'Artificial Intelligence', 'Elective', 1, 3.0),
-(67, 'CS443', 'Mobile Web Programming', 'Elective', 1, 3.0),
 (68, 'CS424', 'Advanced Database Systems', 'Elective', 1, 3.0),
 (69, 'CS452', 'Computer Graphics', 'Elective', 1, 3.0),
-(70, 'CS455', 'Applied Cryptography', 'Elective', 1, 3.0),
 (71, 'ECON321', 'Risk Management', 'Elective', 1, 3.0),
 (72, 'ECON341', 'Operations Research', 'Elective', 1, 3.0),
-(73, 'ENGR414', 'Environmental Science and Engineering', 'Elective', 1, 3.0),
 (74, 'BUSA401_A', 'Entrepreneurship I', 'Capstone', 1, 3.0),
 (75, 'BUSA401_B', 'Entrepreneurship II', 'Capstone', 1, 3.0),
 (76, 'CS400_A', 'Thesis I', 'Capstone', 1, 3.0),
@@ -310,25 +85,18 @@ VALUES
 (88, 'CE322', 'Digital Systems Design', 'Core', 1, 3.0),
 (89, 'CE451', 'Embedded Systems', 'Core', 1, 3.0),
 (90, 'CS313', 'Intermediate Computer Programming', 'Core', 1, 3.0),
-(91, 'CS341', 'Web Technologies', 'Core', 1, 3.0),
 (92, 'CS433', 'Operating Systems and Systems Administration', 'Core', 1, 3.0),
 (93, 'CS456', 'Algorithm Design & Analysis', 'Core', 1, 3.0),
 (94, 'ME311', 'Mechanics of Materials/Structural Engineering', 'Core', 1, 3.0),
 (95, 'ME301', 'Mechanical Machine Design', 'Core', 1, 3.0),
-(96, 'ME411', 'Fundamentals of Thermal Fluid Science', 'Core', 1, 3.0),
 (97, 'ME421', 'Thermal Systems and Applications', 'Core', 1, 3.0),
-(98, 'ME431', 'Fluid Mechanics & Applications', 'Elective', 1, 3.0),
 (99, 'EE222', 'Circuits and Electronics', 'Core', 1, 3.0),
 (100, 'EE242', 'Introduction to Electrical Machines and Power Electronics', 'Core', 1, 3.0),
 (101, 'EE342', 'Advanced Electrical Machines and Power Electronics', 'Core', 1, 3.0),
 (102, 'EE453', 'Power Systems Analysis', 'Elective', 1, 3.0),
-(103, 'CS222', 'Data Structures and Algorithms', 'Core', 1, 3.0),
 (104, 'CS412', 'Concepts of Programming Languages', 'Elective', 1, 3.0),
-(105, 'CS457', 'Data Mining', 'Elective', 1, 3.0),
 (106, 'CS443', 'Mobile App Development', 'Elective', 1, 3.0),
-(107, 'CS452', 'Computer Graphics', 'Elective', 1, 3.0),
 (108, 'CS455', 'Applied Cryptography and Security', 'Elective', 1, 3.0),
-(109, 'CS424', 'Advanced Database Systems', 'Elective', 1, 3.0),
 (110, 'CS413', 'Human-Computer Interaction', 'Elective', 1, 3.0),
 (111, 'ENGR400', 'Senior Project', 'Capstone', 1, 3.0),
 (112, 'ENGR401', 'Senior Project and Seminar', 'Capstone', 1, 3.0),
@@ -336,7 +104,6 @@ VALUES
 (114, 'SC141', 'Introduction to Biology', 'Core', 1, 3.0),
 (115, 'SC241', 'Biochemistry', 'Core', 1, 3.0),
 (116, 'SC341', 'Molecular Biology', 'Core', 1, 3.0),
-(117, 'ENGR312', 'Control Systems', 'Core', 1, 3.0),
 (118, 'ENGR313', 'Project Management', 'Core', 1, 3.0),
 (119, 'EE421', 'Digital and Analog Signal Processing', 'Elective', 1, 3.0),
 (120, 'CS451', 'VLSI: Embedded Systems', 'Elective', 1, 3.0),
@@ -350,8 +117,6 @@ VALUES
 (128, 'CS458', 'Machine Learning', 'Elective', 1, 3.0),
 (129, 'CS459', 'Deep Learning', 'Elective', 1, 3.0),
 (130, 'CS314', 'Human-Computer Interaction', 'Core', 1, 3.0),
-(131, 'CS433', 'Operating Systems', 'Core', 1, 3.0),
-(132, 'CS324', 'Database Systems', 'Core', 1, 3.0),
 (133, 'SC112', 'Physics 1', 'Core', 1, 3.0),
 (134, 'SC113', 'Physics 2', 'Core', 1, 3.0),
 (135, 'CS121', 'Introduction to Programming', 'Core', 1, 3.0),
@@ -420,80 +185,3 @@ VALUES
 (198, 'EE495', 'Wireless Communication Systems', 'Elective', 1, 3.0),
 (199, 'SC450', 'Advanced Biophysics', 'Elective', 1, 3.0),
 (200, 'SC460', 'Nanotechnology', 'Elective', 1, 3.0);
-
--- Create Room table
-CREATE TABLE Room (
-    RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Location TEXT NOT NULL UNIQUE,
-    MaxRoomCapacity INTEGER NOT NULL
-);
-
-INSERT INTO Room (RoomID, Location, MaxRoomCapacity) VALUES
-(1, 'Apt Hall 216', 74),
-(2, 'Apt Hall 217', 75),
-(3, 'Bio Lab', 33),
-(4, 'D-Lab 102', 58),
-(5, 'Databank Foundation Hall 218', 75),
-(6, 'EE lab', 52),
-(7, 'Fab Lab 103', 31),
-(8, 'Fab Lab 203', 72),
-(9, 'Fab Lab 303', 75),
-(10, 'Jackson Hall 115', 76),
-(11, 'Jackson Hall 116', 79),
-(12, 'Jackson Lab 221', 59),
-(13, 'Jackson Lab 222', 61),
-(14, 'Norton-Motulsky 207A', 58),
-(15, 'Norton-Motulsky 207B', 69),
-(16, 'Nutor Hall 100', 100),
-(17, 'Nutor Hall 115', 73),
-(18, 'Nutor Hall 216', 68),
-(19, 'Radichel MPR', 55),
-(20, 'Science Lab', 47);
-
--- Create SessionAssignments table
-CREATE TABLE SessionAssignments (
-    SessionID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CourseID INTEGER NOT NULL,
-    LecturerID INTEGER NOT NULL,
-    CohortID INTEGER NOT NULL,
-    SessionTypeID INTEGER NOT NULL,
-    DurationID INTEGER NOT NULL,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID),
-    FOREIGN KEY (LecturerID) REFERENCES Lecturer(LecturerID),
-    FOREIGN KEY (CohortID) REFERENCES Cohort(CohortID),
-    FOREIGN KEY (SessionTypeID) REFERENCES SessionType(SessionTypeID),
-    FOREIGN KEY (DurationID) REFERENCES Duration(DurationID)
-);
-
--- Create SessionSchedule table
-CREATE TABLE SessionSchedule (
-    ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SessionID INTEGER NOT NULL,
-    DayOfWeek TEXT NOT NULL CHECK (DayOfWeek IN ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')),
-    StartTime TIME NOT NULL,
-    EndTime TIME NOT NULL,
-    RoomID INTEGER NOT NULL,
-    FOREIGN KEY (SessionID) REFERENCES SessionAssignments(SessionID),
-    FOREIGN KEY (RoomID) REFERENCES Room(RoomID)
-);
-
--- Create Major table
-CREATE TABLE Major (
-    MajorID INTEGER PRIMARY KEY AUTOINCREMENT,
-    MajorName TEXT NOT NULL UNIQUE
-);
-
--- Populate Major table
-INSERT INTO Major (MajorID, MajorName)
-VALUES
-(1, 'Business Administration'),
-(2, 'Computer Science'),
-(3, 'Management Information Systems (MIS)'),
-(4, 'Computer Engineering'),
-(5, 'Mechatronics Engineering'),
-(6, 'Mechanical Engineering'),
-(7, 'Electrical and Electronic Engineering'),
-(8, 'Law with Public Policy');
-
-ALTER TABLE Lecturer ADD COLUMN ActiveFlag INTEGER NOT NULL DEFAULT 1 CHECK (ActiveFlag IN (0, 1));
-ALTER TABLE Room ADD COLUMN ActiveFlag INTEGER NOT NULL DEFAULT 1 CHECK (ActiveFlag IN (0, 1));

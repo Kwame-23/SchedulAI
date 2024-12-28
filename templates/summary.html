@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assignments Summary</title>
+</head>
+<body>
+    <h1>Session Assignments Summary</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Session ID</th>
+                <th>Course Code</th>
+                <th>Lecturer</th>
+                <th>Cohort</th>
+                <th>Session Type</th>
+                <th>Duration</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in assignments %}
+            <tr>
+                <td>{{ row.SessionID }}</td>
+                <td>{{ row.CourseCode }}</td>
+                <td>{{ row.LecturerName }}</td>
+                <td>{{ row.CohortName }}</td>
+                <td>{{ row.SessionTypeName }}</td>
+                <td>{{ row.Duration }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
