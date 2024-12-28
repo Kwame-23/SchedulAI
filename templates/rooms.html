@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Active Rooms</title>
+</head>
+<body>
+    <h1>Select Active Rooms</h1>
+    <form method="POST">
+        {% for rm in rooms %}
+    {# rm is a tuple like (1, 'Apt Hall 216', 74) #}
+    <div>
+      <input type="checkbox" id="room_{{ rm[0] }}" name="room_ids" value="{{ rm[0] }}">
+      <label for="room_{{ rm[0] }}">
+        {{ rm[1] }} (Capacity: {{ rm[2] }})
+      </label>
+    </div>
+{% endfor %}
+        <button type="submit">Next (Assign Sessions)</button>
+    </form>
+</body>
+</html>

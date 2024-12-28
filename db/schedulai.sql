@@ -494,3 +494,6 @@ VALUES
 (6, 'Mechanical Engineering'),
 (7, 'Electrical and Electronic Engineering'),
 (8, 'Law with Public Policy');
+
+ALTER TABLE Lecturer ADD COLUMN ActiveFlag INTEGER NOT NULL DEFAULT 1 CHECK (ActiveFlag IN (0, 1));
+ALTER TABLE Room ADD COLUMN ActiveFlag INTEGER NOT NULL DEFAULT 1 CHECK (ActiveFlag IN (0, 1));
