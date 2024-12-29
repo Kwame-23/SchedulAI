@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Active Courses</title>
+</head>
+<body>
+    <h1>Select Active Courses</h1>
+    <form method="POST">
+        {% for course in courses %}
+            <!-- If you're using a tuple: course => (CourseID, CourseCode, CourseName, Credits) -->
+            <div>
+                <input 
+                    type="checkbox" 
+                    id="course_{{ course[0] }}" 
+                    name="course_ids" 
+                    value="{{ course[0] }}"
+                >
+                <label for="course_{{ course[0] }}">
+                    {{ course[1] }} - {{ course[2] }}
+                    (Credits: {{ course[3] }})
+                </label>
+            </div>
+        {% endfor %}
+        <button type="submit">Proceed to Assign Sessions</button>
+    </form>
+</body>
+</html>
