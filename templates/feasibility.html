@@ -1,0 +1,26 @@
+<!-- templates/feasibility.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Feasibility Results</title>
+</head>
+<body>
+    <h1>Feasibility Check for All Students</h1>
+    <table border="1">
+        <tr>
+            <th>Student ID</th>
+            <th>Major</th>
+            <th>Year</th>
+            <th>Is Feasible?</th>
+        </tr>
+        {% for row in results %}
+        <tr>
+            <td>{{ row.StudentID }}</td>
+            <td>{{ row.MajorName }}</td>
+            <td>{{ row.YearNumber }}</td>
+            <td>{{ 'OK' if row.IsFeasible else 'CONFLICT' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

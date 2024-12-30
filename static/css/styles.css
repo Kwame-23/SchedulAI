@@ -1,0 +1,69 @@
+/* styles.css */
+
+/* Layout the main container to have day columns side by side */
+#timetable-container {
+    display: flex; 
+    gap: 1rem;
+    margin: 1rem;
+  }
+  
+  /* Each day column */
+  .day-column {
+    flex: 1;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.5rem;
+    min-width: 150px;
+    background-color: #fafafa;
+    position: relative;
+  }
+  
+  .day-column h2 {
+    text-align: center;
+  }
+  
+  /* Container for timeslots */
+  .timeslots {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  /* Each timeslot acts as a droppable area */
+  .timeslot {
+    height: 60px; /* For a 1-hour slot; adjust as needed */
+    background-color: #f0f0f0;
+    border: 1px dashed #ccc;
+    position: relative;
+  }
+  
+  /* Session blocks are draggable items */
+  .session-block {
+    background-color: #ffd86e; /* default color, e.g. for Lecture */
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: move; 
+    position: absolute; /* or relative if you want stacking */
+    width: 90%;
+  }
+  
+  /* Example color-coding based on data-session-type attribute */
+  .session-block[data-session-type="Lecture"] {
+    background-color: #ffe066;
+  }
+  .session-block[data-session-type="Discussion"] {
+    background-color: #9fe6ff;
+  }
+  .session-block[data-session-type="Lab"] {
+    background-color: #c2ffa3;
+  }
+  
+  /* Style the Save button */
+  #save-button {
+    margin: 1rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+  }
