@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Courses for Student</title>
+</head>
+<body>
+    <h1>Select which courses a student is taking</h1>
+
+    <form method="POST" action="{{ url_for('student_courses') }}">
+        <label for="student_id">Pick a Student:</label>
+        <select name="student_id" id="student_id">
+            {% for stu in students %}
+                <!-- Show StudentID, or optionally "Major X Year Y" -->
+                <option value="{{ stu.StudentID }}">
+                    Student #{{ stu.StudentID }} (Major {{ stu.MajorID }}, Year {{ stu.YearNumber }})
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label>Select Courses:</label><br>
+        {% for c in courses %}
+            <input type="checkbox" name="course_codes" value="{{ c.CourseCode }}" />
+            {{ c.CourseCode }} - {{ c.CourseName }}<br>
+        {% endfor %}
+
+        <br>
+        <input type="submit" value="Submit" />
+    </form>
+</body>
+</html>

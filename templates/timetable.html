@@ -1,0 +1,51 @@
+<!-- timetable.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Timetable Management</title>
+
+  <!-- Reference the CSS file -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+  <h1>Timetable Management</h1>
+
+  <div id="timetable-container">
+    <!-- Example: Monday, Tuesday, Wednesday, Thursday, Friday columns -->
+    <!-- We'll fill them dynamically in dragdrop.js or server-side -->
+    {% for day_name in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
+    <div class="day-column" data-day="{{day_name}}">
+      <h2>{{ day_name }}</h2>
+      <div class="timeslots">
+        <!-- We'll create timeslots from e.g. 08:00 to 17:00 in 30-min increments -->
+        {% set current_time = 8 %}
+        {% for slot in range(8,17) %}
+          <!-- For a 1-hour slot; or do 2 for 30-minute increments, etc. -->
+          <div class="timeslot" data-start="{{ "%02d:00" % slot }}">
+            <!-- We'll place session blocks here if any match day/time -->
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Save Button -->
+  <button id="save-button">Save</button>
+
+  <!-- We store session data in a hidden JSON or pass from the server -->
+  <!-- Option A: Directly embed them as blocks in the HTML (server-side). -->
+  <!-- Option B: Store them in a JSON script tag for JS to handle. -->
+
+  <!-- Example of embedding session data in a script block as JSON -->
+  <script id="session-data" type="application/json">
+    {{ sessions|tojson }}
+  </script>
+
+  <!-- Reference your drag-and-drop logic -->
+  <script src="{{ url_for('static', filename='js/dragdrop.js') }}"></script>
+
+</body>
+</html>

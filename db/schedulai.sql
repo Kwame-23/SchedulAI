@@ -508,17 +508,14 @@ VALUES
 
 CREATE TABLE SessionAssignments (
     SessionID INT PRIMARY KEY AUTO_INCREMENT,
-    CourseID INT NOT NULL,
-    LecturerID INT NOT NULL,
-    CohortID INT NOT NULL,
-    SessionTypeID INT NOT NULL,
-    DurationID INT NOT NULL,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID),
-    FOREIGN KEY (LecturerID) REFERENCES Lecturer(LecturerID),
-    FOREIGN KEY (CohortID) REFERENCES Cohort(CohortID),
-    FOREIGN KEY (SessionTypeID) REFERENCES SessionType(SessionTypeID),
-    FOREIGN KEY (DurationID) REFERENCES Duration(DurationID)
+    CourseCode VARCHAR(20) NOT NULL,
+    LecturerName VARCHAR(100) NOT NULL,
+    CohortName VARCHAR(50) NOT NULL,
+    SessionType VARCHAR(50) NOT NULL,
+    Duration TIME NOT NULL,
+    NumberOfEnrollments INT NOT NULL DEFAULT 0
 ) ENGINE=InnoDB;
+
 
 
 CREATE TABLE SessionSchedule (
@@ -553,3 +550,57 @@ ALTER TABLE Room ADD COLUMN ActiveFlag INTEGER NOT NULL DEFAULT 1 CHECK (ActiveF
 
 ALTER TABLE SessionAssignments
 ADD COLUMN NumberOfEnrollments INT NOT NULL DEFAULT 0;
+
+ALTER TABLE SessionSchedule
+ADD COLUMN RoomName VARCHAR(255) NOT NULL;
+
+
+ALTER TABLE SessionSchedule
+DROP FOREIGN KEY sessionschedule_ibfk_2;
+ALTER TABLE SessionSchedule
+DROP COLUMN RoomID;
+
+UPDATE Room
+SET ActiveFlag = 1;
+
+-- -----------------------------------------
+-- 1. Create the Student table
+-- -----------------------------------------
+CREATE TABLE Student (
+    StudentID INT PRIMARY KEY AUTO_INCREMENT,
+    MajorID INT NOT NULL,
+    YearNumber INT NOT NULL,
+    FOREIGN KEY (MajorID) REFERENCES Major(MajorID)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------
+-- 2. Populate Student table with all
+--    possible Major + Year combos
+--    (8 majors x 4 years = 32 rows)
+-- -----------------------------------------
+INSERT INTO Student (MajorID, YearNumber)
+VALUES
+    -- Business Administration (MajorID=1), Years 1-4
+    (1, 1), (1, 2), (1, 3), (1, 4),
+    -- Computer Science (MajorID=2), Years 1-4
+    (2, 1), (2, 2), (2, 3), (2, 4),
+    -- Management Information Systems (MIS) (MajorID=3), Years 1-4
+    (3, 1), (3, 2), (3, 3), (3, 4),
+    -- Computer Engineering (MajorID=4), Years 1-4
+    (4, 1), (4, 2), (4, 3), (4, 4),
+    -- Mechatronics Engineering (MajorID=5), Years 1-4
+    (5, 1), (5, 2), (5, 3), (5, 4),
+    -- Mechanical Engineering (MajorID=6), Years 1-4
+    (6, 1), (6, 2), (6, 3), (6, 4),
+    -- Electrical and Electronic Engineering (MajorID=7), Years 1-4
+    (7, 1), (7, 2), (7, 3), (7, 4),
+    -- Law with Public Policy (MajorID=8), Years 1-4
+    (8, 1), (8, 2), (8, 3), (8, 4);
+
+    CREATE TABLE StudentCourseSelection (
+    SelectionID INT PRIMARY KEY AUTO_INCREMENT,
+    StudentID INT NOT NULL,
+    CourseCode VARCHAR(255) NOT NULL,
+    FOREIGN KEY (StudentID) REFERENCES Student(StudentID),
+    FOREIGN KEY (CourseCode) REFERENCES Course(CourseCode)
+) ENGINE=InnoDB;
