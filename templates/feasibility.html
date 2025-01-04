@@ -1,26 +1,45 @@
 <!-- templates/feasibility.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Student Feasibility Results</title>
-</head>
-<body>
-    <h1>Feasibility Check for All Students</h1>
-    <table border="1">
-        <tr>
-            <th>Student ID</th>
-            <th>Major</th>
-            <th>Year</th>
-            <th>Is Feasible?</th>
-        </tr>
-        {% for row in results %}
-        <tr>
-            <td>{{ row.StudentID }}</td>
-            <td>{{ row.MajorName }}</td>
-            <td>{{ row.YearNumber }}</td>
-            <td>{{ 'OK' if row.IsFeasible else 'CONFLICT' }}</td>
-        </tr>
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Feasibility Check Results</h2>
+    
+    {% if conflicts %}
+        {% for conflict in conflicts %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    Conflict Detected
+                </div>
+                <div class="card-body">
+                    <p><strong>Student Group:</strong> {{ conflict.StudentGroup }}</p>
+                    
+                    {% if conflict.MaxSessionsExceeded %}
+                        <p><strong>Maximum Sessions Exceeded:</strong> {{ conflict.MaxSessionsExceeded.Reason }}</p>
+                        <p><strong>Conflicting Sessions:</strong></p>
+                        <ul>
+                            {% for sess in conflict.MaxSessionsExceeded.Sessions %}
+                                <li><strong>{{ sess.CourseCode }}</strong>: {{ sess.SessionType }} in {{ sess.RoomName }} (Scheduled Time: {{ sess.StartTime }} - {{ sess.EndTime }})</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    
+                    {% if conflict.OverlappingSessions %}
+                        <p><strong>Overlapping Sessions:</strong></p>
+                        {% for overlap in conflict.OverlappingSessions.Conflicts %}
+                            <p>{{ overlap.Reason }}</p>
+                            <ul>
+                                {% for sess in overlap.Sessions %}
+                                    <li><strong>{{ sess.CourseCode }}</strong>: {{ sess.SessionType }} in {{ sess.RoomName }} (Scheduled Time: {{ sess.StartTime }} - {{ sess.EndTime }})</li>
+                                {% endfor %}
+                            </ul>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
         {% endfor %}
-    </table>
-</body>
-</html>
+    {% else %}
+        <div class="alert alert-success" role="alert">
+            All student groups are within the session limits. No conflicts detected.
+        </div>
+    {% endif %}
+{% endblock %}

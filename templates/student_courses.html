@@ -1,31 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Select Courses for Student</title>
-</head>
-<body>
-    <h1>Select which courses a student is taking</h1>
+<!-- templates/student_courses.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Select Courses for Student</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
     <form method="POST" action="{{ url_for('student_courses') }}">
-        <label for="student_id">Pick a Student:</label>
-        <select name="student_id" id="student_id">
-            {% for stu in students %}
-                <!-- Show StudentID, or optionally "Major X Year Y" -->
-                <option value="{{ stu.StudentID }}">
-                    Student #{{ stu.StudentID }} (Major {{ stu.MajorID }}, Year {{ stu.YearNumber }})
-                </option>
+        <!-- Student Selection -->
+        <div class="mb-3">
+            <label for="student_id" class="form-label">Pick a Student:</label>
+            <select class="form-select" name="student_id" id="student_id" required>
+                <option value="" disabled selected>Select a student</option>
+                {% for stu in students %}
+                    <option value="{{ stu.StudentID }}">
+                        {{ stu.MajorName }}, Year {{ stu.YearNumber }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Courses Selection -->
+        <div class="mb-3">
+            <label class="form-label">Select Courses:</label><br>
+            {% for c in courses %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="course_codes" value="{{ c.CourseCode }}" id="course_{{ c.CourseCode }}">
+                    <label class="form-check-label" for="course_{{ c.CourseCode }}">
+                        {{ c.CourseCode }} - {{ c.CourseName }}
+                    </label>
+                </div>
             {% endfor %}
-        </select>
-        <br><br>
+        </div>
 
-        <label>Select Courses:</label><br>
-        {% for c in courses %}
-            <input type="checkbox" name="course_codes" value="{{ c.CourseCode }}" />
-            {{ c.CourseCode }} - {{ c.CourseName }}<br>
-        {% endfor %}
-
-        <br>
-        <input type="submit" value="Submit" />
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Submit</button>
     </form>
-</body>
-</html>
+{% endblock %}
