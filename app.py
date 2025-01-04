@@ -8,7 +8,7 @@ import os
 import logging
 import json
 
-# These imports assume you have scheduler/feasibility files:
+# These imports assume you have the following local modules:
 from scheduling.scheduler import schedule_sessions as run_schedule
 from scheduling.feasibility_checker import run_feasibility_check
 
@@ -19,6 +19,10 @@ app.secret_key = 'YOUR_SECRET_KEY'  # Needed for session usage
 # MySQL Database Connection
 # ----------------------------------------------------
 def get_db_connection():
+    """
+    Connects to your schedulai database using mysql.connector.
+    Adjust host/user/password if needed.
+    """
     conn = mysql.connector.connect(
         host='localhost',
         user='root',
@@ -34,7 +38,7 @@ def is_valid_duration(duration):
     if not duration:
         return False
     duration = duration.strip()
-    pattern = r'^\d{1,2}:\d{2}:\d{2}$'  # Allows 1 or 2 digits for hours
+    pattern = r'^\d{1,2}:\d{2}:\d{2}$'  # Allows 1-2 digits for HH
     return re.match(pattern, duration) is not None
 
 # ----------------------------------------------------
@@ -42,28 +46,148 @@ def is_valid_duration(duration):
 # ----------------------------------------------------
 def convert_timedelta_to_hhmm(td):
     """
-    Converts a datetime.timedelta to "HH:MM" string.
-    For example, 8 hours => "08:00"
+    Converts a datetime.timedelta to "HH:MM" string, e.g. 8 hours -> "08:00"
     """
     if not td:
         return "00:00"
-    total_seconds = int(td.total_seconds())  # e.g. 28800 for 8:00
+    total_seconds = int(td.total_seconds())
     hours = total_seconds // 3600
     minutes = (total_seconds % 3600) // 60
     return f"{hours:02d}:{minutes:02d}"
+
+# ----------------------------------------------------
+# HELPER A: Overlap check for Friday 11:50–12:15
+# ----------------------------------------------------
+def overlaps_friday_prayer(day_of_week, start_str, end_str):
+    """
+    Returns True if the requested day/time overlaps with
+    Friday prayer (11:50–12:15). Otherwise False.
+    """
+    if day_of_week.lower() != 'friday':
+        return False  # Only relevant on Friday
+
+    def parse_hhmm_to_minutes(hhmm):
+        hh, mm = hhmm.split(':')
+        return int(hh)*60 + int(mm)
+
+    requested_start = parse_hhmm_to_minutes(start_str)
+    requested_end   = parse_hhmm_to_minutes(end_str)
+
+    prayer_start = parse_hhmm_to_minutes("11:50")
+    prayer_end   = parse_hhmm_to_minutes("12:15")
+
+    # Overlap condition
+    return (requested_start < prayer_end) and (requested_end > prayer_start)
+
+# ----------------------------------------------------
+# HELPER B: Which days is a lecturer assigned?
+# ----------------------------------------------------
+def lecturer_assigned_days(lecturer_name):
+    """
+    Returns a set of distinct days (e.g. {"Monday","Wednesday"})
+    the lecturer is currently scheduled for.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    sql = """
+        SELECT DISTINCT ss.DayOfWeek AS day
+        FROM SessionSchedule ss
+        JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
+        WHERE sa.LecturerName = %s
+    """
+    cursor.execute(sql, (lecturer_name,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return {row['day'] for row in rows}
+
+# ----------------------------------------------------
+# Check Room Availability (with Friday constraint)
+# ----------------------------------------------------
+def rooms_free_for_timeslot(day_of_week, start_time_str, end_time_str):
+    """
+    Returns a list of (RoomID, Location, MaxRoomCapacity) free during
+    the specified timeslot. If overlap with Friday prayer => returns [].
+    """
+    # If overlapping prayer => no rooms
+    if overlaps_friday_prayer(day_of_week, start_time_str, end_time_str):
+        return []
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Query all active rooms
+    cursor.execute("SELECT RoomID, Location, MaxRoomCapacity FROM Room WHERE ActiveFlag = 1")
+    all_rooms = cursor.fetchall()
+    all_room_ids = [r['RoomID'] for r in all_rooms]
+
+    # Find rooms booked in overlapping times
+    sql_booked = """
+        SELECT DISTINCT RoomID
+        FROM SessionSchedule
+        WHERE DayOfWeek = %s
+          AND StartTime < %s
+          AND EndTime > %s
+    """
+    cursor.execute(sql_booked, (day_of_week, end_time_str, start_time_str))
+    booked_rooms = cursor.fetchall()
+    booked_room_ids = [br['RoomID'] for br in booked_rooms]
+
+    # Subtract => free rooms
+    free_room_ids = list(set(all_room_ids) - set(booked_room_ids))
+    if not free_room_ids:
+        cursor.close()
+        conn.close()
+        return []
+
+    placeholders = ','.join(['%s'] * len(free_room_ids))
+    sql_free = f"SELECT RoomID, Location, MaxRoomCapacity FROM Room WHERE RoomID IN ({placeholders})"
+    cursor.execute(sql_free, tuple(free_room_ids))
+    free_rooms = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    return free_rooms
+
+# ----------------------------------------------------
+# Check Lecturer Availability (with Friday constraint)
+# ----------------------------------------------------
+def lecturer_is_free(lecturer_name, day_of_week, start_time_str, end_time_str):
+    """
+    Returns False if the lecturer is busy or if timeslot overlaps Friday prayer.
+    """
+    if overlaps_friday_prayer(day_of_week, start_time_str, end_time_str):
+        return False
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    sql = """
+        SELECT ss.*
+        FROM SessionSchedule ss
+        JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
+        WHERE sa.LecturerName = %s
+          AND ss.DayOfWeek = %s
+          AND ss.StartTime < %s
+          AND ss.EndTime > %s
+    """
+    cursor.execute(sql, (lecturer_name, day_of_week, end_time_str, start_time_str))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # If we found any rows => overlap => not free
+    return (len(rows) == 0)
 
 # ----------------------------------------------------
 # Query: Fetch joined data for Timetable
 # ----------------------------------------------------
 def fetch_sessions_join_schedule():
     """
-    Pulls data from SessionAssignments + SessionSchedule to produce a
-    combined row for each session:
-      {
-         SessionID, CourseCode, SessionType,
-         Lecturer, DayOfWeek, StartTime, EndTime, RoomName, ...
-      }
-    We convert TIME columns (StartTime/EndTime) from timedelta to "HH:MM".
+    Pulls data from SessionAssignments + SessionSchedule => combined schedule.
+    Converts TIME columns to "HH:MM" for StartTime/EndTime.
     """
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -80,9 +204,9 @@ def fetch_sessions_join_schedule():
     cursor.close()
     conn.close()
 
-    # Convert TIME fields from timedelta to "HH:MM"
+    # Convert TIME fields from timedelta -> "HH:MM"
     for r in rows:
-        start_td = r["StartTime"]  # e.g. datetime.timedelta
+        start_td = r["StartTime"]
         end_td   = r["EndTime"]
         r["StartTime"] = convert_timedelta_to_hhmm(start_td)
         r["EndTime"]   = convert_timedelta_to_hhmm(end_td)
@@ -99,7 +223,6 @@ def lecturers():
 
     if request.method == 'POST':
         selected_lecturers = request.form.getlist('lecturer_ids')
-        # Optionally store them in session
         session['active_lecturers'] = selected_lecturers
         
         # Reset all to inactive, then set chosen ones active
@@ -114,7 +237,7 @@ def lecturers():
 
         return redirect(url_for('rooms'))
 
-    # GET: show all lecturers
+    # GET all lecturers
     cursor.execute("SELECT LecturerID, LecturerName FROM Lecturer")
     lecturers_data = cursor.fetchall()
     cursor.close()
@@ -145,7 +268,7 @@ def rooms():
 
         return redirect(url_for('assign_sessions'))
 
-    # GET: show rooms
+    # GET: show all rooms
     cursor.execute("SELECT RoomID, Location, MaxRoomCapacity FROM Room")
     rooms_data = cursor.fetchall()
     
@@ -165,11 +288,11 @@ def assign_sessions():
         session_count = int(request.form.get('session_count', 0))
         course_id = request.form.get('current_course_id')
 
-        # Map CourseID to CourseCode
-        cursor.execute("SELECT CourseCode FROM Course WHERE CourseID = %s AND ActiveFlag = 1", (course_id,))
+        # Map CourseID -> CourseCode
+        cursor.execute("SELECT CourseCode FROM Course WHERE CourseID=%s AND ActiveFlag=1", (course_id,))
         course_row = cursor.fetchone()
         if not course_row:
-            flash("Invalid or inactive course selected.")
+            flash("Invalid or inactive course.")
             cursor.close()
             conn.close()
             return redirect(url_for('assign_sessions'))
@@ -183,27 +306,25 @@ def assign_sessions():
             duration_str = request.form.get(f'duration_{i}', '').strip()
             enrollments = request.form.get(f'enrollments_{i}', '0').strip()
 
-            # Validation
+            # Validate
             if not all([cohort_name, lecturer_main, session_type, duration_str]):
-                flash(f"Missing data for session {i+1}. Fill all fields.")
+                flash(f"Missing data in session row {i+1}.")
                 continue
-
             if not is_valid_duration(duration_str):
-                flash(f"Invalid duration format: {duration_str} (use HH:MM:SS).")
+                flash(f"Invalid duration format: {duration_str}.")
                 continue
-
             try:
                 enrollments = int(enrollments)
             except ValueError:
                 enrollments = 0
 
-            # Choose which lecturer
+            # Choose lecturer
             if session_type.lower() == 'discussion' and lecturer_intern:
                 chosen_lecturer = lecturer_intern
             else:
                 chosen_lecturer = lecturer_main
 
-            # Insert into SessionAssignments
+            # Insert to DB
             insert_sql = """
                 INSERT INTO SessionAssignments
                 (CourseCode, LecturerName, CohortName, SessionType, Duration, NumberOfEnrollments)
@@ -222,14 +343,14 @@ def assign_sessions():
         cursor.close()
         conn.close()
 
-        flash("Sessions saved for the selected course!")
+        flash("Sessions saved for selected course!")
         return redirect(url_for('assign_sessions'))
 
-    # GET portion
-    cursor.execute("SELECT CourseID, CourseCode, CourseName, Credits FROM Course WHERE ActiveFlag = 1")
+    # GET
+    cursor.execute("SELECT CourseID, CourseCode, CourseName, Credits FROM Course WHERE ActiveFlag=1")
     courses_data = cursor.fetchall()
 
-    cursor.execute("SELECT LecturerName FROM Lecturer WHERE ActiveFlag = 1")
+    cursor.execute("SELECT LecturerName FROM Lecturer WHERE ActiveFlag=1")
     lecturers_data = cursor.fetchall()
 
     cursor.execute("SELECT DISTINCT SessionType FROM SessionAssignments")
@@ -243,13 +364,11 @@ def assign_sessions():
     cursor.close()
     conn.close()
 
-    return render_template(
-        'assign_sessions.html',
-        courses=courses_data,
-        lecturers=lecturers_data,
-        session_types=session_types_data,
-        durations=durations_data
-    )
+    return render_template('assign_sessions.html',
+                           courses=courses_data,
+                           lecturers=lecturers_data,
+                           session_types=session_types_data,
+                           durations=durations_data)
 
 # ----------------------------------------------------
 # ROUTE 4: Run Scheduler
@@ -283,14 +402,14 @@ def summary():
 
     query = """
         SELECT sc.ScheduleID,
-            s.SessionID,
-            s.CourseCode,
-            s.LecturerName,
-            s.SessionType,
-            sc.DayOfWeek,
-            sc.StartTime,
-            sc.EndTime,
-            sc.RoomName
+               s.SessionID,
+               s.CourseCode,
+               s.LecturerName,
+               s.SessionType,
+               sc.DayOfWeek,
+               sc.StartTime,
+               sc.EndTime,
+               sc.RoomName
         FROM SessionSchedule sc
         JOIN SessionAssignments s ON sc.SessionID = s.SessionID
         ORDER BY s.SessionID
@@ -313,7 +432,6 @@ def summary():
 # ----------------------------------------------------
 @app.route('/')
 def home():
-    # Return a landing page or redirect to 'lecturers' or something
     return render_template('index.html')
 
 # ----------------------------------------------------
@@ -337,31 +455,26 @@ def courses():
         WHERE ActiveFlag = 1
     """)
     courses_data = cursor.fetchall()
-
     cursor.close()
     conn.close()
+
     return render_template('courses.html', courses=courses_data)
 
 # ----------------------------------------------------
 # Feasibility Check
 # ----------------------------------------------------
+
 @app.route('/feasibility', methods=['GET'])
 def feasibility():
-    results = run_feasibility_check()
+    """
+    Renders the Feasibility Check page, displaying detailed conflict information
+    for student groups based on their scheduling.
+    """
+    # Run the feasibility check to get conflict details
+    conflicts = run_feasibility_check()
 
-    # Build a {MajorID: MajorName}
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT MajorID, MajorName FROM Major")
-    majors = cursor.fetchall()
-    major_map = {m['MajorID']: m['MajorName'] for m in majors}
-    cursor.close()
-    conn.close()
-
-    for r in results:
-        r['MajorName'] = major_map.get(r['MajorID'], 'Unknown Major')
-
-    return render_template('feasibility.html', results=results)
+    # Render the 'feasibility.html' template with the conflicts data
+    return render_template('feasibility.html', conflicts=conflicts)
 
 # ----------------------------------------------------
 # Route: Student->Courses bridging
@@ -375,27 +488,42 @@ def student_courses():
         student_id = request.form.get('student_id')
         selected_codes = request.form.getlist('course_codes')
 
-        # Overwrite old rows
-        cursor.execute("DELETE FROM StudentCourseSelection WHERE StudentID = %s", (student_id,))
-        insert_sql = """
-            INSERT INTO StudentCourseSelection (StudentID, CourseCode)
-            VALUES (%s, %s)
-        """
-        for ccode in selected_codes:
-            cursor.execute(insert_sql, (student_id, ccode))
+        # Validate input
+        if not student_id:
+            flash("No student selected.", "danger")
+            return redirect(url_for('student_courses'))
 
-        conn.commit()
-        cursor.close()
-        conn.close()
+        # Update the StudentCourseSelection table
+        try:
+            cursor.execute("DELETE FROM StudentCourseSelection WHERE StudentID=%s", (student_id,))
+            insert_sql = """
+                INSERT INTO StudentCourseSelection (StudentID, CourseCode)
+                VALUES (%s, %s)
+            """
+            for ccode in selected_codes:
+                cursor.execute(insert_sql, (student_id, ccode))
+            conn.commit()
+            flash("Courses updated successfully!", "success")
+        except mysql.connector.Error as err:
+            conn.rollback()
+            flash(f"Error updating courses: {err}", "danger")
+        finally:
+            cursor.close()
+            conn.close()
 
-        flash("Courses updated successfully!")
         return redirect(url_for('student_courses'))
 
-    # GET: fetch students
-    cursor.execute("SELECT StudentID, MajorID, YearNumber FROM Student")
+    # GET request handling
+    # Fetch students with their MajorName by joining the Major table
+    cursor.execute("""
+        SELECT s.StudentID, s.MajorID, s.YearNumber, m.MajorName
+        FROM Student s
+        JOIN Major m ON s.MajorID = m.MajorID
+        ORDER BY m.MajorName, s.YearNumber, s.StudentID
+    """)
     students_data = cursor.fetchall()
 
-    # fetch courses
+    # Fetch active courses
     cursor.execute("""
         SELECT CourseCode, CourseName
         FROM Course
@@ -406,6 +534,7 @@ def student_courses():
 
     cursor.close()
     conn.close()
+
     return render_template('student_courses.html',
                            students=students_data,
                            courses=courses_data)
@@ -415,9 +544,6 @@ def student_courses():
 # ----------------------------------------------------
 @app.route('/timetable', methods=['GET'])
 def timetable():
-    """
-    Renders timetable with session data from SessionSchedule + SessionAssignments.
-    """
     sessions = fetch_sessions_join_schedule()
     return render_template('timetable.html', sessions=sessions)
 
@@ -426,12 +552,16 @@ def timetable():
 # ----------------------------------------------------
 @app.route('/check_conflict', methods=['POST'])
 def check_conflict():
+    """
+    Here is where you'd do advanced overlap checks if needed.
+    For now, returns conflict=False.
+    """
     data = request.json
     session_id = data.get("SessionID")
     new_day = data.get("NewDay")
     new_start = data.get("NewStartTime")
 
-    # Here is where you'd do real checks for overlapping with same lecturer or same cohort
+    # Could check same lecturer / cohort overlap in DB
     conflict_found = False
     reason = ""
 
@@ -442,26 +572,148 @@ def check_conflict():
 # ----------------------------------------------------
 @app.route('/save_timetable', methods=['POST'])
 def save_timetable():
-    data = request.json  # array of {SessionID, DayOfWeek, StartTime, EndTime}
+    data = request.json  # list of {SessionID, DayOfWeek, StartTime, EndTime}
     conn = get_db_connection()
     cursor = conn.cursor()
 
     for sess in data:
-        sid = sess["SessionID"]
-        day = sess["DayOfWeek"]
-        start = sess["StartTime"]
-        end = sess["EndTime"]
-        sql = """
+        sid  = sess["SessionID"]
+        day  = sess["DayOfWeek"]
+        st   = sess["StartTime"]
+        en   = sess["EndTime"]
+        sql  = """
           UPDATE SessionSchedule
           SET DayOfWeek=%s, StartTime=%s, EndTime=%s
           WHERE SessionID=%s
         """
-        cursor.execute(sql, (day, start, end, sid))
+        cursor.execute(sql, (day, st, en, sid))
 
     conn.commit()
     cursor.close()
     conn.close()
     return jsonify({"message": "Timetable saved successfully"})
 
+# ----------------------------------------------------
+# Route: Conflicts -> show UnassignedSessions
+# ----------------------------------------------------
+@app.route('/conflicts', methods=['GET'])
+def conflicts():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM UnassignedSessions")
+    unassigned = cursor.fetchall()
+
+    cursor.execute("SELECT RoomID, Location, MaxRoomCapacity FROM Room WHERE ActiveFlag=1")
+    rooms = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    
+    return render_template('conflict_resolution.html', unassigned=unassigned, rooms=rooms)
+
+# ----------------------------------------------------
+# Route: Suggest Alternatives
+#  (incorporates day-limit + Friday prayer constraints)
+# ----------------------------------------------------
+@app.route('/suggest_alternatives', methods=['POST'])
+def suggest_alternatives():
+    """
+    1) If lecturer has fewer than 3 distinct days => Monday–Friday.
+    2) If 3+ => only assigned days.
+    3) Skip Fri 11:50–12:15.
+    4) Check capacity & lecturer free => yield as alternative.
+    """
+    data = request.json
+    session_id  = data.get("SessionID")
+    enrollments = data.get("NumberOfEnrollments", 0)
+    lecturer    = data.get("LecturerName")
+
+    # A: which days is this lecturer assigned?
+    assigned = lecturer_assigned_days(lecturer)
+    if len(assigned) < 3:
+        possible_days = ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+    else:
+        possible_days = sorted(list(assigned))
+
+    # B: example timeslots
+    possible_times = [
+        ("08:00","09:00"),("09:00","10:00"),("10:00","11:00"),
+        ("11:00","12:00"),("12:00","13:00"),("13:00","14:00"),
+        ("14:00","15:00"),("15:00","16:00")
+    ]
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT RoomID, Location, MaxRoomCapacity FROM Room WHERE ActiveFlag=1")
+    all_rooms = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    free_slots = []
+    for day in possible_days:
+        for (st, en) in possible_times:
+            # skip if Fri overlap
+            if overlaps_friday_prayer(day, st, en):
+                continue
+
+            for r in all_rooms:
+                if r['MaxRoomCapacity'] >= enrollments:
+                    # check if room is free
+                    rr = rooms_free_for_timeslot(day, st, en)
+                    # check if lecturer free
+                    lf = lecturer_is_free(lecturer, day, st, en)
+                    room_ids = [x['RoomID'] for x in rr]
+
+                    if r['RoomID'] in room_ids and lf:
+                        free_slots.append({
+                            "Day": day,
+                            "StartTime": st,
+                            "EndTime": en,
+                            "RoomID": r['RoomID'],
+                            "Location": r['Location']
+                        })
+
+    return jsonify({"alternatives": free_slots})
+
+# ----------------------------------------------------
+# Route: Resolve Conflict -> move from UnassignedSessions -> SessionSchedule
+# ----------------------------------------------------
+@app.route('/resolve_conflict', methods=['POST'])
+def resolve_conflict():
+    data = request.json
+    session_id  = data["SessionID"]
+    day_of_week = data["DayOfWeek"]
+    start_time  = data["StartTime"]
+    end_time    = data["EndTime"]
+    room_id     = data["RoomID"]
+
+    # check if Fri prayer overlap
+    if overlaps_friday_prayer(day_of_week, start_time, end_time):
+        return jsonify({"message": "Cannot schedule during Friday prayer time!"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # remove from UnassignedSessions
+    cursor.execute("DELETE FROM UnassignedSessions WHERE SessionID=%s", (session_id,))
+
+    # Insert or update SessionSchedule
+    #  If you do an insert, you might do:
+    insert_sql = """
+      INSERT INTO SessionSchedule (SessionID, DayOfWeek, StartTime, EndTime, RoomID)
+      VALUES (%s, %s, %s, %s, %s)
+    """
+    cursor.execute(insert_sql, (session_id, day_of_week, start_time, end_time, room_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"message": "Session assigned successfully!"})
+
+# ----------------------------------------------------
+# Main
+# ----------------------------------------------------
 if __name__ == '__main__':
     app.run(debug=True)

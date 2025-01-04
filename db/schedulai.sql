@@ -604,3 +604,13 @@ VALUES
     FOREIGN KEY (StudentID) REFERENCES Student(StudentID),
     FOREIGN KEY (CourseCode) REFERENCES Course(CourseCode)
 ) ENGINE=InnoDB;
+
+CREATE TABLE UnassignedSessions (
+    SessionID INT PRIMARY KEY AUTO_INCREMENT,
+    CourseCode VARCHAR(20) NOT NULL,
+    LecturerName VARCHAR(100) NOT NULL,
+    CohortName VARCHAR(50) NOT NULL,
+    SessionType VARCHAR(50) NOT NULL,
+    Duration TIME NOT NULL,
+    NumberOfEnrollments INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB;

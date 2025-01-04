@@ -33,7 +33,6 @@ def get_db_connection():
         print(f"Error: {err}")
         return None
 
-
 # ----------------------------------------------------
 # 2. Helper: Normalize "0 days HH:MM:SS" if present
 # ----------------------------------------------------
@@ -56,7 +55,6 @@ def normalize_duration_str(duration_str: str) -> str:
             # Now it's "01:30:00"
 
     return duration_str
-
 
 # ----------------------------------------------------
 # 3. Fetch Data from DB and CSV
@@ -120,7 +118,6 @@ def fetch_data(session_preferences_csv_path):
     logging.info("Data fetched successfully from the database and CSV.")
     return sessions_df, rooms_df, session_preferences_data
 
-
 # ----------------------------------------------------
 # 4. Convert Duration to # of 15-min Blocks
 # ----------------------------------------------------
@@ -139,7 +136,6 @@ def duration_to_blocks(duration_str, time_blocks=15):
     hours, minutes = map(int, parts[:2])  # parse HH and MM
     total_minutes  = hours * 60 + minutes
     return total_minutes // time_blocks
-
 
 # ----------------------------------------------------
 # 5. Assign Single Session
@@ -214,6 +210,53 @@ def assign_session(
 
     return True
 
+# ----------------------------------------------------
+# Store Unassigned Sessions in UnassignedSessions Table
+# ----------------------------------------------------
+def store_unassigned_sessions(unassigned_list):
+    """
+    Inserts unassigned sessions into the UnassignedSessions table.
+    unassigned_list is a list of rows from the leftover sessions (tuples).
+    
+    Each row has the structure: (SessionID, CourseCode, CohortName, LecturerName, SessionType, Duration, NumberOfEnrollments)
+    """
+    conn = get_db_connection()
+    if conn is None:
+        print("Could not connect to DB to store unassigned sessions.")
+        return
+    
+    cursor = conn.cursor()
+    
+    insert_sql = """
+        INSERT INTO UnassignedSessions
+        (SessionID, CourseCode, LecturerName, CohortName, SessionType, Duration, NumberOfEnrollments)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+    
+    for row in unassigned_list:
+        # row = (SessionID, CourseCode, CohortName, LecturerName, SessionType, Duration, NumberOfEnrollments)
+        session_id = row[0]
+        course_code = row[1]
+        cohort_name = row[2]
+        lecturer_name = row[3]
+        session_type = row[4]
+        duration = row[5]
+        enrollments = row[6]
+        
+        cursor.execute(insert_sql, (
+            session_id,
+            course_code,
+            lecturer_name,
+            cohort_name,
+            session_type,
+            duration,
+            enrollments
+        ))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print("Unassigned sessions have been stored in UnassignedSessions table.")
 
 # ----------------------------------------------------
 # 6A. Function to Write the Final Schedule to DB
@@ -260,7 +303,6 @@ def write_schedule_to_db(assigned_sessions):
     conn.close()
     print("Schedule has been written to SessionSchedule table.")
 
-
 # ----------------------------------------------------
 # 6B. Main Scheduling Function
 # ----------------------------------------------------
@@ -296,11 +338,10 @@ def schedule_sessions(session_preferences_csv_path):
         for day in days_of_week
     }
     scheduled_session_ids = set()
-    unassigned_sessions   = []
+    unassigned_sessions   = []  # We'll store the full row from sessions_df here
     assigned_sessions     = []
 
     # 6B-5. Build a dictionary of "preferred rooms" for each course code
-    #       from the session preferences CSV
     preferred_rooms = session_preferences_df.groupby('Course Code')['Location'].apply(list).to_dict()
 
     # 6B-6. Additional tracking
@@ -357,7 +398,7 @@ def schedule_sessions(session_preferences_csv_path):
                     continue
                 else:
                     print(f"Unable to assign {course_code} - conflict with consistent scheduling.")
-                    unassigned_sessions.append(sess)
+                    unassigned_sessions.append(sess)  # full row
                     continue
 
             # 6B-7b. Attempt to parse duration
@@ -371,7 +412,6 @@ def schedule_sessions(session_preferences_csv_path):
             session_assigned = False
             print(f"Attempting to schedule Session ID {session_id} - {course_code}...")
 
-            # Helper function
             def do_assign(rm, blk):
                 nonlocal session_assigned
                 return assign_session(
@@ -383,7 +423,6 @@ def schedule_sessions(session_preferences_csv_path):
                 )
 
             def check_break_ok(rm, blk):
-                # Check for 15-min break in the previous block
                 if blk > 0 and room_occupancy[day][rm][blk-1] is not None:
                     return False
                 return True
@@ -397,9 +436,8 @@ def schedule_sessions(session_preferences_csv_path):
                 p_end_block     = (prayer_end   - start_time)//time_blocks
                 latest_end_block= (latest_end_time - start_time)//time_blocks
 
-                # If it can fit fully before prayer time
                 if dur_blocks <= p_start_block:
-                    # Try to schedule before prayer
+                    # Try scheduling before prayer
                     for pref_room in preferred_rooms.get(course_code, []):
                         for blk in range(p_start_block - dur_blocks + 1):
                             blocks_free = all(
@@ -412,8 +450,8 @@ def schedule_sessions(session_preferences_csv_path):
                         if session_assigned:
                             break
 
-                    # If not assigned, try after prayer but before 3:25 PM
                     if not session_assigned:
+                        # try after prayer
                         for pref_room in preferred_rooms.get(course_code, []):
                             for blk in range(p_end_block, latest_end_block - dur_blocks +1):
                                 blocks_free = all(
@@ -426,21 +464,18 @@ def schedule_sessions(session_preferences_csv_path):
                             if session_assigned:
                                 break
 
-                # If not assigned => can't schedule on Friday
                 if not session_assigned:
                     print(f"Unable to schedule {course_code} - Friday conflict.")
                     unassigned_sessions.append(sess)
                     continue
 
-            # 6B-7d. If it's a Math course => morning preference
+            # 6B-7d. If MATH => morning preference
             elif 'MATH' in course_code.upper():
-                # Attempt morning first
                 morning_blocks = (morning_end_time - start_time)//time_blocks
                 for pref_room in preferred_rooms.get(course_code, []):
                     if pref_room not in room_occupancy[day]:
                         continue
                     for blk in range(morning_blocks):
-                        # Ensure we don't exceed the morning boundary
                         if blk + dur_blocks <= morning_blocks:
                             capacity_ok  = (
                                 rooms_df[rooms_df['Location']==pref_room]['MaxRoomCapacity'].values[0]
@@ -461,8 +496,8 @@ def schedule_sessions(session_preferences_csv_path):
                         print(f"Assigned Session ID {session_id} to {pref_room} in the morning.")
                         break
 
-                # If not assigned in the morning, try any other time
                 if not session_assigned:
+                    # try other time
                     for pref_room in preferred_rooms.get(course_code, []):
                         for blk in range(morning_blocks, time_slots_per_day):
                             if blk + dur_blocks <= time_slots_per_day:
@@ -485,7 +520,7 @@ def schedule_sessions(session_preferences_csv_path):
                         if session_assigned:
                             break
 
-            # 6B-7e. For non-Math or leftover, attempt preferred rooms first
+            # 6B-7e. For non-Math or leftover, attempt preferred rooms
             if not session_assigned:
                 for pref_room in preferred_rooms.get(course_code, []):
                     blk = 0
@@ -555,7 +590,7 @@ def schedule_sessions(session_preferences_csv_path):
               f"Cohort: {s['Cohort']}, Lecturer: {s['Lecturer']}, Room: {s['Room']}, "
               f"Day: {s['Day']}, Start Time: {s['Start Time']}, End Time: {s['End Time']}")
 
-    # Check which sessions remain unscheduled
+    # 6B-9b: Identify leftover (unassigned) sessions
     leftover = [
         row for row in sessions_df.itertuples(index=False, name=None)
         if row[0] not in scheduled_session_ids
@@ -568,6 +603,9 @@ def schedule_sessions(session_preferences_csv_path):
             print(f"Session ID: {row[0]}, Course Code: {row[1]}, "
                   f"Cohort: {row[2]}, Lecturer: {row[3]}, "
                   f"Duration: {row[4]}, Number of Enrollments: {row[5]}")
+
+        # 6B-9c: Insert leftover into UnassignedSessions table
+        store_unassigned_sessions(leftover)
 
     # 6B-10. Print room occupancies
     print("\nRoom Occupancies:")

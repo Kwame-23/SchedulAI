@@ -1,0 +1,260 @@
+<!-- templates/conflict_resolution.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Timetable Conflict Resolution</h2>
+    
+    <p>The following sessions could not be scheduled:</p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Session ID</th>
+                <th>Course Code</th>
+                <th>Cohort</th>
+                <th>Lecturer</th>
+                <th>Duration</th>
+                <th>Enrollments</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in unassigned %}
+            <tr>
+                <td>{{ s.SessionID }}</td>
+                <td>{{ s.CourseCode }}</td>
+                <td>{{ s.CohortName }}</td>
+                <td>{{ s.LecturerName }}</td>
+                <td>{{ s.Duration }}</td>
+                <td>{{ s.NumberOfEnrollments }}</td>
+                <td>
+                    <button 
+                        class="btn btn-primary btn-sm resolve-btn" 
+                        data-sessionid="{{ s.SessionID }}"
+                        data-coursecode="{{ s.CourseCode }}"
+                        data-cohort="{{ s.CohortName }}"
+                        data-lecturer="{{ s.LecturerName }}"
+                        data-duration="{{ s.Duration }}"
+                        data-enrollments="{{ s.NumberOfEnrollments }}"
+                    >
+                        Resolve
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Modal for Resolving Conflicts -->
+    <div class="modal fade" id="resolveModal" tabindex="-1" aria-labelledby="resolveModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resolveModalLabel">Resolve Session Conflict</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <h5>Session Details</h5>
+            <p id="modal-session-info"></p>
+            
+            <hr>
+            
+            <h5>Suggest Alternative Slots</h5>
+            <button class="btn btn-secondary mb-3" id="suggest-alternatives-btn">Suggest Alternatives</button>
+            <div id="alternative-list">
+                <!-- Suggested alternatives will be populated here -->
+            </div>
+            
+            <hr>
+            
+            <h5>Assign Session to a Slot</h5>
+            <form id="assign-form">
+                <div class="mb-3">
+                    <label for="day-of-week" class="form-label">Day of Week</label>
+                    <select class="form-select" id="day-of-week" name="day_of_week" required>
+                        <option value="" disabled selected>Select a day</option>
+                        <option>Monday</option>
+                        <option>Tuesday</option>
+                        <option>Wednesday</option>
+                        <option>Thursday</option>
+                        <option>Friday</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="start-time" class="form-label">Start Time</label>
+                    <input type="time" class="form-control" id="start-time" name="start_time" required>
+                </div>
+                <div class="mb-3">
+                    <label for="end-time" class="form-label">End Time</label>
+                    <input type="time" class="form-control" id="end-time" name="end_time" required>
+                </div>
+                <div class="mb-3">
+                    <label for="room-id" class="form-label">Room ID</label>
+                    <input type="number" class="form-control" id="room-id" name="room_id" min="1" required>
+                </div>
+                <button type="button" class="btn btn-success" id="save-assignment-btn">Save Assignment</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+        let currentSessionID = null;
+        let currentEnrollments = 0;
+        let currentLecturer = "";
+
+        // Handle Resolve button click
+        $('.resolve-btn').click(function(){
+            currentSessionID = $(this).data('sessionid');
+            let courseCode = $(this).data('coursecode');
+            let cohort = $(this).data('cohort');
+            currentEnrollments = $(this).data('enrollments');
+            currentLecturer = $(this).data('lecturer');
+            
+            // Populate modal with session details
+            $('#modal-session-info').html(`
+                <strong>Session ID:</strong> ${currentSessionID}<br>
+                <strong>Course Code:</strong> ${courseCode}<br>
+                <strong>Cohort:</strong> ${cohort}<br>
+                <strong>Lecturer:</strong> ${currentLecturer}<br>
+                <strong>Duration:</strong> ${$(this).data('duration')}<br>
+                <strong>Enrollments:</strong> ${currentEnrollments}
+            `);
+            
+            // Clear previous alternatives
+            $('#alternative-list').empty();
+            $('#assign-form')[0].reset();
+            
+            // Show the modal
+            $('#resolveModal').modal('show');
+        });
+
+        // Handle Suggest Alternatives button click
+        $('#suggest-alternatives-btn').click(function(){
+            if(!currentSessionID){
+                alert("No session selected.");
+                return;
+            }
+
+            const payload = {
+                "SessionID": currentSessionID,
+                "NumberOfEnrollments": parseInt(currentEnrollments),
+                "LecturerName": currentLecturer
+            };
+
+            // Fetch alternatives via AJAX
+            $.ajax({
+                url: '/suggest_alternatives',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(response){
+                    const alternatives = response.alternatives;
+                    const altList = $('#alternative-list');
+                    altList.empty(); // Clear previous
+
+                    if(alternatives.length === 0){
+                        altList.append('<p>No available alternatives found.</p>');
+                    } else {
+                        let table = `
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Day</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Room ID</th>
+                                        <th>Location</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        alternatives.forEach(function(slot){
+                            table += `
+                                <tr>
+                                    <td>${slot.Day}</td>
+                                    <td>${slot.StartTime}</td>
+                                    <td>${slot.EndTime}</td>
+                                    <td>${slot.RoomID}</td>
+                                    <td>${slot.Location}</td>
+                                    <td>
+                                        <button class="btn btn-success btn-sm assign-alternative-btn" data-day="${slot.Day}" data-start="${slot.StartTime}" data-end="${slot.EndTime}" data-roomid="${slot.RoomID}">Assign</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        table += `
+                                </tbody>
+                            </table>
+                        `;
+                        altList.append(table);
+                    }
+                },
+                error: function(){
+                    alert("Error fetching alternatives.");
+                }
+            });
+        });
+
+        // Handle Assign Alternative button click
+        $(document).on('click', '.assign-alternative-btn', function(){
+            const day = $(this).data('day');
+            const startTime = $(this).data('start');
+            const endTime = $(this).data('end');
+            const roomID = $(this).data('roomid');
+
+            // Populate the form fields with selected alternative
+            $('#day-of-week').val(day);
+            $('#start-time').val(startTime);
+            $('#end-time').val(endTime);
+            $('#room-id').val(roomID);
+        });
+
+        // Handle Save Assignment button click
+        $('#save-assignment-btn').click(function(){
+            const dayOfWeek = $('#day-of-week').val();
+            const startTime = $('#start-time').val();
+            const endTime = $('#end-time').val();
+            const roomID = parseInt($('#room-id').val());
+
+            if(!dayOfWeek || !startTime || !endTime || !roomID){
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const payload = {
+                "SessionID": currentSessionID,
+                "DayOfWeek": dayOfWeek,
+                "StartTime": startTime,
+                "EndTime": endTime,
+                "RoomID": roomID
+            };
+
+            // Send assignment via AJAX
+            $.ajax({
+                url: '/resolve_conflict',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(response){
+                    alert(response.message);
+                    // Reload the page to update the list of unassigned sessions
+                    window.location.reload();
+                },
+                error: function(xhr){
+                    if(xhr.status === 400){
+                        alert(xhr.responseJSON.message);
+                    } else {
+                        alert("Error assigning session.");
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
