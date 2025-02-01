@@ -8,12 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Optional: Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- jQuery (required for some Bootstrap components and custom JS) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Optional: Custom JS -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -63,13 +57,14 @@
     
     <!-- Flash Messages -->
     <div class="container">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
-            <div class="alert alert-info" role="alert">
-              {% for message in messages %}
-                <div>{{ message }}</div>
-              {% endfor %}
-            </div>
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
           {% endif %}
         {% endwith %}
     </div>
@@ -80,7 +75,42 @@
         {% endblock %}
     </div>
     
-    <!-- Additional Scripts -->
+    <!-- Modal Structure (for Timetable) -->
+    <div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="sessionModalLabel">Session Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Course Code:</strong> <span id="modal-course-code"></span></p>
+            <p><strong>Lecturer:</strong> <span id="modal-lecturer"></span></p>
+            <p><strong>Session Type:</strong> <span id="modal-session-type"></span></p>
+            <p><strong>Room:</strong> <span id="modal-room"></span></p>
+            <p><strong>Time:</strong> <span id="modal-time"></span></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 1) Correct jQuery Script with matching integrity hash -->
+    <script
+      src="https://code.jquery.com/jquery-3.6.4.min.js"
+      integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+      crossorigin="anonymous">
+    </script>
+
+    <!-- 2) Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 3) (Optional) Your custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- 4) Child template scripts (like conflict_resolution.html) -->
     {% block scripts %}
     {% endblock %}
 </body>

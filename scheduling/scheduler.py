@@ -240,9 +240,17 @@ def store_unassigned_sessions(unassigned_list):
         cohort_name = row[2]
         lecturer_name = row[3]
         session_type = row[4]
-        duration = row[5]
+        duration_raw = row[5]
         enrollments = row[6]
         
+        # Normalize Duration
+        duration = normalize_duration_str(str(duration_raw))
+        
+        # Validate Duration format (optional but recommended)
+        if not re.match(r'^\d{2}:\d{2}:\d{2}$', duration):
+            print(f"Invalid Duration format for SessionID {session_id}: {duration}")
+            continue  # Skip inserting this row or handle as needed
+    
         cursor.execute(insert_sql, (
             session_id,
             course_code,
@@ -603,7 +611,7 @@ def schedule_sessions(session_preferences_csv_path):
             print(f"Session ID: {row[0]}, Course Code: {row[1]}, "
                   f"Cohort: {row[2]}, Lecturer: {row[3]}, "
                   f"Duration: {row[4]}, Number of Enrollments: {row[5]}")
-
+    
         # 6B-9c: Insert leftover into UnassignedSessions table
         store_unassigned_sessions(leftover)
 

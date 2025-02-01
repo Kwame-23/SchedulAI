@@ -1,0 +1,57 @@
+2025-02-01 21:07:32,338 INFO:127.0.0.1 - - [01/Feb/2025 21:07:32] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:22:31,785 INFO:Accessed /conflicts route.
+2025-02-01 21:22:31,998 INFO:127.0.0.1 - - [01/Feb/2025 21:22:31] "GET /conflicts HTTP/1.1" 200 -
+2025-02-01 21:22:32,033 INFO:127.0.0.1 - - [01/Feb/2025 21:22:32] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:22:32,038 INFO:127.0.0.1 - - [01/Feb/2025 21:22:32] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-02-01 21:34:41,631 INFO:Accessed /conflicts route.
+2025-02-01 21:34:41,827 INFO:127.0.0.1 - - [01/Feb/2025 21:34:41] "GET /conflicts HTTP/1.1" 200 -
+2025-02-01 21:34:41,885 INFO:127.0.0.1 - - [01/Feb/2025 21:34:41] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:34:41,892 INFO:127.0.0.1 - - [01/Feb/2025 21:34:41] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-02-01 21:34:43,255 INFO:Accessed /get_existing_schedule route.
+2025-02-01 21:34:43,282 INFO:Fetched existing schedule for CourseCode: MATH121, CohortName: Section A.
+2025-02-01 21:34:43,283 INFO:127.0.0.1 - - [01/Feb/2025 21:34:43] "POST /get_existing_schedule HTTP/1.1" 200 -
+2025-02-01 21:34:54,876 INFO:Accessed /student_timetable route with StudentID=7, Day=Wednesday
+2025-02-01 21:34:54,916 INFO:StudentID 7, Day=Wednesday: 2 major elective sessions, 8 non-major elective sessions.
+2025-02-01 21:34:54,936 INFO:127.0.0.1 - - [01/Feb/2025 21:34:54] "GET /student_timetable/7/Wednesday HTTP/1.1" 200 -
+2025-02-01 21:36:56,929 INFO:Accessed /student_timetable route with StudentID=7, Day=Wednesday
+2025-02-01 21:36:57,054 INFO:StudentID 7, Day=Wednesday: 2 major elective sessions, 8 non-major elective sessions.
+2025-02-01 21:36:57,062 INFO:127.0.0.1 - - [01/Feb/2025 21:36:57] "GET /student_timetable/7/Wednesday HTTP/1.1" 200 -
+2025-02-01 21:39:09,591 INFO:Accessed /timetable route.
+2025-02-01 21:39:09,629 INFO:Fetched sessions and schedule successfully.
+2025-02-01 21:39:09,629 INFO:Fetched 439 sessions for timetable.
+2025-02-01 21:39:09,668 INFO:127.0.0.1 - - [01/Feb/2025 21:39:09] "GET /timetable HTTP/1.1" 200 -
+2025-02-01 21:39:09,692 INFO:127.0.0.1 - - [01/Feb/2025 21:39:09] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:39:09,698 INFO:127.0.0.1 - - [01/Feb/2025 21:39:09] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-02-01 21:39:15,078 INFO:Accessed /conflicts route.
+2025-02-01 21:39:15,092 INFO:127.0.0.1 - - [01/Feb/2025 21:39:15] "GET /conflicts HTTP/1.1" 200 -
+2025-02-01 21:39:15,111 INFO:127.0.0.1 - - [01/Feb/2025 21:39:15] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:39:15,114 INFO:127.0.0.1 - - [01/Feb/2025 21:39:15] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-02-01 21:39:16,218 INFO:Accessed /get_existing_schedule route.
+2025-02-01 21:39:16,231 INFO:Fetched existing schedule for CourseCode: MATH121, CohortName: Section A.
+2025-02-01 21:39:16,232 INFO:127.0.0.1 - - [01/Feb/2025 21:39:16] "POST /get_existing_schedule HTTP/1.1" 200 -
+2025-02-01 21:39:19,834 INFO:Suggesting alternatives for SessionID: 1034, Lecturer: Rebecca Awuah, Enrollments: 34
+2025-02-01 21:39:19,864 INFO:Found 0 alternative slots for SessionID: 1034
+2025-02-01 21:39:19,865 INFO:127.0.0.1 - - [01/Feb/2025 21:39:19] "POST /suggest_alternatives HTTP/1.1" 200 -
+2025-02-01 21:39:36,281 INFO:Accessed /summary route.
+2025-02-01 21:39:36,320 INFO:127.0.0.1 - - [01/Feb/2025 21:39:36] "GET /summary HTTP/1.1" 200 -
+2025-02-01 21:49:13,367 INFO:Accessed /get_existing_schedule route.
+2025-02-01 21:49:13,393 INFO:Fetched existing schedule for CourseCode: MATH121, CohortName: Section A.
+2025-02-01 21:49:13,395 INFO:127.0.0.1 - - [01/Feb/2025 21:49:13] "POST /get_existing_schedule HTTP/1.1" 200 -
+2025-02-01 21:49:18,934 INFO:Accessed /lecturers route.
+2025-02-01 21:49:18,951 INFO:127.0.0.1 - - [01/Feb/2025 21:49:18] "GET /lecturers HTTP/1.1" 200 -
+2025-02-01 21:49:27,005 INFO:Accessed /lecturers route.
+2025-02-01 21:49:27,019 INFO:127.0.0.1 - - [01/Feb/2025 21:49:27] "GET /lecturers HTTP/1.1" 200 -
+2025-02-01 21:49:29,654 INFO:Accessed /courses route.
+2025-02-01 21:49:29,683 INFO:127.0.0.1 - - [01/Feb/2025 21:49:29] "GET /courses HTTP/1.1" 200 -
+2025-02-01 21:49:32,553 INFO:Accessed /timetable route.
+2025-02-01 21:49:32,576 INFO:Fetched sessions and schedule successfully.
+2025-02-01 21:49:32,577 INFO:Fetched 439 sessions for timetable.
+2025-02-01 21:49:32,592 INFO:127.0.0.1 - - [01/Feb/2025 21:49:32] "GET /timetable HTTP/1.1" 200 -
+2025-02-01 21:49:32,614 INFO:127.0.0.1 - - [01/Feb/2025 21:49:32] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:49:32,619 INFO:127.0.0.1 - - [01/Feb/2025 21:49:32] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-02-01 21:49:33,399 INFO:Accessed /conflicts route.
+2025-02-01 21:49:33,417 INFO:127.0.0.1 - - [01/Feb/2025 21:49:33] "GET /conflicts HTTP/1.1" 200 -
+2025-02-01 21:49:33,433 INFO:127.0.0.1 - - [01/Feb/2025 21:49:33] "[33mGET /static/css/style.css HTTP/1.1[0m" 404 -
+2025-02-01 21:49:33,437 INFO:127.0.0.1 - - [01/Feb/2025 21:49:33] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-02-01 21:49:34,324 INFO:Accessed /run_scheduler route.
+2025-02-01 21:49:34,328 INFO:127.0.0.1 - - [01/Feb/2025 21:49:34] "GET /run_scheduler HTTP/1.1" 200 -
