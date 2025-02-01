@@ -1,51 +1,271 @@
-<!-- timetable.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Timetable Management</title>
+<!-- templates/timetable.html -->
+{% extends 'base.html' %}
 
-  <!-- Reference the CSS file -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+{% block content %}
+<div class="timetable-container">
+    <div class="timetable-header">
+        <button id="prev-room" class="btn btn-primary">&larr;</button>
+        <h3 id="current-room">Room Name</h3>
+        <button id="next-room" class="btn btn-primary">&rarr;</button>
+    </div>
 
-</head>
-<body>
-  <h1>Timetable Management</h1>
+    <div class="table-responsive">
+        <table class="timetable-table table table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+                        <th>{{ day }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="timetable-body">
+                {% for time in time_slots %}
+                <tr>
+                    <td class="time-slot">{{ time }}</td>
+                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+                        <td></td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-  <div id="timetable-container">
-    <!-- Example: Monday, Tuesday, Wednesday, Thursday, Friday columns -->
-    <!-- We'll fill them dynamically in dragdrop.js or server-side -->
-    {% for day_name in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
-    <div class="day-column" data-day="{{day_name}}">
-      <h2>{{ day_name }}</h2>
-      <div class="timeslots">
-        <!-- We'll create timeslots from e.g. 08:00 to 17:00 in 30-min increments -->
-        {% set current_time = 8 %}
-        {% for slot in range(8,17) %}
-          <!-- For a 1-hour slot; or do 2 for 30-minute increments, etc. -->
-          <div class="timeslot" data-start="{{ "%02d:00" % slot }}">
-            <!-- We'll place session blocks here if any match day/time -->
-          </div>
-        {% endfor %}
+<!-- Modal Structure -->
+<div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sessionModalLabel">Session Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Course Code:</strong> <span id="modal-course-code"></span></p>
+        <p><strong>Lecturer:</strong> <span id="modal-lecturer"></span></p>
+        <p><strong>Session Type:</strong> <span id="modal-session-type"></span></p>
+        <p><strong>Room:</strong> <span id="modal-room"></span></p>
+        <p><strong>Time:</strong> <span id="modal-time"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
-    {% endfor %}
   </div>
+</div>
 
-  <!-- Save Button -->
-  <button id="save-button">Save</button>
+<style>
+    /* Timetable Styles */
+    .timetable-container {
+        margin: 20px;
+    }
+    .timetable-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .timetable-header h3 {
+        margin: 0 20px;
+    }
+    .timetable-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .timetable-table th, .timetable-table td {
+        border: 1px solid #dee2e6;
+        position: relative;
+        height: 60px; /* Increased height for better readability */
+        padding: 0;
+        vertical-align: top;
+    }
+    .timetable-table th {
+        background-color: #f8f9fa;
+        text-align: center;
+    }
+    .time-slot {
+        width: 60px;
+        text-align: right;
+        padding-right: 10px;
+        background-color: #f1f1f1;
+        font-weight: bold;
+    }
+    .session-block {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        bottom: 2px;
+        color: white;
+        padding: 2px;
+        border-radius: 4px;
+        overflow: hidden;
+        cursor: pointer;
+        font-size: 0.85em; /* Reduced font size for better fit */
+        white-space: normal; /* Allow text to wrap */
+        text-align: center; /* Center align text */
+    }
+    /* Session Type Colors */
+    .session-lecture {
+        background-color: #007bff; /* Blue */
+    }
+    .session-discussion {
+        background-color: #28a745; /* Green */
+    }
+    .session-lab {
+        background-color: #fd7e14; /* Orange */
+    }
+    .session-tutorial {
+        background-color: #6f42c1; /* Purple */
+    }
+    .session-other {
+        background-color: #6c757d; /* Grey */
+    }
+</style>
 
-  <!-- We store session data in a hidden JSON or pass from the server -->
-  <!-- Option A: Directly embed them as blocks in the HTML (server-side). -->
-  <!-- Option B: Store them in a JSON script tag for JS to handle. -->
+<script>
+    // Initialize Variables
+    const rooms = {{ rooms|tojson }};
+    const sessionsByRoom = {{ sessions_by_room|tojson }};
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const timeSlots = {{ time_slots|tojson }};
 
-  <!-- Example of embedding session data in a script block as JSON -->
-  <script id="session-data" type="application/json">
-    {{ sessions|tojson }}
-  </script>
+    let currentRoomIndex = 0;
 
-  <!-- Reference your drag-and-drop logic -->
-  <script src="{{ url_for('static', filename='js/dragdrop.js') }}"></script>
+    // Function to Render Timetable
+    function renderTimetable() {
+        const currentRoom = rooms[currentRoomIndex];
+        document.getElementById('current-room').innerText = currentRoom;
 
-</body>
-</html>
+        // Clear existing timetable body
+        const timetableBody = document.getElementById('timetable-body');
+        timetableBody.innerHTML = '';
+
+        // Generate time slots rows
+        for (let i = 0; i < timeSlots.length; i++) {
+            const row = document.createElement('tr');
+
+            // Time Slot Cell
+            const timeCell = document.createElement('td');
+            timeCell.classList.add('time-slot');
+            timeCell.innerText = timeSlots[i];
+            row.appendChild(timeCell);
+
+            // Day Cells
+            for (let d = 0; d < days.length; d++) {
+                const day = days[d];
+                const cell = document.createElement('td');
+                cell.setAttribute('data-day', day);
+                cell.setAttribute('data-time', timeSlots[i]);
+
+                // Check if there's a session at this time and day
+                const sessions = sessionsByRoom[currentRoom] || [];
+                sessions.forEach(session => {
+                    if (session.DayOfWeek === day) {
+                        const sessionStart = session.StartTime;
+                        const sessionEnd = session.EndTime;
+
+                        // Compare times
+                        if (timeSlots[i] >= sessionStart && timeSlots[i] < sessionEnd) {
+                            // Determine session type class
+                            let sessionTypeClass = 'session-other'; // Default
+                            switch(session.SessionType.toLowerCase()) {
+                                case 'lecture':
+                                    sessionTypeClass = 'session-lecture';
+                                    break;
+                                case 'discussion':
+                                    sessionTypeClass = 'session-discussion';
+                                    break;
+                                case 'lab':
+                                    sessionTypeClass = 'session-lab';
+                                    break;
+                                case 'tutorial':
+                                    sessionTypeClass = 'session-tutorial';
+                                    break;
+                                // Add more cases as needed
+                                default:
+                                    sessionTypeClass = 'session-other';
+                            }
+
+                            // Create session block
+                            const block = document.createElement('div');
+                            block.classList.add('session-block', sessionTypeClass);
+                            block.innerHTML = `<strong>${session.CourseCode}</strong><br>${session.Lecturer}<br>${session.SessionType}`;
+                            block.title = `Course: ${session.CourseCode}\nLecturer: ${session.Lecturer}\nType: ${session.SessionType}`;
+
+                            // Add click event to show modal with details
+                            block.onclick = function() {
+                                showSessionDetails(session.CourseCode, session.Lecturer, session.SessionType, session.RoomName, `${session.StartTime} - ${session.EndTime}`);
+                            };
+
+                            cell.appendChild(block);
+                        }
+                    }
+                });
+
+                row.appendChild(cell);
+            }
+
+            timetableBody.appendChild(row);
+        }
+    }
+
+    // Initial Render
+    renderTimetable();
+
+    // Navigation Buttons
+    document.getElementById('prev-room').addEventListener('click', () => {
+        currentRoomIndex = (currentRoomIndex - 1 + rooms.length) % rooms.length;
+        renderTimetable();
+    });
+
+    document.getElementById('next-room').addEventListener('click', () => {
+        currentRoomIndex = (currentRoomIndex + 1) % rooms.length;
+        renderTimetable();
+    });
+
+    // Function to Show Session Details in Modal
+    function showSessionDetails(courseCode, lecturer, sessionType, room, time) {
+        document.getElementById('modal-course-code').innerText = courseCode;
+        document.getElementById('modal-lecturer').innerText = lecturer;
+        document.getElementById('modal-session-type').innerText = sessionType;
+        document.getElementById('modal-room').innerText = room;
+        document.getElementById('modal-time').innerText = time;
+        var sessionModal = new bootstrap.Modal(document.getElementById('sessionModal'), {
+            keyboard: false
+        });
+        sessionModal.show();
+    }
+
+    // Highlight Current Time Slot (Optional Enhancement)
+    function highlightCurrentTimeSlot() {
+        const now = new Date();
+        const currentDay = days[now.getDay()]; // getDay(): Sunday - Saturday : 0 - 6
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+        // Iterate over each cell to find the current time slot
+        const cells = document.querySelectorAll('#timetable-body td');
+        cells.forEach(cell => {
+            const day = cell.getAttribute('data-day');
+            const time = cell.getAttribute('data-time');
+
+            if (day === currentDay && time === currentTime) {
+                cell.style.backgroundColor = '#ffc107'; // Amber color
+            } else {
+                // Remove highlight if it was previously set
+                if (day !== currentDay || time !== currentTime) {
+                    // Reset to default background or previous styles
+                    cell.style.backgroundColor = '';
+                }
+            }
+        });
+    }
+
+    // Call the function initially
+    highlightCurrentTimeSlot();
+
+    // Update every minute
+    setInterval(highlightCurrentTimeSlot, 60000);
+</script>
+{% endblock %}

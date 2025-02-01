@@ -14,7 +14,7 @@
                 <th>Lecturer</th>
                 <th>Duration</th>
                 <th>Enrollments</th>
-                <th>Action</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -38,6 +38,17 @@
                     >
                         Resolve
                     </button>
+                    <button 
+                        class="btn btn-secondary btn-sm edit-btn" 
+                        data-sessionid="{{ s.SessionID }}"
+                        data-coursecode="{{ s.CourseCode }}"
+                        data-cohort="{{ s.CohortName }}"
+                        data-lecturer="{{ s.LecturerName }}"
+                        data-duration="{{ s.Duration }}"
+                        data-enrollments="{{ s.NumberOfEnrollments }}"
+                    >
+                        Edit
+                    </button>
                 </td>
             </tr>
             {% endfor %}
@@ -55,6 +66,13 @@
           <div class="modal-body">
             <h5>Session Details</h5>
             <p id="modal-session-info"></p>
+            
+            <hr>
+            
+            <h5>Existing Schedule for Cohort and Course</h5>
+            <div id="existing-schedule-section">
+                <p>Loading existing schedule...</p>
+            </div>
             
             <hr>
             
@@ -88,10 +106,54 @@
                     <input type="time" class="form-control" id="end-time" name="end_time" required>
                 </div>
                 <div class="mb-3">
-                    <label for="room-id" class="form-label">Room ID</label>
-                    <input type="number" class="form-control" id="room-id" name="room_id" min="1" required>
+                    <label for="location" class="form-label">Room Location</label>
+                    <select class="form-select" id="location" name="Location" required>
+                        <option value="" disabled selected>Select a room</option>
+                        {% for room in rooms %}
+                            <option value="{{ room.Location }}">{{ room.Location }} (Capacity: {{ room.MaxRoomCapacity }})</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <button type="button" class="btn btn-success" id="save-assignment-btn">Save Assignment</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Editing Sessions -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel">Edit Session Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-form">
+                <input type="hidden" id="edit-session-id" name="SessionID">
+                <div class="mb-3">
+                    <label for="edit-course-code" class="form-label">Course Code</label>
+                    <input type="text" class="form-control" id="edit-course-code" name="CourseCode" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edit-cohort" class="form-label">Cohort</label>
+                    <input type="text" class="form-control" id="edit-cohort" name="CohortName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edit-lecturer" class="form-label">Lecturer</label>
+                    <input type="text" class="form-control" id="edit-lecturer" name="LecturerName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edit-duration" class="form-label">Duration</label>
+                    <input type="time" class="form-control" id="edit-duration" name="Duration" required step="60">
+                </div>
+                <div class="mb-3">
+                    <label for="edit-enrollments" class="form-label">Enrollments</label>
+                    <input type="number" class="form-control" id="edit-enrollments" name="NumberOfEnrollments" min="0" required>
+                </div>
+                <button type="button" class="btn btn-primary" id="save-edit-btn">Save Changes</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </form>
           </div>
@@ -106,32 +168,128 @@
         let currentSessionID = null;
         let currentEnrollments = 0;
         let currentLecturer = "";
+        let currentCourseCode = "";
+        let currentCohort = "";
+        let currentDurationMinutes = 0;  // Variable to store duration in minutes
 
         // Handle Resolve button click
         $('.resolve-btn').click(function(){
             currentSessionID = $(this).data('sessionid');
-            let courseCode = $(this).data('coursecode');
-            let cohort = $(this).data('cohort');
+            currentCourseCode = $(this).data('coursecode');
+            currentCohort = $(this).data('cohort');
             currentEnrollments = $(this).data('enrollments');
             currentLecturer = $(this).data('lecturer');
-            
+            let duration_str = $(this).data('duration');  // e.g., "01:30:00"
+
+            // Convert duration_str to total minutes
+            let parts = duration_str.split(':');
+            if(parts.length === 3){
+                currentDurationMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]) + (parseInt(parts[2]) >= 30 ? 1 : 0);  // Round up if seconds >= 30
+            } else {
+                currentDurationMinutes = 60;  // Default to 1 hour if format is incorrect
+            }
+
             // Populate modal with session details
             $('#modal-session-info').html(`
                 <strong>Session ID:</strong> ${currentSessionID}<br>
-                <strong>Course Code:</strong> ${courseCode}<br>
-                <strong>Cohort:</strong> ${cohort}<br>
+                <strong>Course Code:</strong> ${currentCourseCode}<br>
+                <strong>Cohort:</strong> ${currentCohort}<br>
                 <strong>Lecturer:</strong> ${currentLecturer}<br>
-                <strong>Duration:</strong> ${$(this).data('duration')}<br>
+                <strong>Duration:</strong> ${duration_str}<br>
                 <strong>Enrollments:</strong> ${currentEnrollments}
             `);
             
-            // Clear previous alternatives
+            // Clear previous alternatives and existing schedule
             $('#alternative-list').empty();
             $('#assign-form')[0].reset();
+            $('#existing-schedule-section').html('<p>Loading existing schedule...</p>');
             
-            // Show the modal
+            // Fetch and display existing schedule
+            fetchExistingSchedule(currentCourseCode, currentCohort);
+            
+            // Show the resolve modal
             $('#resolveModal').modal('show');
         });
+
+        // Handle Edit button click
+        $('.edit-btn').click(function(){
+            let sessionID = $(this).data('sessionid');
+            let courseCode = $(this).data('coursecode');
+            let cohort = $(this).data('cohort');
+            let lecturer = $(this).data('lecturer');
+            let duration = $(this).data('duration');
+            let enrollments = $(this).data('enrollments');
+
+            // Populate edit modal with session details
+            $('#edit-session-id').val(sessionID);
+            $('#edit-course-code').val(courseCode);
+            $('#edit-cohort').val(cohort);
+            $('#edit-lecturer').val(lecturer);
+            $('#edit-duration').val(duration);
+            $('#edit-enrollments').val(enrollments);
+
+            // Show the edit modal
+            $('#editModal').modal('show');
+        });
+
+        // Function to fetch existing schedule
+        function fetchExistingSchedule(courseCode, cohortName){
+            const payload = {
+                "CourseCode": courseCode,
+                "CohortName": cohortName
+            };
+
+            $.ajax({
+                url: '/get_existing_schedule',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(response){
+                    const schedule = response.existing_schedule;
+                    const scheduleSection = $('#existing-schedule-section');
+                    scheduleSection.empty(); // Clear loading text
+
+                    if(schedule.length === 0){
+                        scheduleSection.append('<p>No existing schedules found for this cohort and course.</p>');
+                    } else {
+                        let table = `
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Session Type</th>
+                                        <th>Lecturer</th>
+                                        <th>Day</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Room Location</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        schedule.forEach(function(entry){
+                            table += `
+                                <tr>
+                                    <td>${entry.SessionType}</td>
+                                    <td>${entry.LecturerName}</td>
+                                    <td>${entry.DayOfWeek}</td>
+                                    <td>${entry.StartTime}</td>
+                                    <td>${entry.EndTime}</td>
+                                    <td>${entry.RoomName}</td>
+                                </tr>
+                            `;
+                        });
+                        table += `
+                                </tbody>
+                            </table>
+                        `;
+                        scheduleSection.append(table);
+                    }
+                },
+                error: function(){
+                    $('#existing-schedule-section').html('<p>Error fetching existing schedule.</p>');
+                }
+            });
+        }
 
         // Handle Suggest Alternatives button click
         $('#suggest-alternatives-btn').click(function(){
@@ -167,8 +325,7 @@
                                         <th>Day</th>
                                         <th>Start Time</th>
                                         <th>End Time</th>
-                                        <th>Room ID</th>
-                                        <th>Location</th>
+                                        <th>Room Location</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -180,10 +337,9 @@
                                     <td>${slot.Day}</td>
                                     <td>${slot.StartTime}</td>
                                     <td>${slot.EndTime}</td>
-                                    <td>${slot.RoomID}</td>
                                     <td>${slot.Location}</td>
                                     <td>
-                                        <button class="btn btn-success btn-sm assign-alternative-btn" data-day="${slot.Day}" data-start="${slot.StartTime}" data-end="${slot.EndTime}" data-roomid="${slot.RoomID}">Assign</button>
+                                        <button class="btn btn-success btn-sm assign-alternative-btn" data-day="${slot.Day}" data-start="${slot.StartTime}" data-end="${slot.EndTime}" data-location="${slot.Location}">Assign</button>
                                     </td>
                                 </tr>
                             `;
@@ -206,13 +362,13 @@
             const day = $(this).data('day');
             const startTime = $(this).data('start');
             const endTime = $(this).data('end');
-            const roomID = $(this).data('roomid');
+            const location = $(this).data('location');
 
             // Populate the form fields with selected alternative
             $('#day-of-week').val(day);
             $('#start-time').val(startTime);
             $('#end-time').val(endTime);
-            $('#room-id').val(roomID);
+            $('#location').val(location);
         });
 
         // Handle Save Assignment button click
@@ -220,10 +376,22 @@
             const dayOfWeek = $('#day-of-week').val();
             const startTime = $('#start-time').val();
             const endTime = $('#end-time').val();
-            const roomID = parseInt($('#room-id').val());
+            const location = $('#location').val();
 
-            if(!dayOfWeek || !startTime || !endTime || !roomID){
+            if(!dayOfWeek || !startTime || !endTime || !location){
                 alert("Please fill in all fields.");
+                return;
+            }
+
+            // Optional: Validate that the duration matches
+            const startParts = startTime.split(':').map(Number);
+            const endParts = endTime.split(':').map(Number);
+            const startTotal = startParts[0] * 60 + startParts[1];
+            const endTotal = endParts[0] * 60 + endParts[1];
+            const assignedDuration = endTotal - startTotal;
+
+            if(assignedDuration !== currentDurationMinutes){
+                alert(`Assigned timeslot duration (${assignedDuration} minutes) does not match session duration (${currentDurationMinutes} minutes).`);
                 return;
             }
 
@@ -232,7 +400,7 @@
                 "DayOfWeek": dayOfWeek,
                 "StartTime": startTime,
                 "EndTime": endTime,
-                "RoomID": roomID
+                "Location": location
             };
 
             // Send assignment via AJAX
@@ -251,6 +419,62 @@
                         alert(xhr.responseJSON.message);
                     } else {
                         alert("Error assigning session.");
+                    }
+                }
+            });
+        });
+
+        // Handle Save Changes in Edit Modal
+        $('#save-edit-btn').click(function(){
+            const sessionID = $('#edit-session-id').val();
+            const courseCode = $('#edit-course-code').val().trim();
+            const cohortName = $('#edit-cohort').val().trim();
+            const lecturerName = $('#edit-lecturer').val().trim();
+            const duration = $('#edit-duration').val();  // "HH:MM"
+            const enrollments = $('#edit-enrollments').val();
+
+            // Basic validation
+            if(!courseCode || !cohortName || !lecturerName || !duration || enrollments === ""){
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            // Convert duration to "HH:MM:SS" format
+            let duration_sec = "00";
+            if(duration.split(':').length === 2){
+                duration_sec = "00";  // Default seconds
+            } else if(duration.split(':').length === 3){
+                duration_sec = duration.split(':')[2];
+            }
+            const duration_full = `${duration}:00`;
+
+            const payload = {
+                "SessionID": sessionID,
+                "CourseCode": courseCode,
+                "CohortName": cohortName,
+                "LecturerName": lecturerName,
+                "Duration": duration_full,
+                "NumberOfEnrollments": parseInt(enrollments)
+            };
+
+            // Send edit via AJAX
+            $.ajax({
+                url: '/edit_session',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(response){
+                    alert(response.message);
+                    // Reload the page to reflect changes
+                    window.location.reload();
+                },
+                error: function(xhr){
+                    if(xhr.status === 400){
+                        alert(xhr.responseJSON.message);
+                    } else if(xhr.status === 404){
+                        alert(xhr.responseJSON.message);
+                    } else {
+                        alert("Error editing session.");
                     }
                 }
             });

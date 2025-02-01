@@ -4,152 +4,6 @@
   <title>Assign Sessions</title>
   <!-- Bootstrap CSS for styling/layout -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-
-  <script>
-    // Data from Flask, JSON-encoded
-    const coursesData      = JSON.parse('{{ courses|tojson|safe }}');        // List of [CourseID, CourseCode, CourseName, Credits]
-    const lecturersData    = JSON.parse('{{ lecturers|tojson|safe }}');      // List of [LecturerName]
-    const sessionTypesData = JSON.parse('{{ session_types|tojson|safe }}'); // List of [SessionType]
-    const durationsData    = JSON.parse('{{ durations|tojson|safe }}');      // List of ['01:00:00', '01:30:00', ...]
-
-    // For each course, we store how many rows (sessionCounter) we have so far
-    let sessionCounters = {};
-
-    // Clear table for a given course
-    function clearTable(courseCode) {
-      document.getElementById('tbody_' + courseCode).innerHTML = '';
-      sessionCounters[courseCode] = 0;
-      document.getElementById('session_count_' + courseCode).value = 0;
-    }
-
-    // Generate default sessions given number of cohorts and credits
-    function generateSessions(courseCode, credits) {
-      const cohortCount = parseInt(document.getElementById('cohortCount_' + courseCode).value, 10) || 0;
-      if (cohortCount < 1) {
-        alert("Please specify at least 1 cohort.");
-        return;
-      }
-
-      clearTable(courseCode);
-
-      // For each cohort index, we produce "Section A", "Section B", etc.
-      for (let i = 0; i < cohortCount; i++) {
-        const letter = String.fromCharCode(65 + i); // 'A' + i
-        const cohortName = 'Section ' + letter;
-
-        // If credit=1 => 3 sessions (2 Lecture @1:30, 1 Discussion@1:00)
-        // If credit=0.5 => 2 sessions (1 Lecture@1:30, 1 Discussion@1:00)
-        if (credits == 1.0) {
-          addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
-          addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
-          addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
-        } else if (credits == 0.5) {
-          addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
-          addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
-        }
-      }
-    }
-
-    // Adds a single row with pre-filled cohort, session type, and duration
-    function addDefaultRow(courseCode, cohortName, sessionTypeName, defaultDuration) {
-      const tbody = document.getElementById('tbody_' + courseCode);
-      let sc = sessionCounters[courseCode] || 0;
-
-      const row = tbody.insertRow();
-
-      // Cell 1: read-only cohort name
-      row.insertCell().innerHTML = `<input type="text" name="cohort_name_${sc}" value="${cohortName}" readonly class="form-control" required>`;
-
-      // Cell 2: main lecturer <select>
-      row.insertCell().innerHTML = buildLecturerSelect(`lecturer_main_name_${sc}_${courseCode}`, "Main Lecturer");
-
-      // Cell 3: intern <select>
-      row.insertCell().innerHTML = buildLecturerSelect(`lecturer_intern_name_${sc}_${courseCode}`, "Faculty Intern");
-
-      // Cell 4: session type <select> (pre-selected)
-      let stHTML = `<select name="session_type_${sc}" class="form-select" required>`;
-      sessionTypesData.forEach(st => {
-        const sessionType = st;
-        const sel = (sessionType.toLowerCase() === sessionTypeName.toLowerCase()) ? 'selected' : '';
-        stHTML += `<option value="${sessionType}" ${sel}>${sessionType}</option>`;
-      });
-      stHTML += `</select>`;
-      row.insertCell().innerHTML = stHTML;
-
-      // Cell 5: duration <select> (pre-selected)
-      let durHTML = `<select name="duration_${sc}" class="form-select" required>`;
-      durationsData.forEach(d => {
-        const dval = d;
-        const sel = (dval === defaultDuration) ? 'selected' : '';
-        durHTML += `<option value="${dval}" ${sel}>${dval}</option>`;
-      });
-      durHTML += `</select>`;
-      row.insertCell().innerHTML = durHTML;
-
-      // Cell 6: enrollments
-      row.insertCell().innerHTML = `<input type="number" name="enrollments_${sc}" class="form-control" min="0" placeholder="Enrollments" required>`;
-
-      sc++;
-      sessionCounters[courseCode] = sc;
-      document.getElementById('session_count_' + courseCode).value = sc;
-    }
-
-    // For purely manual additions (blank row)
-    function addSessionRow(courseCode) {
-      const tbody = document.getElementById('tbody_' + courseCode);
-      let sc = sessionCounters[courseCode] || 0;
-
-      const row = tbody.insertRow();
-
-      // 1) cohort
-      row.insertCell().innerHTML = `<input type="text" name="cohort_name_${sc}" class="form-control" placeholder="Section A" required>`;
-
-      // 2) main lecturer
-      row.insertCell().innerHTML = buildLecturerSelect(`lecturer_main_name_${sc}_${courseCode}`, "Main Lecturer");
-
-      // 3) intern lecturer
-      row.insertCell().innerHTML = buildLecturerSelect(`lecturer_intern_name_${sc}_${courseCode}`, "Faculty Intern");
-
-      // 4) session type
-      let stHTML = `<select name="session_type_${sc}" class="form-select" required>
-          <option value="">--Select--</option>`;
-      sessionTypesData.forEach(st => {
-        const sessionType = st;
-        stHTML += `<option value="${sessionType}">${sessionType}</option>`;
-      });
-      stHTML += `</select>`;
-      row.insertCell().innerHTML = stHTML;
-
-      // 5) duration
-      let durHTML = `<select name="duration_${sc}" class="form-select" required>
-          <option value="">--Select--</option>`;
-      durationsData.forEach(d => {
-        const dval = d;
-        durHTML += `<option value="${dval}">${dval}</option>`;
-      });
-      durHTML += `</select>`;
-      row.insertCell().innerHTML = durHTML;
-
-      // 6) enrollments
-      row.insertCell().innerHTML = `<input type="number" name="enrollments_${sc}" class="form-control" min="0" placeholder="Enrollments" required>`;
-
-      sc++;
-      sessionCounters[courseCode] = sc;
-      document.getElementById('session_count_' + courseCode).value = sc;
-    }
-
-    // Build a lecturer <select>
-    function buildLecturerSelect(fieldName, placeholder) {
-      let html = `<select name="${fieldName}" class="form-select" required>
-                    <option value="">-- ${placeholder} --</option>`;
-      lecturersData.forEach(l => {
-        const [lecturerName] = l;
-        html += `<option value="${lecturerName}">${lecturerName}</option>`;
-      });
-      html += `</select>`;
-      return html;
-    }
-  </script>
 </head>
 <body class="bg-light">
   <div class="container my-4">
@@ -212,7 +66,7 @@
 
                   <div class="mb-3">
                     <button type="button" class="btn btn-secondary"
-                            onclick="generateSessions('{{ courseCode }}', {{ credits }})">
+                            onclick='generateSessions({{ courseCode | tojson }}, {{ credits | tojson }})'>
                       Generate Default Sessions
                     </button>
                     <button type="button" class="btn btn-outline-warning"
@@ -221,7 +75,7 @@
                     </button>
                   </div>
 
-                  <input type="hidden" id="session_count_{{ courseCode }}" name="session_count" value="0">
+                  <input type="hidden" id="session_count_{{ courseCode }}" name="session_count_{{ courseCode }}" value="0">
                   
                   <table class="table table-bordered">
                     <thead>
@@ -256,6 +110,210 @@
       {% endfor %}
     </div>
   </div>
+
+  <!-- JavaScript placed at the end for better performance and to ensure DOM is loaded -->
+  <script>
+    // Data from Flask, JSON-encoded
+    const coursesData      = JSON.parse('{{ courses|tojson|safe }}');        // List of [CourseID, CourseCode, CourseName, Credits]
+    const lecturersData    = JSON.parse('{{ lecturers|tojson|safe }}');      // List of [LecturerName]
+    const sessionTypesData = JSON.parse('{{ session_types|tojson|safe }}'); // List of [SessionType]
+    const durationsData    = JSON.parse('{{ durations|tojson|safe }}');      // List of ['01:00:00', '01:30:00', ...]
+
+    // For each course, we store how many rows (sessionCounter) we have so far
+    let sessionCounters = {};
+
+    // Clear table for a given course
+    function clearTable(courseCode) {
+      const tbody = document.getElementById('tbody_' + courseCode);
+      if (tbody) {
+        tbody.innerHTML = '';
+        sessionCounters[courseCode] = 0;
+        const sessionCountInput = document.getElementById('session_count_' + courseCode);
+        if (sessionCountInput) {
+          sessionCountInput.value = 0;
+        }
+        console.log(`Cleared table for course: ${courseCode}`);
+      } else {
+        console.error(`Table body with id 'tbody_${courseCode}' not found.`);
+      }
+    }
+
+    // Generate default sessions given number of cohorts and credits
+    function generateSessions(courseCode, credits) {
+      credits = parseFloat(credits); // Ensure credits is a number
+      console.log(`Generating sessions for Course: ${courseCode}, Credits: ${credits}`);
+      
+      const cohortCountInput = document.getElementById('cohortCount_' + courseCode);
+      if (!cohortCountInput) {
+        console.error(`Cohort count input with id 'cohortCount_${courseCode}' not found.`);
+        return;
+      }
+      
+      const cohortCount = parseInt(cohortCountInput.value, 10) || 0;
+      console.log(`Cohort Count: ${cohortCount}`);
+      
+      if (cohortCount < 1) {
+        alert("Please specify at least 1 cohort.");
+        return;
+      }
+
+      clearTable(courseCode);
+
+      // For each cohort index, we produce "Section A", "Section B", etc.
+      for (let i = 0; i < cohortCount; i++) {
+        const letter = String.fromCharCode(65 + i); // 'A' + i
+        const cohortName = 'Section ' + letter;
+        console.log(`Creating cohort: ${cohortName}`);
+
+        // If credit=1 => 3 sessions (2 Lecture @1:30, 1 Discussion@1:00)
+        // If credit=0.5 => 2 sessions (1 Lecture @1:30, 1 Discussion@1:00)
+        if (credits === 1.0) {
+          addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
+          addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
+          addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
+        } else if (credits === 0.5) {
+          addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
+          addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
+        } else {
+          console.warn(`Unhandled credit value: ${credits} for course: ${courseCode}`);
+        }
+      }
+    }
+
+    // Adds a single row with pre-filled cohort, session type, and duration
+    function addDefaultRow(courseCode, cohortName, sessionTypeName, defaultDuration) {
+      const tbody = document.getElementById('tbody_' + courseCode);
+      if (!tbody) {
+        console.error(`Table body with id 'tbody_${courseCode}' not found.`);
+        return;
+      }
+
+      let sc = sessionCounters[courseCode] || 0;
+
+      const row = tbody.insertRow();
+      console.log(`Adding row ${sc} to course: ${courseCode}`);
+
+      // Cell 1: read-only cohort name
+      const cell1 = row.insertCell();
+      cell1.innerHTML = `<input type="text" name="cohort_name_${sc}" value="${cohortName}" readonly class="form-control" required>`;
+
+      // Cell 2: main lecturer <select>
+      const cell2 = row.insertCell();
+      cell2.innerHTML = buildLecturerSelect(`lecturer_main_name_${sc}`, "Main Lecturer");
+
+      // Cell 3: intern <select>
+      const cell3 = row.insertCell();
+      cell3.innerHTML = buildLecturerSelect(`lecturer_intern_name_${sc}`, "Faculty Intern");
+
+      // Cell 4: session type <select> (pre-selected)
+      const cell4 = row.insertCell();
+      let stHTML = `<select name="session_type_${sc}" class="form-select" required>`;
+      sessionTypesData.forEach(st => {
+        const sessionType = st;
+        const sel = (sessionType.toLowerCase() === sessionTypeName.toLowerCase()) ? 'selected' : '';
+        stHTML += `<option value="${sessionType}" ${sel}>${sessionType}</option>`;
+      });
+      stHTML += `</select>`;
+      cell4.innerHTML = stHTML;
+
+      // Cell 5: duration <select> (pre-selected)
+      const cell5 = row.insertCell();
+      let durHTML = `<select name="duration_${sc}" class="form-select" required>`;
+      durationsData.forEach(d => {
+        const dval = d;
+        const sel = (dval === defaultDuration) ? 'selected' : '';
+        durHTML += `<option value="${dval}" ${sel}>${dval}</option>`;
+      });
+      durHTML += `</select>`;
+      cell5.innerHTML = durHTML;
+
+      // Cell 6: enrollments
+      const cell6 = row.insertCell();
+      cell6.innerHTML = `<input type="number" name="enrollments_${sc}" class="form-control" min="0" placeholder="Enrollments" required>`;
+
+      sc++;
+      sessionCounters[courseCode] = sc;
+      const sessionCountInput = document.getElementById('session_count_' + courseCode);
+      if (sessionCountInput) {
+        sessionCountInput.value = sc;
+      } else {
+        console.error(`Session count input with id 'session_count_${courseCode}' not found.`);
+      }
+    }
+
+    // For purely manual additions (blank row)
+    function addSessionRow(courseCode) {
+      const tbody = document.getElementById('tbody_' + courseCode);
+      if (!tbody) {
+        console.error(`Table body with id 'tbody_${courseCode}' not found.`);
+        return;
+      }
+
+      let sc = sessionCounters[courseCode] || 0;
+
+      const row = tbody.insertRow();
+      console.log(`Adding manual row ${sc} to course: ${courseCode}`);
+
+      // 1) cohort
+      const cell1 = row.insertCell();
+      cell1.innerHTML = `<input type="text" name="cohort_name_${sc}" class="form-control" placeholder="Section A" required>`;
+
+      // 2) main lecturer
+      const cell2 = row.insertCell();
+      cell2.innerHTML = buildLecturerSelect(`lecturer_main_name_${sc}`, "Main Lecturer");
+
+      // 3) intern lecturer
+      const cell3 = row.insertCell();
+      cell3.innerHTML = buildLecturerSelect(`lecturer_intern_name_${sc}`, "Faculty Intern");
+
+      // 4) session type
+      const cell4 = row.insertCell();
+      let stHTML = `<select name="session_type_${sc}" class="form-select" required>
+          <option value="">--Select--</option>`;
+      sessionTypesData.forEach(st => {
+        const sessionType = st;
+        stHTML += `<option value="${sessionType}">${sessionType}</option>`;
+      });
+      stHTML += `</select>`;
+      cell4.innerHTML = stHTML;
+
+      // 5) duration
+      const cell5 = row.insertCell();
+      let durHTML = `<select name="duration_${sc}" class="form-select" required>
+          <option value="">--Select--</option>`;
+      durationsData.forEach(d => {
+        const dval = d;
+        durHTML += `<option value="${dval}">${dval}</option>`;
+      });
+      durHTML += `</select>`;
+      cell5.innerHTML = durHTML;
+
+      // 6) enrollments
+      const cell6 = row.insertCell();
+      cell6.innerHTML = `<input type="number" name="enrollments_${sc}" class="form-control" min="0" placeholder="Enrollments" required>`;
+
+      sc++;
+      sessionCounters[courseCode] = sc;
+      const sessionCountInput = document.getElementById('session_count_' + courseCode);
+      if (sessionCountInput) {
+        sessionCountInput.value = sc;
+      } else {
+        console.error(`Session count input with id 'session_count_${courseCode}' not found.`);
+      }
+    }
+
+    // Build a lecturer <select>
+    function buildLecturerSelect(fieldName, placeholder) {
+      let html = `<select name="${fieldName}" class="form-select" required>
+                    <option value="">-- ${placeholder} --</option>`;
+      lecturersData.forEach(l => {
+        const [lecturerName] = l;
+        html += `<option value="${lecturerName}">${lecturerName}</option>`;
+      });
+      html += `</select>`;
+      return html;
+    }
+  </script>
 
   <!-- Bootstrap JS for modals -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

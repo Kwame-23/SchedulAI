@@ -37,17 +37,7 @@
     border: 1px dashed #ccc;
     position: relative;
   }
-  
-  /* Session blocks are draggable items */
-  .session-block {
-    background-color: #ffd86e; /* default color, e.g. for Lecture */
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 0.5rem;
-    cursor: move; 
-    position: absolute; /* or relative if you want stacking */
-    width: 90%;
-  }
+
   
   /* Example color-coding based on data-session-type attribute */
   .session-block[data-session-type="Lecture"] {
@@ -67,3 +57,73 @@
     font-size: 1rem;
     cursor: pointer;
   }
+
+  /* static/css/style.css */
+
+/* Timetable Styles */
+.timetable-container {
+  margin: 20px;
+}
+.timetable-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.timetable-header h3 {
+  margin: 0 20px;
+}
+.timetable-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.timetable-table th, .timetable-table td {
+  border: 1px solid #dee2e6;
+  position: relative;
+  height: 40px; /* Adjust as needed */
+  padding: 5px;
+  vertical-align: top;
+}
+.timetable-table th {
+  background-color: #f8f9fa;
+  text-align: center;
+}
+.time-slot {
+  width: 60px;
+  text-align: right;
+  padding-right: 10px;
+  background-color: #f1f1f1;
+}
+
+.session-block:hover {
+  background-color: #0056b3;
+}
+
+/* Modal Styles (Optional Enhancements) */
+.modal-content {
+  background-color: #f8f9fa;
+}
+
+.session-block {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  color: white;
+  padding: 2px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  font-size: 0.85em; /* Reduced font size for better fit */
+  white-space: normal; /* Allow text to wrap */
+  text-align: center; /* Center align text */
+}
+
+/* Optional: Add ellipsis for very long text */
+.session-block p {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
