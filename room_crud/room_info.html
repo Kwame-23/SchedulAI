@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Information</title>
+    <link rel="stylesheet" href="room_design.css"> <!-- If in "css" folder -->
+    <script src="room_java.js"></script> <!-- If in "js" folder -->
+    </head>
+<body>
+
+    <h1>Room Information</h1>
+    
+    <div class="room-container" id="room-container">
+        <!-- Room Cards will be dynamically added here -->
+    </div>
+
+    <!-- Floating Add Button -->
+    <button class="add-button" onclick="openForm()">+</button>
+
+    <!-- Modal Form for Adding/Editing Room -->
+    <div id="roomForm" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForm()">&times;</span>
+            <h2 id="form-title">Add Room</h2>
+            <label for="roomLocation">Room Location:</label>
+            <input type="text" id="roomLocation" placeholder="Enter Room Location">
+            <label for="roomCapacity">Maximum Capacity:</label>
+            <input type="number" id="roomCapacity" placeholder="Enter Capacity">
+            <button onclick="saveRoom()">Save</button>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -62,16 +62,20 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 20px;
             text-align: center;
+            width: 90%; /* Reduced width */
+            max-width: 350px; /* Optional: restrict maximum width */
+            margin: 0 auto; /* Center the containers */
         }
         .container button {
             margin-top: 10px;
-            padding: 10px 20px;
+            padding: 15px 30px;
             background-color: #007BFF;
             color: white;
             border: none;
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 18px;
             cursor: pointer;
+            width: 100%;
         }
         .container button:hover {
             background-color: #0056b3;
@@ -80,10 +84,10 @@
         /* Footer */
         footer {
             text-align: center;
-            padding: 15px 20px;
+            padding: 5px 10px;
             background-color: grey;
             color: white;
-            font-size: 14px;
+            font-size: 12px;
             position: fixed;
             bottom: 0;
             width: 100%;
@@ -117,19 +121,19 @@
     <main>
         <div class="container">
             <h2>Manage Rooms</h2>
-            <button>Go</button>
+            <button onclick="window.location.href='/templates/rooms.html'">Go to Rooms</button>
         </div>
         <div class="container">
             <h2>Manage Faculty</h2>
-            <button>Go</button>
+            <button onclick="window.location.href='/templates/lecturers.html'">Lecturers</button>
         </div>
         <div class="container">
             <h2>Manage Courses</h2>
-            <button>Go</button>
+            <button onclick="window.location.href='/templates/summary.html'">Go to Rooms</button>
         </div>
         <div class="container">
             <h2>Manage Students</h2>
-            <button>Go</button>
+            <button onclick="window.location.href='/templates/assign_sessions.html'">Go to Rooms</button>
         </div>
     </main>
 
