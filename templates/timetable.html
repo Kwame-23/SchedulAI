@@ -1,36 +1,35 @@
-<!-- templates/timetable.html -->
 {% extends 'base.html' %}
 
 {% block content %}
 <div class="timetable-container">
-    <div class="timetable-header">
-        <button id="prev-room" class="btn btn-primary">&larr;</button>
-        <h3 id="current-room">Room Name</h3>
-        <button id="next-room" class="btn btn-primary">&rarr;</button>
-    </div>
+  <div class="timetable-header">
+    <button id="prev-room" class="btn btn-primary">&larr;</button>
+    <h3 id="current-room">Room Name</h3>
+    <button id="next-room" class="btn btn-primary">&rarr;</button>
+  </div>
 
-    <div class="table-responsive">
-        <table class="timetable-table table table-bordered">
-            <thead>
-                <tr>
-                    <th></th>
-                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-                        <th>{{ day }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody id="timetable-body">
-                {% for time in time_slots %}
-                <tr>
-                    <td class="time-slot">{{ time }}</td>
-                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
-                        <td></td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <div class="table-responsive">
+    <table class="timetable-table table table-bordered">
+      <thead>
+        <tr>
+          <th></th>
+          {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+          <th>{{ day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody id="timetable-body">
+        {% for time in time_slots %}
+        <tr>
+          <td class="time-slot">{{ time }}</td>
+          {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+          <td></td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Modal Structure -->
@@ -47,225 +46,244 @@
         <p><strong>Session Type:</strong> <span id="modal-session-type"></span></p>
         <p><strong>Room:</strong> <span id="modal-room"></span></p>
         <p><strong>Time:</strong> <span id="modal-time"></span></p>
+        <!-- Hidden input to store the day -->
+        <input type="hidden" id="modal-day" value="">
       </div>
       <div class="modal-footer">
+        <!-- Button to trigger break insertion -->
+        <button type="button" class="btn btn-warning" id="apply-break-btn">Apply 15-Minute Break</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Custom Style -->
 <style>
-    /* Timetable Styles */
-    .timetable-container {
-        margin: 20px;
-    }
-    .timetable-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-    .timetable-header h3 {
-        margin: 0 20px;
-    }
-    .timetable-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .timetable-table th, .timetable-table td {
-        border: 1px solid #dee2e6;
-        position: relative;
-        height: 60px; /* Increased height for better readability */
-        padding: 0;
-        vertical-align: top;
-    }
-    .timetable-table th {
-        background-color: #f8f9fa;
-        text-align: center;
-    }
-    .time-slot {
-        width: 60px;
-        text-align: right;
-        padding-right: 10px;
-        background-color: #f1f1f1;
-        font-weight: bold;
-    }
-    .session-block {
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        right: 2px;
-        bottom: 2px;
-        color: white;
-        padding: 2px;
-        border-radius: 4px;
-        overflow: hidden;
-        cursor: pointer;
-        font-size: 0.85em; /* Reduced font size for better fit */
-        white-space: normal; /* Allow text to wrap */
-        text-align: center; /* Center align text */
-    }
-    /* Session Type Colors */
-    .session-lecture {
-        background-color: #007bff; /* Blue */
-    }
-    .session-discussion {
-        background-color: #28a745; /* Green */
-    }
-    .session-lab {
-        background-color: #fd7e14; /* Orange */
-    }
-    .session-tutorial {
-        background-color: #6f42c1; /* Purple */
-    }
-    .session-other {
-        background-color: #6c757d; /* Grey */
-    }
+  /* Timetable Styles */
+  .timetable-container { margin: 20px; }
+  .timetable-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .timetable-header h3 { margin: 0 20px; }
+  .timetable-table { width: 100%; border-collapse: collapse; }
+  .timetable-table th,
+  .timetable-table td {
+    border: 1px solid #dee2e6;
+    position: relative;
+    height: 60px;
+    padding: 0;
+    vertical-align: top;
+  }
+  .timetable-table th { background-color: #f8f9fa; text-align: center; }
+  .time-slot {
+    width: 60px;
+    text-align: right;
+    padding-right: 10px;
+    background-color: #f1f1f1;
+    font-weight: bold;
+  }
+  .session-block {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    color: white;
+    padding: 2px;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    font-size: 0.85em;
+    white-space: normal;
+    text-align: center;
+  }
+  /* Session Type Colors */
+  .session-lecture { background-color: #007bff; }
+  .session-discussion { background-color: #28a745; }
+  .session-lab { background-color: #fd7e14; }
+  .session-tutorial { background-color: #6f42c1; }
+  .session-other { background-color: #6c757d; }
 </style>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    // Initialize Variables
-    const rooms = {{ rooms|tojson }};
-    const sessionsByRoom = {{ sessions_by_room|tojson }};
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    const timeSlots = {{ time_slots|tojson }};
+  // Initialize Variables from template context
+  const rooms = {{ rooms|tojson }};
+  const sessionsByRoom = {{ sessions_by_room|tojson }};
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const timeSlots = {{ time_slots|tojson }};
 
-    let currentRoomIndex = 0;
+  let currentRoomIndex = 0;
+  // Global object to store details of the clicked session.
+  let currentSessionDetails = {};
 
-    // Function to Render Timetable
-    function renderTimetable() {
-        const currentRoom = rooms[currentRoomIndex];
-        document.getElementById('current-room').innerText = currentRoom;
+  // Render the timetable with color-coded session blocks.
+  function renderTimetable() {
+    const currentRoom = rooms[currentRoomIndex];
+    document.getElementById('current-room').innerText = currentRoom;
+    const timetableBody = document.getElementById('timetable-body');
+    timetableBody.innerHTML = '';
 
-        // Clear existing timetable body
-        const timetableBody = document.getElementById('timetable-body');
-        timetableBody.innerHTML = '';
+    for (let i = 0; i < timeSlots.length; i++) {
+      const row = document.createElement('tr');
+      const timeCell = document.createElement('td');
+      timeCell.classList.add('time-slot');
+      timeCell.innerText = timeSlots[i];
+      row.appendChild(timeCell);
 
-        // Generate time slots rows
-        for (let i = 0; i < timeSlots.length; i++) {
-            const row = document.createElement('tr');
+      for (let d = 0; d < days.length; d++) {
+        const day = days[d];
+        const cell = document.createElement('td');
+        cell.setAttribute('data-day', day);
+        cell.setAttribute('data-time', timeSlots[i]);
 
-            // Time Slot Cell
-            const timeCell = document.createElement('td');
-            timeCell.classList.add('time-slot');
-            timeCell.innerText = timeSlots[i];
-            row.appendChild(timeCell);
-
-            // Day Cells
-            for (let d = 0; d < days.length; d++) {
-                const day = days[d];
-                const cell = document.createElement('td');
-                cell.setAttribute('data-day', day);
-                cell.setAttribute('data-time', timeSlots[i]);
-
-                // Check if there's a session at this time and day
-                const sessions = sessionsByRoom[currentRoom] || [];
-                sessions.forEach(session => {
-                    if (session.DayOfWeek === day) {
-                        const sessionStart = session.StartTime;
-                        const sessionEnd = session.EndTime;
-
-                        // Compare times
-                        if (timeSlots[i] >= sessionStart && timeSlots[i] < sessionEnd) {
-                            // Determine session type class
-                            let sessionTypeClass = 'session-other'; // Default
-                            switch(session.SessionType.toLowerCase()) {
-                                case 'lecture':
-                                    sessionTypeClass = 'session-lecture';
-                                    break;
-                                case 'discussion':
-                                    sessionTypeClass = 'session-discussion';
-                                    break;
-                                case 'lab':
-                                    sessionTypeClass = 'session-lab';
-                                    break;
-                                case 'tutorial':
-                                    sessionTypeClass = 'session-tutorial';
-                                    break;
-                                // Add more cases as needed
-                                default:
-                                    sessionTypeClass = 'session-other';
-                            }
-
-                            // Create session block
-                            const block = document.createElement('div');
-                            block.classList.add('session-block', sessionTypeClass);
-                            block.innerHTML = `<strong>${session.CourseCode}</strong><br>${session.Lecturer}<br>${session.SessionType}`;
-                            block.title = `Course: ${session.CourseCode}\nLecturer: ${session.Lecturer}\nType: ${session.SessionType}`;
-
-                            // Add click event to show modal with details
-                            block.onclick = function() {
-                                showSessionDetails(session.CourseCode, session.Lecturer, session.SessionType, session.RoomName, `${session.StartTime} - ${session.EndTime}`);
-                            };
-
-                            cell.appendChild(block);
-                        }
-                    }
-                });
-
-                row.appendChild(cell);
+        const sessions = sessionsByRoom[currentRoom] || [];
+        sessions.forEach(session => {
+          if (session.DayOfWeek === day) {
+            const sessionStart = session.StartTime;
+            const sessionEnd = session.EndTime;
+            // If our timeslot cell is within this session range,
+            // place a session block
+            if (timeSlots[i] >= sessionStart && timeSlots[i] < sessionEnd) {
+              let sessionTypeClass = 'session-other';
+              switch(session.SessionType.toLowerCase()) {
+                case 'lecture':
+                  sessionTypeClass = 'session-lecture';
+                  break;
+                case 'discussion':
+                  sessionTypeClass = 'session-discussion';
+                  break;
+                case 'lab':
+                  sessionTypeClass = 'session-lab';
+                  break;
+                case 'tutorial':
+                  sessionTypeClass = 'session-tutorial';
+                  break;
+                default:
+                  sessionTypeClass = 'session-other';
+              }
+              const block = document.createElement('div');
+              block.classList.add('session-block', sessionTypeClass);
+              block.innerHTML = `
+                <strong>${session.CourseCode}</strong><br>
+                ${session.Lecturer}<br>
+                ${session.SessionType}
+              `;
+              block.title = `Course: ${session.CourseCode}\nLecturer: ${session.Lecturer}\nType: ${session.SessionType}`;
+              block.addEventListener('click', function() {
+                console.log("Session block clicked:", session);
+                showSessionDetails(
+                  session.CourseCode,
+                  session.Lecturer,
+                  session.SessionType,
+                  session.RoomName,
+                  `${session.StartTime} - ${session.EndTime}`,
+                  session.DayOfWeek
+                );
+              });
+              cell.appendChild(block);
             }
-
-            timetableBody.appendChild(row);
-        }
+          }
+        });
+        row.appendChild(cell);
+      }
+      timetableBody.appendChild(row);
     }
+  }
 
-    // Initial Render
+  renderTimetable();
+
+  // Navigation buttons to switch rooms.
+  document.getElementById('prev-room').addEventListener('click', () => {
+    currentRoomIndex = (currentRoomIndex - 1 + rooms.length) % rooms.length;
     renderTimetable();
+  });
+  document.getElementById('next-room').addEventListener('click', () => {
+    currentRoomIndex = (currentRoomIndex + 1) % rooms.length;
+    renderTimetable();
+  });
 
-    // Navigation Buttons
-    document.getElementById('prev-room').addEventListener('click', () => {
-        currentRoomIndex = (currentRoomIndex - 1 + rooms.length) % rooms.length;
-        renderTimetable();
+  // Show session details in modal and store the details.
+  function showSessionDetails(courseCode, lecturer, sessionType, room, time, day) {
+    document.getElementById('modal-course-code').innerText = courseCode;
+    document.getElementById('modal-lecturer').innerText = lecturer;
+    document.getElementById('modal-session-type').innerText = sessionType;
+    document.getElementById('modal-room').innerText = room;
+    document.getElementById('modal-time').innerText = time;
+
+    // Store the day in the hidden input and keep other info for reference
+    document.getElementById('modal-day').value = day;
+
+    currentSessionDetails = {
+      courseCode: courseCode,
+      lecturer: lecturer,
+      sessionType: sessionType,
+      room: room,
+      day: day,
+      endTime: time.split(' - ')[1]?.trim() || ""
+    };
+    console.log("Session details set:", currentSessionDetails);
+
+    // Show the modal
+    const sessionModal = new bootstrap.Modal(document.getElementById('sessionModal'), {
+      keyboard: false
     });
+    sessionModal.show();
+  }
 
-    document.getElementById('next-room').addEventListener('click', () => {
-        currentRoomIndex = (currentRoomIndex + 1) % rooms.length;
-        renderTimetable();
+  // Apply 15-min break button -> calls backend
+  document.getElementById('apply-break-btn').addEventListener('click', function() {
+    const day = document.getElementById('modal-day').value;
+    const room = currentSessionDetails.room;  // The room name from the session detail
+
+    // Send an AJAX POST to our server's /apply_break route (adjust if different)
+    fetch('/apply_break', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ day: day, roomName: room })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reload the entire page to reflect updated times
+        location.reload();
+      } else {
+        alert("Error applying break: " + (data.message || 'Unknown error.'));
+      }
+    })
+    .catch(err => {
+      console.error("Error applying break:", err);
+      alert("An unexpected error occurred while applying the break.");
     });
+  });
 
-    // Function to Show Session Details in Modal
-    function showSessionDetails(courseCode, lecturer, sessionType, room, time) {
-        document.getElementById('modal-course-code').innerText = courseCode;
-        document.getElementById('modal-lecturer').innerText = lecturer;
-        document.getElementById('modal-session-type').innerText = sessionType;
-        document.getElementById('modal-room').innerText = room;
-        document.getElementById('modal-time').innerText = time;
-        var sessionModal = new bootstrap.Modal(document.getElementById('sessionModal'), {
-            keyboard: false
-        });
-        sessionModal.show();
-    }
+  // Optional: Highlight the current time slot in real time
+  function highlightCurrentTimeSlot() {
+    const now = new Date();
+    // getDay() returns 0-6 (0=Sunday); days array is [Mon..Fri], so if today is Sun it won't highlight
+    const currentDay = days[now.getDay()];  // e.g. "Monday", "Tuesday", ...
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const currentTime = hh + ':' + mm;
 
-    // Highlight Current Time Slot (Optional Enhancement)
-    function highlightCurrentTimeSlot() {
-        const now = new Date();
-        const currentDay = days[now.getDay()]; // getDay(): Sunday - Saturday : 0 - 6
-        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    const cells = document.querySelectorAll('#timetable-body td');
+    cells.forEach(cell => {
+      const cellDay = cell.getAttribute('data-day');
+      const cellTime = cell.getAttribute('data-time');
+      if (cellDay === currentDay && cellTime === currentTime) {
+        cell.style.backgroundColor = '#ffc107'; // highlight color
+      } else {
+        cell.style.backgroundColor = '';
+      }
+    });
+  }
 
-        // Iterate over each cell to find the current time slot
-        const cells = document.querySelectorAll('#timetable-body td');
-        cells.forEach(cell => {
-            const day = cell.getAttribute('data-day');
-            const time = cell.getAttribute('data-time');
-
-            if (day === currentDay && time === currentTime) {
-                cell.style.backgroundColor = '#ffc107'; // Amber color
-            } else {
-                // Remove highlight if it was previously set
-                if (day !== currentDay || time !== currentTime) {
-                    // Reset to default background or previous styles
-                    cell.style.backgroundColor = '';
-                }
-            }
-        });
-    }
-
-    // Call the function initially
-    highlightCurrentTimeSlot();
-
-    // Update every minute
-    setInterval(highlightCurrentTimeSlot, 60000);
+  highlightCurrentTimeSlot();
+  setInterval(highlightCurrentTimeSlot, 60000);
 </script>
 {% endblock %}
