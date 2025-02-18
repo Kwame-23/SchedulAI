@@ -1,54 +1,61 @@
 {% extends 'base.html' %}
 
+{% block header %}{% endblock %}  {# Override header block to remove it #}
+
 {% block content %}
-<h1>Select Courses for Student</h1>
+<div class="container my-4">
+  <h1 class="mb-4">Select Courses for Student</h1>
 
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
-<form method="POST" action="{{ url_for('student_courses') }}">
+  <form method="POST" action="{{ url_for('student_courses') }}">
     <!-- Student Selection -->
     <div class="mb-3">
-        <label for="student_id" class="form-label">Pick a Student:</label>
-        <select class="form-select" name="student_id" id="student_id" required>
-            <option value="" disabled selected>Select a student</option>
-            {% for stu in students %}
-                <option value="{{ stu.StudentID }}"
-                        data-majorid="{{ stu.MajorID }}">
-                    {{ stu.MajorName }}, Year {{ stu.YearNumber }}
-                    (StudentID={{ stu.StudentID }})
-                </option>
-            {% endfor %}
-        </select>
+      <label for="student_id" class="form-label">Pick a Student:</label>
+      <select class="form-select" name="student_id" id="student_id" required>
+        <option value="" disabled selected>Select a student</option>
+        {% for stu in students %}
+          <option value="{{ stu.StudentID }}" data-majorid="{{ stu.MajorID }}">
+            {{ stu.MajorName }}, Year {{ stu.YearNumber }} (StudentID={{ stu.StudentID }})
+          </option>
+        {% endfor %}
+      </select>
     </div>
 
     <!-- Entire recommended plan goes here -->
-    <div id="full-plan-section">
-        <p>Select a student above to load all recommended courses for that student's major.</p>
+    <div id="full-plan-section" class="mb-3">
+      <p>Select a student above to load all recommended courses for that student's major.</p>
     </div>
 
     <!-- Hidden block of all active courses, so we can show them in each 'Add More' dropdown -->
     <div id="all-courses-data" style="display:none;">
-        {% for c in all_courses %}
-            <span data-ccode="{{ c.CourseCode }}" data-cname="{{ c.CourseName }}"></span>
-        {% endfor %}
+      {% for c in all_courses %}
+        <span data-ccode="{{ c.CourseCode }}" data-cname="{{ c.CourseName }}"></span>
+      {% endfor %}
     </div>
 
     <!-- Action Buttons -->
     <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Save Selected Courses</button>
-        <button type="button" class="btn btn-secondary ms-2" id="deselect_all">Deselect All</button>
+      <button type="submit" class="btn btn-primary">Save Selected Courses</button>
+      <button type="button" class="btn btn-secondary ms-2" id="deselect_all">Deselect All</button>
     </div>
-</form>
+  </form>
+
+  <!-- Next Button: sends user to /rooms -->
+  <div class="mt-4 text-center">
+    <a href="{{ url_for('rooms') }}" class="btn btn-primary">Next: Select Rooms</a>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -191,16 +198,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             courses.forEach(course => {
                                 const cc = course.CourseCode;
                                 const cn = course.CourseName;
-
-                                // Check if the name includes the word 'elective' => show a placeholder label
                                 let displayName = `${cc} - ${cn}`;
                                 if(cn.toLowerCase().includes("elective")) {
                                     displayName = `(Elective Placeholder) ${cn}`;
                                 }
-
-                                // Encode the Type into the value using a pipe separator
                                 const courseValue = `${cc}|${typeValue}`;
-
                                 htmlContent += `
                                   <div class="form-check">
                                     <input class="form-check-input" type="checkbox"
@@ -232,45 +234,36 @@ document.addEventListener('DOMContentLoaded', function() {
                                               data-subtype="${subT}">
                                         <option disabled>-- pick one or more --</option>
                             `;
-
-                            // Populate each option from allActiveCourses
                             allActiveCourses.forEach(ac => {
-                                // Encode the Type into the value
                                 const addMoreCourseValue = `${ac.code}|${typeValue}`;
                                 htmlContent += `
                                         <option value="${addMoreCourseValue}">${ac.code} - ${ac.name}</option>
                                 `;
                             });
-
                             htmlContent += `
                                       </select>
                                       <small class="text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
                                     </div>
-                                  </div> <!-- end "Add More" sub-card -->
+                                  </div>
                             `;
-
-                            htmlContent += `</div></div>`; // End the subType card-body + card
+                            htmlContent += `</div></div>`;
                         });
 
-                        // Done with subType loop
                         htmlContent += `
                               </div>
                             </div>
-                          </div> <!-- end accordion-item for semester -->
+                          </div>
                         `;
                     });
 
-                    // Close semester accordion
                     htmlContent += `
-                            </div> <!-- end semAccordionYear${yearNum} -->
-                          </div> <!-- end accordion-body for year -->
-                        </div> <!-- end collapseYear_${yearNum} -->
-                      </div> <!-- end accordion-item for year -->
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     `;
                 });
-
-                htmlContent += `</div> <!-- end #yearsAccordion -->`;
-
+                htmlContent += `</div>`;
                 planSection.innerHTML = htmlContent;
             })
             .catch(err => {

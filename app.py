@@ -10,6 +10,7 @@ import json
 from datetime import datetime, timedelta, time
 from collections import defaultdict
 import random
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Local module imports
 from scheduling.scheduler import schedule_sessions as run_schedule
@@ -44,6 +45,379 @@ def get_db_connection():
     except mysql.connector.Error as err:
         logging.error(f"Database connection failed: {err}")
         return None
+
+# ------------------------------
+# Authentication Routes
+# ------------------------------
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # Retrieve form data
+        username   = request.form.get('username')
+        email      = request.form.get('email')
+        password   = request.form.get('password')
+        first_name = request.form.get('first_name')
+        last_name  = request.form.get('last_name')
+        # For simplicity, assign a default role (e.g. RoleID=2 for a standard user)
+        default_role_id = 2
+
+        # Basic validation
+        if not all([username, email, password, first_name, last_name]):
+            flash("Please fill in all required fields.", "warning")
+            return redirect(url_for('register'))
+
+        # Hash the password
+        hashed_password = generate_password_hash(password)
+
+        # Connect to database and insert the new user
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check if username or email already exists
+                sql_check = "SELECT * FROM Users WHERE Email = %s OR Username = %s"
+                cursor.execute(sql_check, (email, username))
+                if cursor.fetchone():
+                    flash("Username or email already exists.", "warning")
+                    return redirect(url_for('register'))
+
+                # Insert the new user
+                sql_insert = """
+                    INSERT INTO Users (Username, Email, PasswordHash, FirstName, LastName, RoleID)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(sql_insert, (username, email, hashed_password, first_name, last_name, default_role_id))
+                conn.commit()
+                flash("Registration successful. Please log in.", "success")
+                return redirect(url_for('login'))
+        except mysql.connector.Error as err:
+            conn.rollback()
+            logging.error(f"Error registering user: {err}")
+            flash("An error occurred during registration.", "danger")
+        finally:
+            conn.close()
+    return render_template('register.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email    = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            flash("Please provide both email and password.", "warning")
+            return redirect(url_for('login'))
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor(dictionary=True) as cursor:
+                sql = "SELECT * FROM Users WHERE Email = %s"
+                cursor.execute(sql, (email,))
+                user = cursor.fetchone()
+                if user and check_password_hash(user['PasswordHash'], password):
+                    # Store necessary user details in the session
+                    session['user'] = {
+                        "UserID": user['UserID'],
+                        "Username": user['Username'],
+                        "Email": user['Email'],
+                        "FirstName": user['FirstName'],
+                        "LastName": user['LastName'],
+                        "RoleID": user['RoleID']
+                    }
+                    flash("Login successful.", "success")
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash("Invalid credentials. Please try again.", "danger")
+                    return redirect(url_for('login'))
+        except mysql.connector.Error as err:
+            logging.error(f"Error during login: {err}")
+            flash("An error occurred during login.", "danger")
+        finally:
+            conn.close()
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    flash("Logged out successfully.", "success")
+    return redirect(url_for('login'))
+
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+    return render_template('dashboard.html', user=session['user'])
+
+
+@app.route('/homepage')
+def homepage():
+    return render_template('homepage.html')
+
+# ------------------------------
+# Management Pages (Protected)
+# ------------------------------
+
+@app.route('/manage-rooms', methods=['GET', 'POST'])
+def manage_rooms():
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return render_template('manage_rooms.html', rooms=[])
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            if request.method == 'POST':
+                action = request.form.get('action')
+                # ----------------
+                # CREATE (Add New Room)
+                # ----------------
+                if action == 'add':
+                    location = request.form.get('location')
+                    max_capacity = request.form.get('max_capacity')
+                    if not location or not max_capacity:
+                        flash("Please provide both Location and Maximum Capacity.", "warning")
+                    else:
+                        try:
+                            max_capacity = int(max_capacity)
+                        except ValueError:
+                            flash("Maximum Capacity must be an integer.", "warning")
+                            return redirect(url_for('manage_rooms'))
+                        sql = "INSERT INTO Room (Location, MaxRoomCapacity, ActiveFlag) VALUES (%s, %s, 1)"
+                        cursor.execute(sql, (location, max_capacity))
+                        conn.commit()
+                        flash("Room added successfully.", "success")
+                # ----------------
+                # UPDATE Room
+                # ----------------
+                elif action == 'update':
+                    room_id = request.form.get('room_id')
+                    location = request.form.get('location')
+                    max_capacity = request.form.get('max_capacity')
+                    if not room_id or not location or not max_capacity:
+                        flash("Missing fields for update.", "warning")
+                    else:
+                        try:
+                            max_capacity = int(max_capacity)
+                        except ValueError:
+                            flash("Maximum Capacity must be an integer.", "warning")
+                            return redirect(url_for('manage_rooms'))
+                        sql = "UPDATE Room SET Location = %s, MaxRoomCapacity = %s WHERE RoomID = %s"
+                        cursor.execute(sql, (location, max_capacity, room_id))
+                        conn.commit()
+                        flash("Room updated successfully.", "success")
+                # ----------------
+                # DELETE Room
+                # ----------------
+                elif action == 'delete':
+                    room_id = request.form.get('room_id')
+                    if not room_id:
+                        flash("Missing Room ID for deletion.", "warning")
+                    else:
+                        sql = "DELETE FROM Room WHERE RoomID = %s"
+                        cursor.execute(sql, (room_id,))
+                        conn.commit()
+                        flash("Room deleted successfully.", "success")
+            # Read (List all Rooms)
+            cursor.execute("SELECT * FROM Room")
+            rooms = cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        logging.error(f"Error in manage_rooms: {err}")
+        flash(f"Database error: {err}", "danger")
+        rooms = []
+    finally:
+        conn.close()
+    
+    return render_template('manage_rooms.html', rooms=rooms)
+
+
+@app.route('/manage-lectures', methods=['GET', 'POST'])
+def manage_lectures():
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return render_template('manage_lectures.html', lecturers=[], faculty_types=[])
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            if request.method == 'POST':
+                action = request.form.get('action')
+                # ----------------
+                # CREATE (Add New Lecturer)
+                # ----------------
+                if action == 'add':
+                    lecturer_name = request.form.get('lecturer_name')
+                    faculty_type_id = request.form.get('faculty_type_id')
+                    if not lecturer_name or not faculty_type_id:
+                        flash("Please provide Lecturer Name and Faculty Type ID.", "warning")
+                    else:
+                        try:
+                            faculty_type_id = int(faculty_type_id)
+                        except ValueError:
+                            flash("Faculty Type ID must be an integer.", "warning")
+                            return redirect(url_for('manage_lectures'))
+                        sql = "INSERT INTO Lecturer (LecturerName, FacultyTypeID, ActiveFlag) VALUES (%s, %s, 1)"
+                        cursor.execute(sql, (lecturer_name, faculty_type_id))
+                        conn.commit()
+                        flash("Lecturer added successfully.", "success")
+                # ----------------
+                # UPDATE Lecturer
+                # ----------------
+                elif action == 'update':
+                    lecturer_id = request.form.get('lecturer_id')
+                    lecturer_name = request.form.get('lecturer_name')
+                    faculty_type_id = request.form.get('faculty_type_id')
+                    if not lecturer_id or not lecturer_name or not faculty_type_id:
+                        flash("Missing fields for update.", "warning")
+                    else:
+                        try:
+                            faculty_type_id = int(faculty_type_id)
+                        except ValueError:
+                            flash("Faculty Type ID must be an integer.", "warning")
+                            return redirect(url_for('manage_lectures'))
+                        sql = "UPDATE Lecturer SET LecturerName = %s, FacultyTypeID = %s WHERE LecturerID = %s"
+                        cursor.execute(sql, (lecturer_name, faculty_type_id, lecturer_id))
+                        conn.commit()
+                        flash("Lecturer updated successfully.", "success")
+                # ----------------
+                # DELETE Lecturer
+                # ----------------
+                elif action == 'delete':
+                    lecturer_id = request.form.get('lecturer_id')
+                    if not lecturer_id:
+                        flash("Missing Lecturer ID for deletion.", "warning")
+                    else:
+                        sql = "DELETE FROM Lecturer WHERE LecturerID = %s"
+                        cursor.execute(sql, (lecturer_id,))
+                        conn.commit()
+                        flash("Lecturer deleted successfully.", "success")
+            # Read (List all Lecturers) along with FacultyType info
+            cursor.execute("""
+                SELECT l.*, ft.FacultyTypeName 
+                FROM Lecturer l 
+                JOIN FacultyType ft ON l.FacultyTypeID = ft.FacultyTypeID
+            """)
+            lecturers = cursor.fetchall()
+            # Also fetch all available faculty types for the add/update forms.
+            cursor.execute("SELECT * FROM FacultyType")
+            faculty_types = cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        logging.error(f"Error in manage_lectures: {err}")
+        flash(f"Database error: {err}", "danger")
+        lecturers = []
+        faculty_types = []
+    finally:
+        conn.close()
+    
+    return render_template('manage_lectures.html', lecturers=lecturers, faculty_types=faculty_types)
+
+
+@app.route('/manage-courses', methods=['GET', 'POST'])
+def manage_courses():
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return render_template('manage_courses.html', courses=[])
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            if request.method == 'POST':
+                action = request.form.get('action')
+                # ----------------
+                # CREATE (Add New Course)
+                # ----------------
+                if action == 'add':
+                    course_code = request.form.get('course_code')
+                    course_name = request.form.get('course_name')
+                    requirement_type = request.form.get('requirement_type')
+                    credits = request.form.get('credits')
+                    active_flag = request.form.get('active_flag', 1)  # default active_flag to 1
+                    if not course_code or not course_name or not requirement_type or not credits:
+                        flash("Please fill in all required fields for the new course.", "warning")
+                    else:
+                        try:
+                            credits = float(credits)
+                        except ValueError:
+                            flash("Credits must be a number.", "warning")
+                            return redirect(url_for('manage_courses'))
+                        sql = """
+                            INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+                            VALUES (%s, %s, %s, %s, %s)
+                        """
+                        cursor.execute(sql, (course_code, course_name, requirement_type, active_flag, credits))
+                        conn.commit()
+                        flash("Course added successfully.", "success")
+                # ----------------
+                # UPDATE Course
+                # ----------------
+                elif action == 'update':
+                    course_id = request.form.get('course_id')
+                    course_code = request.form.get('course_code')
+                    course_name = request.form.get('course_name')
+                    requirement_type = request.form.get('requirement_type')
+                    credits = request.form.get('credits')
+                    active_flag = request.form.get('active_flag', 1)
+                    if not course_id or not course_code or not course_name or not requirement_type or not credits:
+                        flash("Missing fields for update.", "warning")
+                    else:
+                        try:
+                            credits = float(credits)
+                        except ValueError:
+                            flash("Credits must be a number.", "warning")
+                            return redirect(url_for('manage_courses'))
+                        sql = """
+                            UPDATE Course 
+                            SET CourseCode = %s, CourseName = %s, RequirementType = %s, ActiveFlag = %s, Credits = %s 
+                            WHERE CourseID = %s
+                        """
+                        cursor.execute(sql, (course_code, course_name, requirement_type, active_flag, credits, course_id))
+                        conn.commit()
+                        flash("Course updated successfully.", "success")
+                # ----------------
+                # DELETE Course
+                # ----------------
+                elif action == 'delete':
+                    course_id = request.form.get('course_id')
+                    if not course_id:
+                        flash("Missing Course ID for deletion.", "warning")
+                    else:
+                        sql = "DELETE FROM Course WHERE CourseID = %s"
+                        cursor.execute(sql, (course_id,))
+                        conn.commit()
+                        flash("Course deleted successfully.", "success")
+            # Read (List all Courses)
+            cursor.execute("SELECT * FROM Course")
+            courses = cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        logging.error(f"Error in manage_courses: {err}")
+        flash(f"Database error: {err}", "danger")
+        courses = []
+    finally:
+        conn.close()
+    
+    return render_template('manage_courses.html', courses=courses)
+
+
+
+
 
 # ----------------------------------------------------
 # Helper: Validate "HH:MM:SS" format (for durations)
@@ -530,6 +904,45 @@ def summary():
     
     return render_template('summary.html', assignments=assignments)
 
+@app.route('/schedule_builder')
+def schedule_builder():
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return render_template('schedule_builder.html', progress=0)
+
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT COUNT(*) AS count FROM Lecturer WHERE ActiveFlag = 1")
+            active_lecturers = cursor.fetchone()['count']
+
+            cursor.execute("SELECT COUNT(*) AS count FROM Room WHERE ActiveFlag = 1")
+            active_rooms = cursor.fetchone()['count']
+
+            cursor.execute("SELECT COUNT(*) AS count FROM SessionAssignments")
+            assigned_sessions = cursor.fetchone()['count']
+
+            cursor.execute("SELECT COUNT(*) AS count FROM StudentCourseSelection")
+            selected_courses = cursor.fetchone()['count']
+
+            progress = 0
+            if active_lecturers > 0:
+                progress = 1
+            if active_rooms > 0:
+                progress = 2
+            if assigned_sessions > 0:
+                progress = 3
+            if selected_courses > 0:
+                progress = 4
+
+    finally:
+        conn.close()
+
+    return render_template('schedule_builder.html', progress=progress)
 
 # ----------------------------------------------------
 # Route: Course Selection
@@ -548,7 +961,7 @@ def courses():
                 selected_course_codes = request.form.getlist('course_codes')
                 session['selected_courses'] = selected_course_codes
                 logging.info(f"Selected courses: {selected_course_codes}")
-                return redirect(url_for('assign_sessions'))
+                return redirect(url_for('courses'))
     
             cursor.execute("""
                 SELECT CourseCode, CourseName, Credits
@@ -1946,6 +2359,176 @@ def student_timetable_grid(student_id):
         timeslots=timeslots,
         cohort_colors=cohort_colors
     )
+
+@app.route('/manage_students', methods=['GET', 'POST'])
+def manage_students():
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        # Pass empty lists so the template can handle no data gracefully.
+        return render_template('manage_students.html', students=[], program_plans=[], majors=[])
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            # Handle POST submissions for both Students and ProgramPlan entries.
+            if request.method == 'POST':
+                entity = request.form.get('entity')  # should be "student" or "program_plan"
+                action = request.form.get('action')    # "add", "update", "delete"
+                
+                if entity == 'student':
+                    if action == 'add':
+                        major_id = request.form.get('major_id')
+                        year_number = request.form.get('year_number')
+                        if not major_id or not year_number:
+                            flash("Please provide both Major and Year Number.", "warning")
+                        else:
+                            try:
+                                major_id = int(major_id)
+                                year_number = int(year_number)
+                            except ValueError:
+                                flash("Major and Year Number must be integers.", "warning")
+                                return redirect(url_for('manage_students'))
+                            sql = "INSERT INTO Student (MajorID, YearNumber) VALUES (%s, %s)"
+                            cursor.execute(sql, (major_id, year_number))
+                            conn.commit()
+                            flash("Student added successfully.", "success")
+                    
+                    elif action == 'update':
+                        student_id = request.form.get('student_id')
+                        major_id = request.form.get('major_id')
+                        year_number = request.form.get('year_number')
+                        if not student_id or not major_id or not year_number:
+                            flash("Please provide Student ID, Major and Year Number for update.", "warning")
+                        else:
+                            try:
+                                student_id = int(student_id)
+                                major_id = int(major_id)
+                                year_number = int(year_number)
+                            except ValueError:
+                                flash("IDs must be integers.", "warning")
+                                return redirect(url_for('manage_students'))
+                            sql = "UPDATE Student SET MajorID = %s, YearNumber = %s WHERE StudentID = %s"
+                            cursor.execute(sql, (major_id, year_number, student_id))
+                            conn.commit()
+                            flash("Student updated successfully.", "success")
+                    
+                    elif action == 'delete':
+                        student_id = request.form.get('student_id')
+                        if not student_id:
+                            flash("Student ID is required for deletion.", "warning")
+                        else:
+                            try:
+                                student_id = int(student_id)
+                            except ValueError:
+                                flash("Student ID must be an integer.", "warning")
+                                return redirect(url_for('manage_students'))
+                            sql = "DELETE FROM Student WHERE StudentID = %s"
+                            cursor.execute(sql, (student_id,))
+                            conn.commit()
+                            flash("Student deleted successfully.", "success")
+                
+                elif entity == 'program_plan':
+                    if action == 'add':
+                        major_id = request.form.get('major_id')
+                        year_number = request.form.get('year_number')
+                        semester_number = request.form.get('semester_number')
+                        subtype = request.form.get('subtype')  # can be empty
+                        course_code = request.form.get('course_code')
+                        if not major_id or not year_number or not semester_number or not course_code:
+                            flash("Please provide Major, Year Number, Semester Number, and Course Code.", "warning")
+                        else:
+                            try:
+                                major_id = int(major_id)
+                                year_number = int(year_number)
+                                semester_number = int(semester_number)
+                            except ValueError:
+                                flash("Major, Year, and Semester numbers must be integers.", "warning")
+                                return redirect(url_for('manage_students'))
+                            sql = """
+                                INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """
+                            cursor.execute(sql, (major_id, year_number, semester_number, subtype, course_code))
+                            conn.commit()
+                            flash("Program plan entry added successfully.", "success")
+                    
+                    elif action == 'update':
+                        plan_id = request.form.get('plan_id')
+                        major_id = request.form.get('major_id')
+                        year_number = request.form.get('year_number')
+                        semester_number = request.form.get('semester_number')
+                        subtype = request.form.get('subtype')
+                        course_code = request.form.get('course_code')
+                        if not plan_id or not major_id or not year_number or not semester_number or not course_code:
+                            flash("Please provide all fields for updating program plan entry.", "warning")
+                        else:
+                            try:
+                                plan_id = int(plan_id)
+                                major_id = int(major_id)
+                                year_number = int(year_number)
+                                semester_number = int(semester_number)
+                            except ValueError:
+                                flash("IDs must be integers.", "warning")
+                                return redirect(url_for('manage_students'))
+                            sql = """
+                                UPDATE ProgramPlan 
+                                SET MajorID = %s, YearNumber = %s, SemesterNumber = %s, SubType = %s, CourseCode = %s
+                                WHERE ProgramPlanID = %s
+                            """
+                            cursor.execute(sql, (major_id, year_number, semester_number, subtype, course_code, plan_id))
+                            conn.commit()
+                            flash("Program plan entry updated successfully.", "success")
+                    
+                    elif action == 'delete':
+                        plan_id = request.form.get('plan_id')
+                        if not plan_id:
+                            flash("Program plan ID is required for deletion.", "warning")
+                        else:
+                            try:
+                                plan_id = int(plan_id)
+                            except ValueError:
+                                flash("Program plan ID must be an integer.", "warning")
+                                return redirect(url_for('manage_students'))
+                            sql = "DELETE FROM ProgramPlan WHERE ProgramPlanID = %s"
+                            cursor.execute(sql, (plan_id,))
+                            conn.commit()
+                            flash("Program plan entry deleted successfully.", "success")
+            # After handling any POST operations, fetch current data to display.
+            # 1) Fetch all students (with Major name)
+            cursor.execute("""
+                SELECT s.StudentID, s.MajorID, s.YearNumber, m.MajorName
+                FROM Student s
+                JOIN Major m ON s.MajorID = m.MajorID
+                ORDER BY s.StudentID
+            """)
+            students = cursor.fetchall()
+            # 2) Fetch all program plan entries (with Major name)
+            cursor.execute("""
+                SELECT pp.ProgramPlanID, pp.MajorID, pp.YearNumber, pp.SemesterNumber, pp.SubType, pp.CourseCode, m.MajorName
+                FROM ProgramPlan pp
+                JOIN Major m ON pp.MajorID = m.MajorID
+                ORDER BY pp.ProgramPlanID
+            """)
+            program_plans = cursor.fetchall()
+            # 3) Fetch list of majors for use in dropdowns.
+            cursor.execute("SELECT MajorID, MajorName FROM Major")
+            majors = cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        logging.error(f"Error in /manage_students: {err}")
+        flash(f"Database error: {err}", "danger")
+        students = []
+        program_plans = []
+        majors = []
+    finally:
+        conn.close()
+    
+    return render_template('manage_students.html', students=students, program_plans=program_plans, majors=majors)
+
 # ----------------------------------------------------
 # Main
 # ----------------------------------------------------

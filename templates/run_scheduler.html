@@ -1,30 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Run Scheduler</title>
-    <!-- Bootstrap CSS for styling -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <meta charset="UTF-8" />
+  <title>Run Scheduler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Bootstrap CSS for styling -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <style>
+    body {
+      background: #f7f9fc;
+      font-family: 'Poppins', sans-serif;
+    }
+    /* Header Navbar */
+    .navbar-custom {
+      background: #673ab7;
+    }
+    .navbar-custom .navbar-brand,
+    .navbar-custom .btn-outline-light {
+      color: #fff;
+    }
+    .navbar-custom .btn-outline-light:hover {
+      color: #673ab7;
+      background-color: #fff;
+    }
+    /* Main Content Styles */
+    .content-wrapper {
+      text-align: center;
+      margin-top: 50px;
+    }
+    .robot-img {
+      max-width: 300px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+  </style>
 </head>
 <body class="bg-light">
-    <div class="container my-4">
-        <h1>Run Scheduler</h1>
-
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <div class="alert alert-info">
-              {% for msg in messages %}
-                <p>{{ msg }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST">
-            <button type="submit" class="btn btn-primary">Start Scheduling</button>
-        </form>
+  <!-- Header with Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('schedule_builder') }}">Schedule Builder</a>
+      <button class="btn btn-outline-light" onclick="window.location.href='{{ url_for('schedule_builder') }}'">
+        Back to Schedule Builder
+      </button>
     </div>
+  </nav>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <div class="container my-5">
+    <h1 class="text-center">Run Scheduler</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-info">
+          {% for msg in messages %}
+            <p class="m-0">{{ msg }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="content-wrapper">
+      <!-- Centered robot image -->
+      <img src="{{ url_for('static', filename='robot.png') }}" alt="Robot" class="robot-img img-fluid">
+
+      {% if scheduled %}
+        <!-- After scheduling is done, show the View Timetable button -->
+        <a href="{{ url_for('timetable') }}" class="btn btn-success btn-lg">View Timetable</a>
+      {% else %}
+        <!-- Before scheduling, show the Start Scheduling button -->
+        <form method="POST">
+          <button type="submit" class="btn btn-primary btn-lg">Start Scheduling</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

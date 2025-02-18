@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: #f7f9fc; 
+      margin: 0; 
+      padding: 0; 
+    }
+    .header { 
+      background: #007bff; 
+      color: #fff; 
+      padding: 1rem; 
+      text-align: center; 
+    }
+    .container { 
+      max-width: 1000px; 
+      margin: 2rem auto; 
+      padding: 0 1rem; 
+    }
+    .card-container { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 1.5rem; 
+      justify-content: center; 
+    }
+    .card {
+      background: #fff; 
+      flex: 1 1 250px; 
+      padding: 1.5rem; 
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15); 
+    }
+    .card h2 { 
+      font-size: 1.5rem; 
+      margin-bottom: 1rem; 
+    }
+    .card p { 
+      font-size: 1rem; 
+      color: #555; 
+    }
+    .card a { 
+      display: inline-block; 
+      margin-top: 1rem; 
+      text-decoration: none; 
+      color: #007bff; 
+      font-weight: 600; 
+    }
+    .card a:hover { 
+      text-decoration: underline; 
+    }
+    .build-schedule-btn {
+      display: block; 
+      width: 250px; 
+      margin: 2rem auto; 
+      padding: 15px;
+      background: #28a745; 
+      color: white; 
+      font-size: 1.2rem; 
+      font-weight: bold;
+      text-align: center; 
+      text-decoration: none; 
+      border-radius: 8px;
+      transition: background 0.3s ease;
+    }
+    .build-schedule-btn:hover { 
+      background: #218838; 
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Welcome, {{ user.FirstName }}!</h1>
+  </header>
+  <div class="container">
+    <div class="card-container">
+      <div class="card">
+        <h2>Manage Rooms</h2>
+        <p>View, add, update, and delete rooms.</p>
+        <a href="{{ url_for('manage_rooms') }}">Go to Rooms</a>
+      </div>
+      <div class="card">
+        <h2>Manage Lectures</h2>
+        <p>Manage lecturer profiles and details.</p>
+        <a href="{{ url_for('manage_lectures') }}">Go to Lectures</a>
+      </div>
+      <div class="card">
+        <h2>Manage Courses</h2>
+        <p>Manage courses and their details.</p>
+        <a href="{{ url_for('manage_courses') }}">Go to Courses</a>
+      </div>
+      <div class="card">
+        <h2>Manage Students</h2>
+        <p>Perform CRUD operations on student records and manage program plans.</p>
+        <a href="{{ url_for('manage_students') }}">Go to Students</a>
+      </div>
+      <div class="card">
+        <h2>Homepage</h2>
+        <p>Return to the main page.</p>
+        <a href="{{ url_for('homepage') }}">Visit Homepage</a>
+      </div>
+    </div>
+    <!-- "Build A Schedule" Button -->
+    <a href="{{ url_for('schedule_builder') }}" class="build-schedule-btn">Build A Schedule</a>
+    <div style="text-align: center; margin-top: 2rem;">
+      <a href="{{ url_for('logout') }}" style="color: #007bff; text-decoration: none; font-weight: 600;">Logout</a>
+    </div>
+  </div>
+</body>
+</html>
