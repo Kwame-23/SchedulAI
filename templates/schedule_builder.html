@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Schedule Builder</title>
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f7f9fc;
+      color: #333;
+    }
+    .header {
+      background: #673ab7; /* A deep purple for a modern look */
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-weight: 600;
+    }
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .container h2 {
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 2.5rem;
+    }
+    /* Stepper Styles */
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+    }
+    /* Each step container */
+    .step {
+      flex: 1;
+      position: relative;
+      text-align: center;
+    }
+    /* Draw a connecting line from this step to the next (except for the last step) */
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 20px; /* half of circle's height */
+      right: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #ccc;
+      z-index: -1;
+      transform: translateX(50%);
+    }
+    /* Circle for the step number */
+    .step-number {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 8px auto;
+      border-radius: 50%;
+      background-color: #ccc;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    /* Step Title & Link */
+    .step-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    .step a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.45rem 0.8rem;
+      background: #673ab7;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      transition: background-color 0.3s ease;
+    }
+    .step a:hover {
+      background-color: #452c78;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Schedule Builder</h1>
+  </header>
+  <div class="container">
+    <h2>Follow the Steps to Build Your Schedule</h2>
+    <!-- Stepper Container -->
+    <div class="stepper">
+      <!-- Step 1: Select Lecturers -->
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-title">Select Lecturers</div>
+        <a href="{{ url_for('lecturers') }}">Start</a>
+      </div>
+      
+      <!-- Step 2: Select Courses -->
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-title">Select Courses</div>
+        <a href="{{ url_for('courses') }}">Next</a>
+      </div>
+
+      <!-- Step 3: Select Student Courses -->
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-title">Select Student Courses</div>
+        <a href="{{ url_for('student_courses') }}">Next</a>
+      </div>
+
+      <!-- Step 4: Select Rooms -->
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-title">Select Rooms</div>
+        <a href="{{ url_for('rooms') }}">Next</a>
+      </div>
+
+      <!-- Step 5: Assign Sessions -->
+      <div class="step">
+        <div class="step-number">5</div>
+        <div class="step-title">Assign Sessions</div>
+        <a href="{{ url_for('assign_sessions') }}">Next</a>
+      </div>
+
+      <!-- Step 6: Generate Timetable -->
+      <div class="step">
+        <div class="step-number">6</div>
+        <div class="step-title">Generate Timetable</div>
+        <a href="{{ url_for('run_scheduler_route') }}">Generate</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

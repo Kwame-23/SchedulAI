@@ -1,5 +1,104 @@
 /* styles.css */
 
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+:root {
+    --primary-color: #4A90E2;
+    --background-color: #F5F7FA;
+    --white: #ffffff;
+    --gray-light: #EDEFF2;
+    --gray-dark: #333333;
+    --text-color: #5A5A5A;
+    --shadow-light: 0px 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Global Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow-light);
+}
+
+/* Button Styles */
+.btn-primary {
+    background: var(--primary-color);
+    border: none;
+    padding: 12px 18px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #3a7bc2;
+}
+
+/* Form Styles */
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid var(--gray-light);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+/* Responsive Navigation */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    background: var(--white);
+    padding: 20px;
+    box-shadow: var(--shadow-light);
+}
+
+.navbar a {
+    text-decoration: none;
+    font-weight: 600;
+    color: var(--gray-dark);
+}
+
+.navbar a:hover {
+    color: var(--primary-color);
+}
+
+/* Table Styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table th, .table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.table th {
+    background: var(--primary-color);
+    color: white;
+}
+
 /* Layout the main container to have day columns side by side */
 #timetable-container {
     display: flex; 
@@ -127,3 +226,4 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+

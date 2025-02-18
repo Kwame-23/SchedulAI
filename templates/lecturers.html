@@ -1,19 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Select Active Lecturers</title>
+  <meta charset="UTF-8" />
+  <title>Select Active Lecturers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Global Resets & Typography */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+    }
+    /* Page Header */
+    .header {
+      background-color: #673ab7;
+      color: #fff;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .header h1 {
+      font-weight: 600;
+      margin: 0;
+    }
+    /* Container */
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: #333;
+    }
+    /* Instructions */
+    .instructions {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    /* Checkbox List */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+    .checkbox-item input[type="checkbox"] {
+      margin-right: 0.5rem;
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+    /* Submit Button */
+    .btn-submit {
+      display: inline-block;
+      background-color: #673ab7;
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+    .btn-submit:hover {
+      background-color: #452c78;
+    }
+    /* Center the button */
+    .btn-wrapper {
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <h1>Select Active Lecturers</h1>
-    <form method="POST">
+  <!-- Page Header -->
+  <header class="header">
+    <h1>Schedule Builder</h1>
+  </header>
+
+  <!-- Main Content Container -->
+  <div class="container">
+    <h2>Select Active Lecturers</h2>
+    <p class="instructions">Please check the box next to each lecturer you want to activate.</p>
+    
+    <!-- Updated Form: The form now submits to the 'courses' route -->
+    <form method="POST" action="{{ url_for('courses') }}">
+      <div class="checkbox-group">
         {% for lec in lecturers %}
-    <div>
-        <!-- lec[0] is LecturerID, lec[1] is LecturerName -->
-        <input type="checkbox" id="lec_{{ lec[0] }}" name="lecturer_ids" value="{{ lec[0] }}">
-        <label for="lec_{{ lec[0] }}">{{ lec[1] }}</label>
-    </div>
-{% endfor %}
-        <button type="submit">Next (Rooms)</button>
+          <div class="checkbox-item">
+            <input type="checkbox" id="lec_{{ lec[0] }}" name="lecturer_ids" value="{{ lec[0] }}">
+            <label for="lec_{{ lec[0] }}">{{ lec[1] }}</label>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="btn-wrapper">
+        <button type="submit" class="btn-submit">Next (Courses)</button>
+      </div>
     </form>
+  </div>
 </body>
 </html>
