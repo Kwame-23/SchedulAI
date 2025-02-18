@@ -13,11 +13,12 @@ import random
 
 # Local module imports
 from scheduling.scheduler import schedule_sessions as run_schedule
-from scheduling.feasibility_checker import run_feasibility_check
+from scheduling.feasibility_checker import run_feasibility_check, timetable_combinations
+from scheduling.feasibility_checker import feasibility_bp
 
 app = Flask(__name__)
 app.secret_key = 'YOUR_SECRET_KEY'  # Replace with a secure secret key
-
+app.register_blueprint(feasibility_bp)
 # ----------------------------------------------------
 # Configure Logging
 # ----------------------------------------------------
@@ -32,10 +33,6 @@ logging.basicConfig(
 # MySQL Database Connection
 # ----------------------------------------------------
 def get_db_connection():
-    """
-    Connects to your schedulai database using mysql.connector.
-    Adjust host/user/password if needed.
-    """
     try:
         conn = mysql.connector.connect(
             host='localhost',
@@ -232,6 +229,7 @@ def fetch_sessions_join_schedule():
     """
     Pulls data from SessionAssignments + SessionSchedule => combined schedule.
     Converts TIME columns to "HH:MM" for StartTime/EndTime.
+    Also includes CohortName so we can display it in the matrix.
     """
     conn = get_db_connection()
     if conn is None:
@@ -241,12 +239,20 @@ def fetch_sessions_join_schedule():
     try:
         with conn.cursor(dictionary=True) as cursor:
             sql = """
-              SELECT sa.SessionID, sa.CourseCode, sa.SessionType,
-                     sa.LecturerName AS Lecturer,
-                     sc.DayOfWeek, sc.StartTime, sc.EndTime, sc.RoomName
-              FROM SessionAssignments sa
-              JOIN SessionSchedule sc ON sa.SessionID = sc.SessionID
-              ORDER BY sa.SessionID
+                SELECT 
+                  sa.SessionID,
+                  sa.CourseCode,
+                  sa.SessionType,
+                  sa.LecturerName AS Lecturer,
+                  sa.CohortName,                      -- <--- MISSING LINE PREVIOUSLY
+                  sc.DayOfWeek,
+                  sc.StartTime,
+                  sc.EndTime,
+                  sc.RoomName
+                FROM SessionAssignments sa
+                JOIN SessionSchedule sc 
+                    ON sa.SessionID = sc.SessionID
+                ORDER BY sa.SessionID
             """
             cursor.execute(sql)
             rows = cursor.fetchall()
@@ -256,7 +262,7 @@ def fetch_sessions_join_schedule():
     finally:
         conn.close()
 
-    # Convert TIME fields from time or timedelta to "HH:MM"
+    # Convert TIME fields to "HH:MM"
     for r in rows:
         start_time = r["StartTime"]
         end_time   = r["EndTime"]
@@ -1566,7 +1572,380 @@ def student_timetable(student_id, day_of_week):
         sessions=sessions
     )
 
+# =========================================
+#  Apply Break Route
+# =========================================
+@app.route('/apply_break', methods=['POST'])
+def apply_break():
+    """
+    Enforces a 15-minute gap for all sessions in the given (roomName, dayOfWeek).
+    Expects JSON payload: { "day": <str>, "roomName": <str> }
+    Returns JSON: { "success": true/false, "message": "..." }
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "No data received."}), 400
 
+    day_of_week = data.get("day")
+    room_name = data.get("roomName")
+
+    if not day_of_week or not room_name:
+        return jsonify({"success": False, "message": "Missing day_of_week or room_name."}), 400
+
+    try:
+        # Enforce the 15-min rule for that room & day
+        enforce_15_min_break(room_name, day_of_week)
+        return jsonify({"success": True, "message": "Break applied successfully."}), 200
+    except Exception as e:
+        logging.error(f"Error applying 15-min break: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+def to_time(value):
+    """
+    Ensure 'value' is a datetime.time. If it's a timedelta, convert it.
+    If it's already a time, just return it.
+    """
+    if isinstance(value, time):
+        return value
+    elif isinstance(value, timedelta):
+        # Convert 'timedelta' to a 'time' by adding it to datetime.min
+        return (datetime.min + value).time()
+    else:
+        # Return None or raise an error if it's neither time nor timedelta
+        return None
+
+def enforce_15_min_break(room_name, day_of_week):
+    conn = get_db_connection()
+    if not conn:
+        raise Exception("Database connection failed.")
+
+    try:
+        conn.start_transaction()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1) Select sessions
+        sql = """
+            SELECT ScheduleID, StartTime, EndTime
+            FROM SessionSchedule
+            WHERE RoomName = %s
+              AND DayOfWeek = %s
+            ORDER BY StartTime
+        """
+        cursor.execute(sql, (room_name, day_of_week))
+        sessions = cursor.fetchall()
+
+        last_end = None
+        for row in sessions:
+            sched_id = row["ScheduleID"]
+            s_start  = to_time(row["StartTime"])  # ensure it's time
+            s_end    = to_time(row["EndTime"])    # ensure it's time
+
+            if s_start is None or s_end is None:
+                # If either is invalid, skip or raise an error
+                raise ValueError("StartTime/EndTime not recognized as time or timedelta.")
+
+            if last_end is not None:
+                # min_start = last_end + 15 min
+                min_start = (datetime.combine(datetime.today(), last_end)
+                             + timedelta(minutes=15)).time()
+
+                if s_start < min_start:
+                    # preserve duration in seconds
+                    duration_sec = (
+                        datetime.combine(datetime.today(), s_end)
+                        - datetime.combine(datetime.today(), s_start)
+                    ).total_seconds()
+
+                    new_start = min_start
+                    new_end_dt = (datetime.combine(datetime.today(), new_start)
+                                  + timedelta(seconds=duration_sec))
+                    new_end = new_end_dt.time()
+
+                    # DB update
+                    update_sql = """
+                        UPDATE SessionSchedule
+                        SET StartTime = %s, EndTime = %s
+                        WHERE ScheduleID = %s
+                    """
+                    cursor.execute(update_sql, (new_start, new_end, sched_id))
+
+                    s_start = new_start
+                    s_end   = new_end
+
+            # Update last_end
+            last_end = s_end
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+def fetch_plan_by_course():
+    """
+    Returns a dict keyed by CourseCode, where each value is a list of
+    { MajorName, YearNumber, SemesterNumber, SubType }
+    describing which Majors/Years/Semesters include that course.
+    """
+    plan_map = defaultdict(list)
+    
+    conn = get_db_connection()
+    if conn is None:
+        logging.error("Failed to connect to the database in fetch_plan_by_course.")
+        return plan_map
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            # Pull ProgramPlan + Major + Course info
+            # We'll also get the MajorName directly to display.
+            sql = """
+                SELECT 
+                  m.MajorName,
+                  p.YearNumber,
+                  p.SemesterNumber,
+                  IFNULL(p.SubType, '') AS SubType,
+                  p.CourseCode
+                FROM ProgramPlan p
+                JOIN Major m ON p.MajorID = m.MajorID
+                -- We could also join Course c ON p.CourseCode = c.CourseCode
+                -- if we need the course name or other fields
+            """
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            
+            for row in rows:
+                ccode = row["CourseCode"]
+                plan_map[ccode].append({
+                    "MajorName": row["MajorName"],
+                    "YearNumber": row["YearNumber"],
+                    "SemesterNumber": row["SemesterNumber"],
+                    "SubType": row["SubType"]
+                })
+    
+    except mysql.connector.Error as err:
+        logging.error(f"Error in fetch_plan_by_course: {err}")
+        # Return what we have so far (likely empty)
+    finally:
+        conn.close()
+    
+    return plan_map
+
+
+
+@app.route('/conflict_free_matrix', methods=['GET'])
+def conflict_free_matrix():
+    """
+    Displays a matrix timetable with:
+      - Rows = distinct start times from scheduled sessions
+      - Columns = Monday–Friday
+      - Cells = sessions (course code, cohort, room, etc.)
+    The "In Plan" information is color-coded by year using the first plan entry’s YearNumber.
+    """
+    logging.info("Accessed /conflict_free_matrix route.")
+    
+    # 1) Fetch all sessions
+    sessions = fetch_sessions_join_schedule()
+    
+    # 2) Fetch ProgramPlan info and attach it to each session
+    plan_by_course = fetch_plan_by_course()
+    for s in sessions:
+        code = s.get("CourseCode", "")
+        s["PlanInfo"] = plan_by_course.get(code, [])
+    
+    # 3) Define the days
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    
+    # 4) Compute distinct timeslots (using session start times)
+    timeslot_set = set()
+    for sess in sessions:
+        timeslot_set.add(sess["StartTime"])
+    # Sort timeslot strings (assumes format "HH:MM")
+    timeslots = sorted(timeslot_set)
+
+    # 5) Bucket sessions by (day, start time)
+    matrix_data = { day: { t: [] for t in timeslots } for day in days }
+    for sess in sessions:
+        day = sess["DayOfWeek"]
+        if day in days and sess["StartTime"] in timeslots:
+            matrix_data[day][sess["StartTime"]].append(sess)
+    
+    # 6) Build color maps for rooms (cohort coloring is removed)
+    import random
+    random.seed(42)
+    # (We still compute cohort_colors if needed for tooltips, but they are not used for background)
+    all_rooms = set(sess.get("RoomName", "Unknown") for sess in sessions)
+    palette2 = [
+        "#ffcccb", "#ffe4b5", "#ffffe0", "#d3ffd3",
+        "#cce5ff", "#e5ccff", "#f5e6e8", "#e2f0d9",
+        "#d1ecf1", "#fefefe"
+    ]
+    random.shuffle(palette2)
+    room_colors = {}
+    j = 0
+    for r in sorted(all_rooms):
+        room_colors[r] = palette2[j % len(palette2)]
+        j += 1
+
+    # Define year_colors for plan info (for example: Year 1 = red-ish, Year 2 = blue, etc.)
+    year_colors = {1: '#f86c6b', 2: '#20a8d8', 3: '#4dbd74', 4: '#ffc107'}
+
+    return render_template(
+        'conflict_free_matrix.html',
+        days=days,
+        timeslots=timeslots,
+        matrix_data=matrix_data,
+        room_colors=room_colors,
+        year_colors=year_colors
+    )
+
+@app.route('/student_timetable_grid/<int:student_id>', methods=['GET'])
+def student_timetable_grid(student_id):
+    """
+    Displays a student’s timetable as a grid.
+    The columns are days of the week (Monday–Friday) and the rows are the distinct start times of sessions.
+    The grid shows both regular sessions (based on the student’s course selections)
+    and elective sessions (with an added field to indicate whether they are a Major or Non-Major elective).
+    """
+    logging.info(f"Accessed /student_timetable_grid route for StudentID {student_id}")
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+    # Establish database connection
+    conn = get_db_connection()
+    if not conn:
+        flash("Database connection failed.", "danger")
+        return redirect(url_for("home"))
+
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            # (1) Fetch Student Information
+            cursor.execute("""
+                SELECT s.StudentID, s.MajorID, m.MajorName, s.YearNumber
+                FROM Student s
+                JOIN Major m ON s.MajorID = m.MajorID
+                WHERE s.StudentID = %s
+            """, (student_id,))
+            student_info = cursor.fetchone()
+            if not student_info:
+                flash("Student not found.", "danger")
+                return redirect(url_for("home"))
+
+            major_id   = student_info["MajorID"]
+            major_name = student_info["MajorName"]
+            year_num   = student_info["YearNumber"]
+            student_label = f"StudentID {student_id}, {ordinal(year_num)}-year {major_name}"
+
+            # (2) Get major prefixes from mapping (used to distinguish elective types)
+            major_prefixes = major_prefix_mapping.get(major_id, [])
+            if not major_prefixes:
+                flash("No major prefixes defined for this student’s major.", "danger")
+                return redirect(url_for("home"))
+
+            # (3) Fetch regular (non-elective) sessions for the student
+            cursor.execute("""
+                SELECT sa.CourseCode,
+                       sa.LecturerName,
+                       sa.CohortName,
+                       ss.StartTime,
+                       ss.EndTime,
+                       ss.RoomName,
+                       ss.DayOfWeek
+                FROM SessionAssignments sa
+                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                JOIN Course c ON sa.CourseCode = c.CourseCode
+                WHERE sa.CourseCode IN (
+                    SELECT DISTINCT scc.CourseCode
+                    FROM StudentCourseSelection scc
+                    WHERE scc.StudentID = %s
+                )
+                  AND c.RequirementType NOT LIKE '%Elective%'
+                  AND c.ActiveFlag = 1
+                ORDER BY ss.DayOfWeek, ss.StartTime
+            """, (student_id,))
+            regular_sessions = cursor.fetchall()
+
+            # (4) Fetch elective sessions (for all days)
+            cursor.execute("""
+                SELECT c.CourseCode,
+                       c.CourseName,
+                       sa.LecturerName,
+                       sa.CohortName,
+                       ss.StartTime,
+                       ss.EndTime,
+                       ss.RoomName,
+                       ss.DayOfWeek
+                FROM Course c
+                JOIN SessionAssignments sa ON c.CourseCode = sa.CourseCode
+                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                WHERE c.RequirementType LIKE '%Elective%'
+                  AND c.ActiveFlag = 1
+                ORDER BY c.CourseCode, ss.DayOfWeek, ss.StartTime
+            """)
+            elective_sessions = cursor.fetchall()
+
+            # (5) Process elective sessions: label each as "Major Elective" or "Non-Major Elective"
+            for sess in elective_sessions:
+                course_code = sess["CourseCode"]
+                if any(course_code.startswith(prefix) for prefix in major_prefixes):
+                    sess["ElectiveType"] = "Major Elective"
+                else:
+                    sess["ElectiveType"] = "Non-Major Elective"
+
+            # (6) Combine sessions
+            all_sessions = regular_sessions + elective_sessions
+
+            # (7) Convert StartTime and EndTime to readable "HH:MM" strings.
+            for sess in all_sessions:
+                if hasattr(sess["StartTime"], "total_seconds"):
+                    sess["StartTime"] = convert_timedelta_to_hhmm(sess["StartTime"])
+                else:
+                    sess["StartTime"] = str(sess["StartTime"])[:5]
+                if hasattr(sess["EndTime"], "total_seconds"):
+                    sess["EndTime"] = convert_timedelta_to_hhmm(sess["EndTime"])
+                else:
+                    sess["EndTime"] = str(sess["EndTime"])[:5]
+
+            # (8) Determine distinct time slots (rows) based on session start times
+            timeslot_set = { sess["StartTime"] for sess in all_sessions }
+            timeslots = sorted(timeslot_set)
+
+            # (9) Bucket sessions into a grid: for each day and each timeslot, list any sessions that start then.
+            matrix_data = { day: { t: [] for t in timeslots } for day in days }
+            for sess in all_sessions:
+                day = sess["DayOfWeek"]
+                start_time = sess["StartTime"]
+                if day in days and start_time in timeslots:
+                    matrix_data[day][start_time].append(sess)
+
+            # (10) Build a cohort_colors mapping from the sessions.
+            cohorts = {sess["CohortName"] for sess in all_sessions if sess.get("CohortName")}
+            color_palette = [
+                "#FF6666", "#66B3FF", "#99FF99", "#FFCC66", "#C0C0C0", "#FF99CC",  # Original 6 colors
+                "#FF6666", "#FFB366", "#FFFF66", "#B3FF66", "#66FF66", "#66FFB3",  # Additional colors
+                "#66FFFF", "#66B3FF", "#6666FF", "#B366FF", "#FF66FF", "#FF66B3",  # More colors
+                "#FF6666", "#FF8C66", "#FFB366", "#FFD966", "#FFFF66", "#D9FF66",  # Even more colors
+                "#B3FF66", "#8CFF66", "#66FF66", "#66FF8C", "#66FFB3", "#66FFD9"   # Final colors
+            ]
+            cohort_colors = {}
+            for i, cohort in enumerate(sorted(cohorts)):
+                cohort_colors[cohort] = color_palette[i % len(color_palette)]
+    except mysql.connector.Error as err:
+        logging.error(f"Database error in student_timetable_grid: {err}")
+        flash("An error occurred while fetching timetable data.", "danger")
+        return redirect(url_for("home"))
+    finally:
+        conn.close()
+
+    return render_template(
+        "student_timetable_grid.html",
+        student_id=student_id,
+        student_label=student_label,
+        matrix_data=matrix_data,
+        days=days,
+        timeslots=timeslots,
+        cohort_colors=cohort_colors
+    )
 # ----------------------------------------------------
 # Main
 # ----------------------------------------------------

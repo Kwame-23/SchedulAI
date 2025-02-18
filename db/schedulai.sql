@@ -526,6 +526,10 @@ VALUES ('ELECTIVE1', 'Elective (4 credits)', 'Elective', 1, 1.0);
 INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES ('ELECTIVE2', 'Extra Major Elective', 'Elective', 1, 1.0);
 
+INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES
+(290, 'SOAN301', 'Introduction to Africana Studies: The Global Black Experience', 'Elective', 1, 1.0);
+
 
 
 CREATE TABLE Cohort (
@@ -814,7 +818,7 @@ VALUES
 (1, 2, 3, '', 'SOAN211'),
 (1, 2, 3, '', 'MATH221'),
 (1, 2, 3, '', 'ECON101'),
-(1, 2, 3, '', 'BUSA201'),
+(1, 2, 3, '', 'BUSA210'),
 (1, 2, 3, '', 'ELECTIVE1');
 
 -- Year 2, Semester 4
@@ -1399,5 +1403,7 @@ VALUES
     (6, 4, 8, '', 'ELECTIVE1'),    -- ME Elective
     (6, 4, 8, '', 'ELECTIVE1'),    -- African Studies Elective
     (6, 4, 8, '', 'ENGR401');      -- Senior Project and Seminar (Capstone)
+
+
 
 

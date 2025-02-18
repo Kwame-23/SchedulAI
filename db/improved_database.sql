@@ -650,3 +650,98 @@ CREATE TABLE IF NOT EXISTS UnassignedSessions (
         ON DELETE RESTRICT
         ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_upsert_session_with_breaks (
+    IN pSessionID   INT,
+    IN pDayOfWeek   ENUM('Monday','Tuesday','Wednesday','Thursday','Friday'),
+    IN pStartTime   TIME,
+    IN pEndTime     TIME,
+    IN pRoomID      INT
+)
+BEGIN
+    --------------------------------------------------------------------------
+    --  1) Declare all variables and the cursor right after BEGIN
+    --------------------------------------------------------------------------
+    DECLARE done               INT DEFAULT FALSE;
+    DECLARE vScheduleID        INT;
+    DECLARE vSessionID         INT;
+    DECLARE vOrigDurationSec   INT;
+    DECLARE vStart             TIME;
+    DECLARE vEnd               TIME;
+    DECLARE vPrevEnd           TIME DEFAULT NULL;
+
+    -- Cursor that selects all sessions for (pRoomID, pDayOfWeek) in ascending order
+    DECLARE cur CURSOR FOR
+        SELECT
+            sc.ScheduleID,
+            sc.SessionID,
+            TIME_TO_SEC(sa.Duration) AS OrigDurationSec,
+            sc.StartTime,
+            sc.EndTime
+        FROM SessionSchedule sc
+        JOIN SessionAssignments sa ON sc.SessionID = sa.SessionID
+        WHERE sc.RoomID = pRoomID
+          AND sc.DayOfWeek = pDayOfWeek
+        ORDER BY sc.StartTime;
+
+    -- A continue handler to exit the loop when no more rows
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    --------------------------------------------------------------------------
+    -- 2) Main logic
+    --------------------------------------------------------------------------
+    START TRANSACTION;
+
+    -- (A) Upsert the session (insert or update if already exists)
+    INSERT INTO SessionSchedule (SessionID, DayOfWeek, StartTime, EndTime, RoomID)
+    VALUES (pSessionID, pDayOfWeek, pStartTime, pEndTime, pRoomID)
+    ON DUPLICATE KEY UPDATE
+        DayOfWeek = VALUES(DayOfWeek),
+        StartTime = VALUES(StartTime),
+        EndTime   = VALUES(EndTime),
+        RoomID    = VALUES(RoomID);
+
+    -- (B) Open the cursor over the final data
+    SET vPrevEnd = NULL;
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO vScheduleID, vSessionID, vOrigDurationSec, vStart, vEnd;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        IF vPrevEnd IS NOT NULL THEN
+            -- If the current StartTime is less than (vPrevEnd + 15 min),
+            -- push it forward so there's a 15-min gap
+            IF vStart < (vPrevEnd + INTERVAL 15 MINUTE) THEN
+                SET vStart = vPrevEnd + INTERVAL 15 MINUTE;
+                SET vEnd   = ADDTIME(vStart, SEC_TO_TIME(vOrigDurationSec));
+
+                UPDATE SessionSchedule
+                SET StartTime = vStart,
+                    EndTime   = vEnd
+                WHERE ScheduleID = vScheduleID;
+            END IF;
+        END IF;
+
+        SET vPrevEnd = vEnd;  -- move forward
+    END LOOP;
+
+    CLOSE cur;
+
+    -- (C) Optionally check if the last session extends beyond e.g. 19:00
+    -- If yes, you might do ROLLBACK or just proceed.
+    -- Example (uncomment if you want to enforce a cutoff):
+    -- IF vPrevEnd > '19:00:00' THEN
+    --     ROLLBACK;
+    --     SIGNAL SQLSTATE '45000'
+    --         SET MESSAGE_TEXT = 'Cannot fit sessions before 19:00 cutoff!';
+    -- END IF;
+
+    COMMIT;
+END $$
+
+DELIMITER ;

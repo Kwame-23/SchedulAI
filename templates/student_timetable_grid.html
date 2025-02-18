@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="timetable-container">
+  <div class="timetable-header">
+    <h3>{{ student_label }} - Timetable Grid</h3>
+  </div>
+
+  <div class="table-responsive">
+    <table class="timetable-table table table-bordered">
+      <thead>
+        <tr>
+          <th>Time</th>
+          {% for day in days %}
+            <th>{{ day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody id="timetable-body">
+        {% for time in timeslots %}
+        <tr>
+          <td class="time-slot">{{ time }}</td>
+          {% for day in days %}
+          <td data-day="{{ day }}" data-time="{{ time }}">
+            {% for session in matrix_data[day][time] %}
+              <div class="session-block"
+                   style="background-color: {{ cohort_colors[session.CohortName] | default('#6c757d') }};"
+                   onclick="showSessionDetails('{{ session.CourseCode }}', '{{ session.LecturerName }}', '{{ session.SessionType }}', '{{ session.RoomName }}', '{{ session.StartTime }} - {{ session.EndTime }}', '{{ session.CohortName }}', '{{ day }}')">
+                <div class="session-content">
+                  <strong>{{ session.CourseCode }}</strong><br>
+                  {{ session.LecturerName }}<br>
+                  {{ session.SessionType }}<br>
+                  <small>{{ session.CohortName }}</small>
+                </div>
+              </div>
+            {% endfor %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Structure -->
+<div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sessionModalLabel">Session Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Course Code:</strong> <span id="modal-course-code"></span></p>
+        <p><strong>Lecturer:</strong> <span id="modal-lecturer"></span></p>
+        <p><strong>Session Type:</strong> <span id="modal-session-type"></span></p>
+        <p><strong>Room:</strong> <span id="modal-room"></span></p>
+        <p><strong>Time:</strong> <span id="modal-time"></span></p>
+        <p><strong>Cohort:</strong> <span id="modal-cohort"></span></p>
+        <input type="hidden" id="modal-day" value="">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Inline CSS for Cohort-Based Colour Coding -->
+<style>
+  .timetable-container {
+    margin: 20px;
+  }
+  .timetable-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .table-responsive {
+    margin: 0 auto;
+  }
+  .timetable-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .timetable-table th,
+  .timetable-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    vertical-align: top;
+    min-height: 60px;
+  }
+  .timetable-table th {
+    background-color: #f8f9fa;
+    text-align: center;
+    font-weight: bold;
+  }
+  .time-slot {
+    width: 60px;
+    text-align: right;
+    padding-right: 10px;
+    background-color: #f1f1f1;
+    font-weight: bold;
+  }
+  .session-block {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 4px;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.85em;
+    white-space: normal;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .session-block:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+  .session-content {
+    flex: 1;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Global object to store details of the clicked session.
+  let currentSessionDetails = {};
+
+  /**
+   * Show session details in a modal.
+   */
+  function showSessionDetails(courseCode, lecturer, sessionType, room, time, cohort, day) {
+    document.getElementById('modal-course-code').innerText = courseCode;
+    document.getElementById('modal-lecturer').innerText = lecturer;
+    document.getElementById('modal-session-type').innerText = sessionType;
+    document.getElementById('modal-room').innerText = room;
+    document.getElementById('modal-time').innerText = time;
+    document.getElementById('modal-cohort').innerText = cohort;
+    document.getElementById('modal-day').value = day;
+    
+    currentSessionDetails = {
+      courseCode: courseCode,
+      lecturer: lecturer,
+      sessionType: sessionType,
+      room: room,
+      cohort: cohort,
+      day: day,
+      time: time
+    };
+    
+    const sessionModal = new bootstrap.Modal(document.getElementById('sessionModal'), {
+      keyboard: false
+    });
+    sessionModal.show();
+  }
+</script>
+{% endblock %}
