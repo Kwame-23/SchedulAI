@@ -1,313 +1,384 @@
-import datetime
+#!/usr/bin/env python3
+"""
+feasibility_checker.py
+
+This module generates all possible non‐conflicting timetables for a student based on their
+selected courses (as stored in StudentCourseSelection). For each student (identified by
+(StudentID, Type)), we:
+  1. Retrieve the list of courses the student selected.
+  2. For each course, if the course is an elective placeholder (ELECTIVE, ELECTIVE1, or ELECTIVE2),
+     expand it into the list of actual elective course codes (retrieved from the Course table
+     and filtered by the student’s major via major_prefix_mapping). Then, for each course code
+     (either from the original selection or from expansion), fetch available sections (cohorts)
+     along with their sessions from SessionAssignments joined with SessionSchedule.
+  3. Generate every combination (Cartesian product) of one section per course.
+  4. Check for time conflicts among the sessions in each combination.
+  5. Return the feasible (conflict‑free) timetables (and, for debugging, also those with conflicts).
+
+A Flask blueprint (feasibility_bp) is provided to expose the results as a JSON endpoint.
+"""
+
 import mysql.connector
 import logging
-from datetime import time, timedelta, datetime
+from datetime import datetime, timedelta
+from itertools import product
 from collections import defaultdict
-from flask import Flask, request, render_template, flash, redirect
-from flask import Blueprint
+from flask import Blueprint, jsonify
 
-app = Flask(__name__)
-feasibility_bp = Blueprint('feasibility', __name__)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
-# ----------------------------------------------------------------
-# Helper functions to get data from the database.
-# ----------------------------------------------------------------
+# ---------------------------
+# Database Connection Helper
+# ---------------------------
 def get_db_connection():
     try:
         conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Naakey057@",
-            database="schedulai"
+            host='localhost',
+            user='root',
+            password='Naakey057@',
+            database='schedulai'
         )
         return conn
-    except mysql.connector.Error as e:
-        logging.error(f"Database connection error: {e}")
-        raise
-
-def fetch_student_course_selections():
-    """
-    Fetches rows from StudentCourseSelection.
-    Expected columns: StudentID, CourseCode, Type
-    """
-    query = "SELECT StudentID, CourseCode, Type FROM StudentCourseSelection"
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(query)
-        selections = cursor.fetchall()
-        return selections
     except mysql.connector.Error as err:
-        logging.error(f"Error fetching course selections: {err}")
-        return []
-    finally:
-        cursor.close()
-        conn.close()
+        logging.error(f"Database connection failed: {err}")
+        return None
 
-def fetch_final_schedule():
-    query = """
-        SELECT sa.CourseCode, sa.CohortName, ss.DayOfWeek, ss.StartTime, ss.EndTime
-        FROM SessionAssignments sa
-        JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
-    """
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                cursor.execute(query)
-                rows = cursor.fetchall()
-        return rows
-    except mysql.connector.Error as err:
-        logging.error(f"Error fetching final schedule: {err}")
-        return []
+# ---------------------------
+# Major Prefix Mapping (Unused without electives)
+# ---------------------------
+major_prefix_mapping = {
+    1: ['BUSA', 'ECON'],       # Business Administration
+    2: ['CS'],                 # Computer Science
+    3: ['IS', 'MIS', 'CS'],    # Management Information Systems
+    4: ['CE', 'ENGR', 'CS'],   # Computer Engineering
+    5: ['MECH'],               # Mechatronics Engineering (assumed)
+    6: ['ME', 'ENGR'],         # Mechanical Engineering
+    7: ['EE', 'ENGR'],         # Electrical and Electronic Engineering
+    8: ['LAW'],                # Law with Public Policy (assumed)
+}
 
-def fetch_students():
+def get_student_major_prefixes(student_id):
     """
-    Fetches basic student information.
-    Expected columns include: StudentID, YearNumber, MajorID, etc.
+    Retrieves the student's MajorID from the Student table and returns the associated
+    list of elective prefixes.
+    (This function is retained for use when expanding electives.)
     """
-    query = "SELECT StudentID, YearNumber, MajorID FROM Student"
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(query)
-        students = cursor.fetchall()
-        return students
-    except mysql.connector.Error as err:
-        logging.error(f"Error fetching students: {err}")
+    if not conn:
         return []
-    finally:
-        cursor.close()
-        conn.close()
-
-# ----------------------------------------------------------------
-# Helper to determine if two time intervals overlap.
-# ----------------------------------------------------------------
-def times_overlap(start1: time, end1: time, start2: time, end2: time) -> bool:
-    """Return True if the two time intervals overlap."""
-    return max(start1, start2) < min(end1, end2)
-
-# ----------------------------------------------------------------
-# Updated feasibility check function
-# This function now groups the course selections by (StudentID, Type)
-# and then, for each group, attempts to assign a cohort for each course
-# such that none of the chosen sessions overlap.
-# ----------------------------------------------------------------
-def run_feasibility_check() -> list:
-    """
-    Checks feasibility for student course selections by grouping them by 
-    (StudentID, Type) so that scheduling conflicts are resolved within each group.
-    
-    Returns a list of conflict dicts (if any).
-    """
-    try:
-        selections = fetch_student_course_selections()
-        students = fetch_students()
-        final_schedule = fetch_final_schedule()
-    except Exception as e:
-        logging.error(f"Error fetching data: {e}")
-        return [{"Error": "Data fetching failed"}]
-    
-    # Group course selections by (StudentID, Type)
-    student_groups = defaultdict(list)
-    for sel in selections:
-        # Skip elective courses (from ProgramPlan) with course codes ELECTIVE1 or ELECTIVE2.
-        if sel['CourseCode'] in ('ELECTIVE1', 'ELECTIVE2'):
-            continue
-        group_key = (sel['StudentID'], sel.get('Type') or 'No Subtype')
-        student_groups[group_key].append(sel['CourseCode'])
-    
-    # Organize the available sessions by (CourseCode, CohortName)
-    sessions_by_course_cohort = defaultdict(list)
-    for sess in final_schedule:
-        key = (sess["CourseCode"], sess["CohortName"])
-        sessions_by_course_cohort[key].append(sess)
-    
-    conflicts = []
-    
-    # For each (student, type) group, try to assign a cohort per course.
-    for (student_id, type_), courses in student_groups.items():
-        # Get a simple student label for reporting.
-        student_info = next((s for s in students if s["StudentID"] == student_id), {})
-        student_label = f"StudentID {student_id} ({type_})"
-        
-        # For each course, build a list of available cohorts.
-        available_cohorts = {}
-        for course in courses:
-            cohorts = {key[1] for key in sessions_by_course_cohort if key[0] == course}
-            if not cohorts:
-                conflicts.append({
-                    "Student": student_label,
-                    "Conflict": f"No available cohorts for course {course}"
-                })
-                break  # Skip further processing for this group
-            available_cohorts[course] = list(cohorts)
-        else:
-            # Backtracking assignment: try to choose one cohort per course
-            assigned = {}
-            session_assignments = []  # List of sessions (from chosen cohorts) for this student group
-            
-            def backtrack(i):
-                if i == len(courses):
-                    return True  # All courses have been assigned a feasible cohort
-                course = courses[i]
-                for cohort in available_cohorts[course]:
-                    sessions = sessions_by_course_cohort.get((course, cohort), [])
-                    conflict_found = False
-                    # Check for conflicts with sessions already assigned in this group.
-                    for sess in sessions:
-                        for assigned_sess in session_assignments:
-                            if sess["DayOfWeek"] == assigned_sess["DayOfWeek"]:
-                                if times_overlap(sess["StartTime"], sess["EndTime"],
-                                                 assigned_sess["StartTime"], assigned_sess["EndTime"]):
-                                    conflict_found = True
-                                    break
-                        if conflict_found:
-                            break
-                    if conflict_found:
-                        continue
-                    # Assign this cohort and add its sessions.
-                    assigned[course] = cohort
-                    session_assignments.extend(sessions)
-                    if backtrack(i + 1):
-                        return True
-                    # Backtrack: remove the sessions for this course.
-                    for _ in sessions:
-                        session_assignments.pop()
-                    assigned.pop(course, None)
-                return False
-            
-            if not backtrack(0):
-                conflicts.append({
-                    "Student": student_label,
-                    "Conflict": "No feasible cohort assignments found without scheduling conflicts."
-                })
-    return conflicts
-
-# ----------------------------------------------------------------
-# Helper: Generate list of timeslots (e.g. every 30 minutes)
-# ----------------------------------------------------------------
-def generate_timeslots(start="08:00", end="19:00", interval_minutes=30):
-    timeslots = []
-    start_dt = datetime.strptime(start, "%H:%M")
-    end_dt = datetime.strptime(end, "%H:%M")
-    current = start_dt
-    while current <= end_dt:
-        timeslots.append(current.strftime("%H:%M"))
-        current += timedelta(minutes=interval_minutes)
-    return timeslots
-
-# ----------------------------------------------------------------
-# NEW ROUTE: /timetable_combinations
-# This route reads query parameters (student_id and type), uses a backtracking
-# routine to generate all conflict-free timetable combinations for the student's
-# course selections, and prepares grid parameters for display.
-# ----------------------------------------------------------------
-@feasibility_bp.route('/timetable_combinations')
-def timetable_combinations():
-    student_id = request.args.get("student_id", type=int)
-    course_type = request.args.get("type", default="No Subtype")
-    if not student_id:
-        flash("Student ID missing", "danger")
-        return redirect("/")
-    
-    # Fetch the student's courses for the specified type.
-    conn = get_db_connection()
     try:
         with conn.cursor(dictionary=True) as cursor:
-            # Exclude courses ELECTIVE1 and ELECTIVE2 from the student's course selections.
-            query = """
-                SELECT CourseCode 
-                FROM StudentCourseSelection 
-                WHERE StudentID = %s 
-                  AND Type = %s 
-                  AND CourseCode NOT IN ('ELECTIVE1', 'ELECTIVE2')
-            """
-            cursor.execute(query, (student_id, course_type))
-            rows = cursor.fetchall()
-        courses = [r["CourseCode"] for r in rows]
+            cursor.execute("SELECT MajorID FROM Student WHERE StudentID = %s", (student_id,))
+            row = cursor.fetchone()
+            if row and row.get("MajorID"):
+                major_id = row["MajorID"]
+                return major_prefix_mapping.get(major_id, [])
+            else:
+                return []
     except Exception as e:
-        logging.error(f"Error fetching courses for student {student_id}: {e}")
-        courses = []
+        logging.error(f"Error retrieving major for student {student_id}: {e}")
+        return []
     finally:
         conn.close()
+
+# ------------------------------------------------
+# Helper: Fetch All Real Elective Courses
+# ------------------------------------------------
+def fetch_all_electives_codes():
+    """
+    Retrieves a list of CourseCodes for all real elective courses.
+    Excludes the placeholder codes (ELECTIVE, ELECTIVE1, ELECTIVE2).
+    """
+    codes = []
+    conn = get_db_connection()
+    if not conn:
+        return codes
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            query = """
+                SELECT CourseCode 
+                FROM Course 
+                WHERE RequirementType = 'Elective'
+                  AND CourseCode NOT IN ('ELECTIVE', 'ELECTIVE1', 'ELECTIVE2')
+            """
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            codes = [row["CourseCode"] for row in rows]
+    except Exception as e:
+        logging.error(f"Error fetching elective courses: {e}")
+    finally:
+        conn.close()
+    return codes
+
+# ------------------------------------------------
+# Helper: Expand Elective Placeholders
+# ------------------------------------------------
+def expand_electives(course_code, student_id):
+    """
+    If course_code is one of the placeholders ("ELECTIVE", "ELECTIVE1", "ELECTIVE2"),
+    retrieve the corresponding list of real elective course codes.
+    Otherwise, return a list with the original course_code.
+    """
+    if course_code not in ("ELECTIVE", "ELECTIVE1", "ELECTIVE2"):
+        return [course_code]
     
-    if not courses:
-        flash("No courses found for the selected student and type.", "warning")
-        return redirect("/")
+    elective_codes = fetch_all_electives_codes()
+    if course_code == "ELECTIVE":
+        return elective_codes
+    prefixes = get_student_major_prefixes(student_id)
+    if course_code == "ELECTIVE1":
+        # Major electives: only those elective courses whose code starts with a major prefix.
+        return [c for c in elective_codes if any(c.startswith(prefix) for prefix in prefixes)]
+    if course_code == "ELECTIVE2":
+        # Non-major electives: electives that do not match any of the major prefixes.
+        return [c for c in elective_codes if not any(c.startswith(prefix) for prefix in prefixes)]
+    return [course_code]  # Fallback
+
+# ------------------------------------------------
+# Fetch Available Sections for a Given Course
+# ------------------------------------------------
+def fetch_sections_for_course(course_code):
+    """
+    For a given course code, fetch available sections (cohorts)
+    and their sessions from SessionAssignments joined with SessionSchedule.
+    Returns a list of section dictionaries.
+    """
+    sections = defaultdict(list)
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            query = """
+                SELECT sa.CohortName, ss.DayOfWeek, ss.StartTime, ss.EndTime
+                FROM SessionAssignments sa
+                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                WHERE sa.CourseCode = %s
+            """
+            cursor.execute(query, (course_code,))
+            rows = cursor.fetchall()
+            for row in rows:
+                cohort = row["CohortName"]
+                session_info = {
+                    "day": row["DayOfWeek"],
+                    "start": row["StartTime"],
+                    "end": row["EndTime"]
+                }
+                sections[cohort].append(session_info)
+    except Exception as e:
+        logging.error(f"Error fetching sections for course {course_code}: {e}")
+    finally:
+        conn.close()
+    section_list = []
+    for cohort, sessions in sections.items():
+        if sessions:  # Only include sections with at least one session.
+            section_list.append({
+                "cohort": cohort,
+                "sessions": sessions,
+                "course_code": course_code
+            })
+    return section_list
+
+# ------------------------------------------------
+# Check if Two Sessions Overlap (Conflict Checker)
+# ------------------------------------------------
+def sessions_conflict(s1, s2):
+    """
+    Given two sessions (each with keys: day, start, end),
+    returns True if they overlap in time (on the same day).
+    """
+    if s1["day"] != s2["day"]:
+        return False
+    return s1["start"] < s2["end"] and s1["end"] > s2["start"]
+
+# ------------------------------------------------
+# Check if a Combination of Sections has any Conflicts
+# ------------------------------------------------
+def timetable_conflicts(section_combination):
+    """
+    Given a list of sections (each as a dict with its sessions),
+    check for any time conflicts among all sessions.
+    Each section’s sessions are treated as an atomic block.
+    """
+    all_sessions = []
+    for sec in section_combination:
+        if not sec.get("sessions"):
+            continue
+        all_sessions.extend(sec["sessions"])
+    n = len(all_sessions)
+    for i in range(n):
+        for j in range(i + 1, n):
+            if sessions_conflict(all_sessions[i], all_sessions[j]):
+                return True
+    return False
+
+# ------------------------------------------------
+# (Optional) Iterative Combination Builder
+# ------------------------------------------------
+def generate_timetables_iterative(sections_by_course):
+    """
+    An alternative to a full Cartesian product: iteratively build the timetable.
+    """
+    feasible = []
+    base_candidates = sections_by_course[0]
+    for sec in base_candidates:
+        candidate = [sec]
+        def add_section(index, current_candidate):
+            if index >= len(sections_by_course):
+                feasible.append(current_candidate)
+                return
+            for sec in sections_by_course[index]:
+                new_candidate = current_candidate + [sec]
+                if not timetable_conflicts(new_candidate):
+                    add_section(index + 1, new_candidate)
+        add_section(1, candidate)
+    return feasible
+
+# ------------------------------------------------
+# Generate Feasible Timetables for a Single Student
+# ------------------------------------------------
+def generate_feasible_timetables_for_student(course_codes, student_id):
+    """
+    Given a list of course codes for a student and the student's ID,
+    fetch sections for each course (expanding electives as needed),
+    then generate and filter combinations based on time conflicts.
+
+    Returns a tuple: (feasible_combinations, conflicting_combinations)
+    """
+    # Expand elective placeholders:
+    # For each course code, if it is ELECTIVE/ELECTIVE1/ELECTIVE2, expand it to a list of real elective codes.
+    expanded_course_list = []
+    for code in course_codes:
+        expanded = expand_electives(code, student_id)
+        expanded_course_list.append(expanded)
     
-    # Fetch final schedule sessions.
-    final_schedule = fetch_final_schedule()
+    # For each group (list of course codes) in the expanded list, fetch all sections and merge them.
+    sections_by_course = []
+    for group in expanded_course_list:
+        group_sections = []
+        for code in group:
+            secs = fetch_sections_for_course(code)
+            if secs:
+                group_sections.extend(secs)
+        if not group_sections:
+            logging.warning(f"No sections found for course group {group}.")
+            sections_by_course = []
+            break
+        sections_by_course.append(group_sections)
     
-    # Organize available sessions by (CourseCode, CohortName)
-    sessions_by_course_cohort = defaultdict(list)
-    for sess in final_schedule:
-        key = (sess["CourseCode"], sess["CohortName"])
-        sessions_by_course_cohort[key].append(sess)
-    
-    # Determine available cohorts for each course.
-    available_cohorts = {}
-    for course in courses:
-        cohorts = {key[1] for key in sessions_by_course_cohort if key[0] == course}
-        if not cohorts:
-            flash(f"No available cohorts for course {course}", "danger")
-            available_cohorts[course] = []
+    overall_feasible = []
+    overall_conflicts = []
+    if not sections_by_course:
+        return overall_feasible, overall_conflicts
+    # Full Cartesian product approach:
+    for combination in product(*sections_by_course):
+        if timetable_conflicts(combination):
+            overall_conflicts.append(combination)
         else:
-            available_cohorts[course] = list(cohorts)
-    
-    # Backtracking: generate all conflict-free combinations.
-    solutions = []  # Each solution is a tuple: (assignment, session_list)
-    current_assignment = {}
-    current_sessions = []  # List of session dicts
+            overall_feasible.append(combination)
+    # Alternatively, one could use the iterative approach:
+    # feasible_iter = generate_timetables_iterative(sections_by_course)
+    # overall_feasible.extend(feasible_iter)
+    return overall_feasible, overall_conflicts
 
-    def backtrack(i):
-        if i == len(courses):
-            solutions.append((current_assignment.copy(), list(current_sessions)))
-            return
-        course = courses[i]
-        for cohort in available_cohorts[course]:
-            sessions = sessions_by_course_cohort.get((course, cohort), [])
-            conflict_found = False
-            for sess in sessions:
-                for assigned_sess in current_sessions:
-                    if sess["DayOfWeek"] == assigned_sess["DayOfWeek"]:
-                        if times_overlap(sess["StartTime"], sess["EndTime"],
-                                         assigned_sess["StartTime"], assigned_sess["EndTime"]):
-                            conflict_found = True
-                            break
-                if conflict_found:
-                    break
-            if conflict_found:
-                continue
-            current_assignment[course] = cohort
-            num_added = len(sessions)
-            current_sessions.extend(sessions)
-            backtrack(i+1)
-            for _ in range(num_added):
-                current_sessions.pop()
-            current_assignment.pop(course, None)
-    
-    backtrack(0)
-    logging.info(f"Generated {len(solutions)} conflict-free timetable combinations for student {student_id} ({course_type}).")
-    
-    # Define grid parameters.
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    timeslots = generate_timeslots("08:00", "19:00", 30)
-    
-    return render_template("timetable_combinations.html",
-                           solutions=solutions,
-                           student_id=student_id,
-                           type=course_type,
-                           days=days,
-                           timeslots=timeslots)
+# ------------------------------------------------
+# Fetch Student Course Selections from Database
+# ------------------------------------------------
+def fetch_student_course_selections():
+    """
+    Returns a dictionary with keys as (StudentID, Type)
+    and values as lists of CourseCodes selected.
+    """
+    selections = defaultdict(list)
+    conn = get_db_connection()
+    if not conn:
+        return selections
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT StudentID, CourseCode, Type FROM StudentCourseSelection")
+            rows = cursor.fetchall()
+            for row in rows:
+                key = (row["StudentID"], row["Type"])
+                selections[key].append(row["CourseCode"])
+    except Exception as e:
+        logging.error("Error fetching student course selections: " + str(e))
+    finally:
+        conn.close()
+    return selections
 
-# ----------------------------------------------------------------
-# For testing purposes you might run this module directly.
-# ----------------------------------------------------------------
-if __name__ == "__main__":
-    conflict_list = run_feasibility_check()
-    if conflict_list:
-        print("Conflicts detected:")
-        for c in conflict_list:
-            print(c)
-    else:
-        print("No conflicts detected. All course selections are feasible.")
+# ------------------------------------------------
+# Generate Timetables for All Students in the System
+# ------------------------------------------------
+def generate_all_feasible_timetables_with_conflicts():
+    """
+    For each unique student (identified by (StudentID, Type) in StudentCourseSelection),
+    generate all feasible timetables based on the courses selected.
+
+    Returns a dictionary mapping (StudentID, Type) to a dict with keys:
+       "courses", "feasible_timetables", "conflict_timetables"
+    """
+    results = {}
+    selections = fetch_student_course_selections()  # key: (StudentID, Type)
+    for key, course_list in selections.items():
+        student_id, sel_type = key
+        feasible, conflicts = generate_feasible_timetables_for_student(course_list, student_id)
+        results[key] = {
+            "courses": course_list,
+            "feasible_timetables": feasible,
+            "conflict_timetables": conflicts
+        }
+    return results
+
+# ------------------------------------------------
+# Flask Blueprint for Feasibility Check Endpoint
+# ------------------------------------------------
+feasibility_bp = Blueprint('feasibility', __name__)
+
+@feasibility_bp.route('/feasibility_check', methods=['GET'])
+def feasibility_check():
+    """
+    Flask endpoint that returns the feasibility check results as JSON.
+    For each student (StudentID and Type) it returns the list of courses selected and
+    the feasible timetables found (with sessions’ times formatted as "HH:MM").
+    """
+    try:
+        results = generate_all_feasible_timetables_with_conflicts()
+        serializable_results = {}
+        for key, data in results.items():
+            student_id, sel_type = key
+            feasibles_serial = []
+            for combo in data["feasible_timetables"]:
+                combo_serial = []
+                for sec in combo:
+                    sec_serial = {
+                        "cohort": sec["cohort"],
+                        "course_code": sec["course_code"],
+                        "sessions": []
+                    }
+                    for s in sec["sessions"]:
+                        start_str = s["start"].strftime("%H:%M") if hasattr(s["start"], "strftime") else str(s["start"])
+                        end_str = s["end"].strftime("%H:%M") if hasattr(s["end"], "strftime") else str(s["end"])
+                        sec_serial["sessions"].append({
+                            "day": s["day"],
+                            "start": start_str,
+                            "end": end_str
+                        })
+                    combo_serial.append(sec_serial)
+                feasibles_serial.append(combo_serial)
+            serializable_results[f"{student_id}_{sel_type}"] = {
+                "courses": data["courses"],
+                "feasible_timetables": feasibles_serial,
+                "conflict_timetables_count": len(data["conflict_timetables"])
+            }
+        return jsonify(serializable_results), 200
+    except Exception as e:
+        logging.error("Error in feasibility check endpoint: " + str(e))
+        return jsonify({"message": "Error during feasibility check", "error": str(e)}), 500
+
+if __name__ == '__main__':
+    # To run the feasibility checker standalone, create a minimal Flask app.
+    from flask import Flask
+    app = Flask(__name__)
+    app.register_blueprint(feasibility_bp, url_prefix='/')
+    app.run(debug=True)
