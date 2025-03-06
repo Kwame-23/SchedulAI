@@ -1,76 +1,45 @@
-<!-- templates/feasibility.html -->
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block content %}
+<div class="container mt-4">
   <h2>Feasibility Check Results</h2>
-
-
-  {% if conflicts %}
-    {% for conflict in conflicts %}
+  {% if feasibility_results %}
+    {% for student_key, result in feasibility_results.items() %}
       <div class="card mb-4">
         <div class="card-header">
-          Conflict Detected for {{ conflict.Student }}
+          <h4>Student {{ student_key }}</h4>
         </div>
         <div class="card-body">
-          {% if conflict.Conflicts %}
-            {% for individual_conflict in conflict.Conflicts %}
-              <div class="mb-3">
-                <p><strong>Conflict Type:</strong> {{ individual_conflict.Type }}</p>
-                {% if individual_conflict.Type == "Cohort Assignment" %}
-                  <p><strong>Details:</strong> {{ individual_conflict.Details }}</p>
-                {% elif individual_conflict.Type == "Max Sessions Exceeded" %}
-                  <p><strong>Day:</strong> {{ individual_conflict.Day }}</p>
-                  <p><strong>Session Count:</strong> {{ individual_conflict.SessionCount }}</p>
-                  <p><strong>Details:</strong> {{ individual_conflict.Details }}</p>
-                  <p><strong>Conflicting Sessions:</strong></p>
-                  <ul>
-                    {% for sess in individual_conflict.Sessions %}
-                      <li>
-                        <strong>{{ sess.CourseCode }}</strong>: {{ sess.SessionType }} in {{ sess.RoomName }}
-                        (Scheduled Time: {{ sess.StartTime }} - {{ sess.EndTime }})
-                      </li>
+          <p><strong>Selected Courses:</strong> {{ result.courses | join(', ') }}</p>
+          {% if result.feasible_timetables | length > 0 %}
+            <div class="alert alert-success">
+              {{ result.feasible_timetables | length }} valid timetable combination(s) found.
+            </div>
+            <ul class="list-group">
+              {% for timetable in result.feasible_timetables %}
+                <li class="list-group-item">
+                  {% for section in timetable %}
+                    <strong>{{ section.course_code }} – {{ section.cohort }}</strong>:
+                    {% for session in section.sessions %}
+                      [{{ session.day }} {{ session.start }}–{{ session.end }}]
                     {% endfor %}
-                  </ul>
-                {% elif individual_conflict.Type == "Overlapping Sessions" %}
-                  <p><strong>Day:</strong> {{ individual_conflict.Day }}</p>
-                  {% for overlap in individual_conflict.Conflicts %}
-                    <p>{{ overlap.Details }}</p>
-                    <ul>
-                      {% for sess in overlap.Sessions %}
-                        <li>
-                          <strong>{{ sess.CourseCode }}</strong>: {{ sess.SessionType }} in {{ sess.RoomName }}
-                          (Scheduled Time: {{ sess.StartTime }} - {{ sess.EndTime }})
-                        </li>
-                      {% endfor %}
-                    </ul>
+                    {% if not loop.last %} | {% endif %}
                   {% endfor %}
-                {% elif individual_conflict.Type == "Cross-Type Overlapping Sessions" %}
-                  <p><strong>Day:</strong> {{ individual_conflict.Day }}</p>
-                  {% for overlap in individual_conflict.Conflicts %}
-                    <p>{{ overlap.Details }}</p>
-                    <ul>
-                      {% for sess in overlap.Sessions %}
-                        <li>
-                          <strong>{{ sess.CourseCode }}</strong> ({{ sess.Type }}): {{ sess.SessionType }} in {{ sess.RoomName }}
-                          (Scheduled Time: {{ sess.StartTime }} - {{ sess.EndTime }})
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  {% endfor %}
-                {% else %}
-                  <p><strong>Details:</strong> {{ individual_conflict.Details }}</p>
-                {% endif %}
-              </div>
-            {% endfor %}
+                </li>
+              {% endfor %}
+            </ul>
           {% else %}
-            <p><strong>Details:</strong> {{ conflict.Conflict }}</p>
+            <div class="alert alert-danger">
+              No valid (conflict‑free) timetable found.
+            </div>
           {% endif %}
+          <p class="mt-2"><small>Conflict combinations count: {{ result.conflict_timetables_count }}</small></p>
         </div>
       </div>
     {% endfor %}
   {% else %}
-    <div class="alert alert-success" role="alert">
-      All student groups are within the session limits. No conflicts detected.
+    <div class="alert alert-info">
+      No feasibility data available.
     </div>
   {% endif %}
+</div>
 {% endblock %}

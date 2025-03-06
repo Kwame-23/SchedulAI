@@ -8,12 +8,47 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Optional: Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+      /* Custom inline styles for purple and white theme */
+      body {
+        background-color: #ffffff;
+        color: #333;
+      }
+      .navbar-brand, .nav-link {
+        font-weight: 600;
+        color: #d0d0d0;
+      }
+      .navbar {
+        background-color: #673ab7 !important;
+      }
+      .nav-link {
+        color: #ffffff !important;
+      }
+      .nav-link:hover {
+        color: #d1c4e9 !important;
+      }
+      .alert {
+        border: 1px solid #673ab7;
+      }
+      .btn-primary {
+        background-color: #673ab7;
+        border-color: #673ab7;
+      }
+      .btn-primary:hover {
+        background-color: #5e35b1;
+        border-color: #5e35b1;
+      }
+      .modal-header {
+        background-color: #673ab7;
+        color: #fff;
+      }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{{ url_for('home') }}">Schedulai</a>
+        <a class="navbar-brand" href="{{ url_for('homepage') }}">Schedulai</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -21,34 +56,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('lecturers') }}">Lecturers</a>
+              <a class="nav-link" href="{{ url_for('conflict_free_matrix') }}">Conflict-Free Matrix</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('rooms') }}">Rooms</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('assign_sessions') }}">Assign Sessions</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('courses') }}">Courses</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('student_courses') }}">Student Courses</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('timetable') }}">Timetable</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('conflicts') }}">Conflicts</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('run_scheduler_route') }}">Run Scheduler</a>
+              <a class="nav-link" href="{{ url_for('conflicts') }}">Conflict Resolution</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('feasibility') }}">Feasibility Check</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('summary') }}">Summary</a>
+              <a class="nav-link" href="{{ url_for('student_timetables') }}">Student Timetables</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('timetable') }}">Timetable</a>
             </li>
           </ul>
         </div>
@@ -75,7 +95,7 @@
         {% endblock %}
     </div>
     
-    <!-- Modal Structure (for Timetable) -->
+    <!-- Modal Structure (for Timetable details) -->
     <div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -97,20 +117,15 @@
       </div>
     </div>
     
-    <!-- 1) Correct jQuery Script with matching integrity hash -->
-    <script
-      src="https://code.jquery.com/jquery-3.6.4.min.js"
-      integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
-      crossorigin="anonymous">
-    </script>
-
-    <!-- 2) Bootstrap JS Bundle (includes Popper) -->
+    <!-- jQuery (Optional) -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" 
+            integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" 
+            crossorigin="anonymous"></script>
+    <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- 3) (Optional) Your custom JS -->
+    <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
-    <!-- 4) Child template scripts (like conflict_resolution.html) -->
     {% block scripts %}
     {% endblock %}
 </body>

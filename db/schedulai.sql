@@ -558,14 +558,27 @@ VALUES
 (259, 'BUSA400_B', 'Thesis 2', 'Core', 1, 1.0);
 
 INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
-VALUES ('ELECTIVE1', 'Elective (4 credits)', 'Elective', 1, 1.0);
+VALUES ('ELECTIVE1', 'Major Elective', 'Elective', 1, 1.0);
 
 INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
-VALUES ('ELECTIVE2', 'Extra Major Elective', 'Elective', 1, 1.0);
+VALUES ('ELECTIVE2', 'Non-Major Elective', 'Elective', 1, 1.0);
+
+-- Insert the new "Elective" course
+INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES (
+    'ELECTIVE', 
+    'Major or Non-Major Elective', 
+    'Elective', 
+    1, 
+    1.0
+);
 
 INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES
 (290, 'SOAN301', 'Introduction to Africana Studies: The Global Black Experience', 'Elective', 1, 1.0);
+
+INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES (300, 'MATH101', 'College Algebra', 'Core', 1, 1.0);
 
 
 
@@ -802,7 +815,7 @@ VALUES
     (7, 4, 7, '', 'ELECTIVE1'),
     (7, 4, 7, '', 'ECON100'),
     (7, 4, 7, '', 'CE451'),
-    (7, 4, 7, '', 'ELECTIVE2');
+    (7, 4, 7, '', 'ELECTIVE');
 
 -- Year 4, Semester 8
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -833,6 +846,15 @@ VALUES
 (1, 1, 1, 'II', 'BUSA161'),
 (1, 1, 1, 'II', 'CS111');
 
+-- Type III (Introducing MATH101 as an alternative to MATH121)
+INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
+VALUES
+    (1, 1, 1, 'III', 'AS111'),       -- Ashesi Success
+    (1, 1, 1, 'III', 'MATH101'),      -- College Algebra (replaces MATH121)
+    (1, 1, 1, 'III', 'ENGL112'),      -- Written and Oral Communication
+    (1, 1, 1, 'III', 'BUSA161'),      -- Foundations of Design and Entrepreneurship I
+    (1, 1, 1, 'III', 'CS111');        -- Introduction to Computing and Information Systems
+
 -- Year 1, Semester 2 - Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
@@ -856,7 +878,7 @@ VALUES
 (1, 2, 3, '', 'MATH221'),
 (1, 2, 3, '', 'ECON101'),
 (1, 2, 3, '', 'BUSA210'),
-(1, 2, 3, '', 'ELECTIVE1');
+(1, 2, 3, '', 'ELECTIVE2');
 
 -- Year 2, Semester 4
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -879,17 +901,25 @@ VALUES
 -- Year 3, Semester 6
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
-(1, 3, 6, '', 'SOAN325'),
-(1, 3, 6, '', 'BUSA311'),
-(1, 3, 6, '', 'SOAN411'),
-(1, 3, 6, '', 'BUSA402'),
-(1, 3, 6, '', 'ELECTIVE1');
+(1, 3, 6, 'I', 'SOAN325'),
+(1, 3, 6, 'I', 'BUSA311'),
+(1, 3, 6, 'I', 'SOAN411'),
+(1, 3, 6, 'I', 'BUSA402'),
+(1, 3, 6, 'I', 'ELECTIVE1');
+
+INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
+VALUES
+(1, 3, 6, 'II', 'SOAN325'),
+(1, 3, 6, 'II', 'BUSA311'),
+(1, 3, 6, 'II', 'ELECTIVE'),
+(1, 3, 6, 'II', 'BUSA402'),
+(1, 3, 6, 'II', 'ELECTIVE1');
 
 -- Year 4, Semester 7 - Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 7, 'I', 'BUSA405'),
-(1, 4, 7, 'I', 'ELECTIVE1'),
+(1, 4, 7, 'I', 'ELECTIVE'),
 (1, 4, 7, 'I', 'BUSA321'),
 (1, 4, 7, 'I', 'BUSA400_A');
 
@@ -897,7 +927,7 @@ VALUES
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 7, 'II', 'BUSA405'),
-(1, 4, 7, 'II', 'ELECTIVE1'),
+(1, 4, 7, 'II', 'ELECTIVE'),
 (1, 4, 7, 'II', 'BUSA321'),
 (1, 4, 7, 'II', 'BUSA410_A');
 
@@ -905,7 +935,7 @@ VALUES
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 7, 'III', 'BUSA405'),
-(1, 4, 7, 'III', 'ELECTIVE1'),
+(1, 4, 7, 'III', 'ELECTIVE'),
 (1, 4, 7, 'III', 'BUSA321'),
 (1, 4, 7, 'III', 'BUSA401_A');
 
@@ -913,24 +943,24 @@ VALUES
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 8, 'I', 'BUSA231'),
-(1, 4, 8, 'I', 'ELECTIVE1'),
-(1, 4, 8, 'I', 'ELECTIVE1'),
+(1, 4, 8, 'I', 'ELECTIVE'),
+(1, 4, 8, 'I', 'ELECTIVE'),
 (1, 4, 8, 'I', 'BUSA400_B');
 
 -- Year 4, Semester 8 - Type II
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 8, 'II', 'BUSA231'),
-(1, 4, 8, 'II', 'ELECTIVE1'),
-(1, 4, 8, 'II', 'ELECTIVE1'),
+(1, 4, 8, 'II', 'ELECTIVE'),
+(1, 4, 8, 'II', 'ELECTIVE'),
 (1, 4, 8, 'II', 'BUSA410_B');
 
 -- Year 4, Semester 8 - Type III
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 8, 'III', 'BUSA231'),
-(1, 4, 8, 'III', 'ELECTIVE1'),
-(1, 4, 8, 'III', 'ELECTIVE1'),
+(1, 4, 8, 'III', 'ELECTIVE'),
+(1, 4, 8, 'III', 'ELECTIVE'),
 (1, 4, 8, 'III', 'BUSA401_B');
 
 -- ----------------------------------------------------
@@ -957,6 +987,15 @@ VALUES
     (2, 1, 1, 'II', 'ENGL112'),    -- Written and Oral Communication
     (2, 1, 1, 'II', 'BUSA161'),    -- Foundations of Design and Entrepreneurship I
     (2, 1, 1, 'II', 'CS111');      -- Introduction to Computing and Information Systems
+
+-- Type III (Introducing MATH101 as an alternative to MATH121)
+INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
+VALUES
+    (2, 1, 1, 'III', 'AS111'),       -- Ashesi Success
+    (2, 1, 1, 'III', 'MATH101'),      -- College Algebra (replaces MATH121)
+    (2, 1, 1, 'III', 'ENGL112'),      -- Written and Oral Communication
+    (2, 1, 1, 'III', 'BUSA161'),      -- Foundations of Design and Entrepreneurship I
+    (2, 1, 1, 'III', 'CS111');        -- Introduction to Computing and Information Systems
 
 -- Semester 2
 -- Type I
@@ -1018,6 +1057,7 @@ VALUES
     (2, 3, 5, 'II', 'CS456'),       -- Algorithm Design & Analysis
     (2, 3, 5, 'II', 'CS313'),       -- Intermediate Computer Programming
     (2, 3, 5, 'II', 'CS330');       -- Hardware and Systems Fundamentals
+    (2, 3, 5, 'II', 'ELECTIVE1'); 
 
 -- Semester 6
 -- Type I
@@ -1046,7 +1086,8 @@ VALUES
     (2, 4, 7, 'I', 'CS433'),        -- Operating Systems and Systems Administration
     (2, 4, 7, 'I', 'BUSA224'),      -- Finance for Non-Finance
     (2, 4, 7, 'I', 'CS402'),        -- CSIS Research Seminar
-    (2, 4, 7, 'I', 'CS400_A');      -- Thesis I
+    (2, 4, 7, 'I', 'CS400_A'),      -- Thesis I
+    (2, 4, 7, 'I', 'ELECTIVE');      
 
 -- Semester 7
 -- Type II
@@ -1055,32 +1096,26 @@ VALUES
     (2, 4, 7, 'II', 'CS433'),       -- Operating Systems and Systems Administration
     (2, 4, 7, 'II', 'BUSA224'),     -- Finance for Non-Finance
     (2, 4, 7, 'II', 'CS402'),       -- CSIS Research Seminar
-    (2, 4, 7, 'II', 'ELECTIVE2');   -- Extra Major Elective
-
--- Semester 7
--- Type III
-INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
-VALUES
-    (2, 4, 7, 'III', 'CS433'),      -- Operating Systems and Systems Administration
-    (2, 4, 7, 'III', 'BUSA224'),    -- Finance for Non-Finance
-    (2, 4, 7, 'III', 'CS402');      -- CSIS Research Seminar
+    (2, 4, 7, 'II', 'ELECTIVE1'),   -- Extra Major Elective
+    (2, 4, 7, 'II', 'ELECTIVE');      
 
 -- Semester 7
 -- Type IV
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
-    (2, 4, 7, 'IV', 'CS433'),       -- Operating Systems and Systems Administration
-    (2, 4, 7, 'IV', 'BUSA224'),     -- Finance for Non-Finance
-    (2, 4, 7, 'IV', 'CS402'),       -- CSIS Research Seminar
-    (2, 4, 7, 'IV', 'BUSA401_A');   -- Entrepreneurship I (Capstone)
+    (2, 4, 7, 'III', 'CS433'),       -- Operating Systems and Systems Administration
+    (2, 4, 7, 'III', 'BUSA224'),     -- Finance for Non-Finance
+    (2, 4, 7, 'III', 'CS402'),       -- CSIS Research Seminar
+    (2, 4, 7, 'III', 'BUSA401_A'),   -- Entrepreneurship I (Capstone)
+    (2, 4, 7, 'III', 'ELECTIVE');  
 
 -- Semester 8
 -- Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
     (2, 4, 8, 'I', 'CS432'),        -- Computer Networks and Data Communications
-    (2, 4, 8, 'I', 'ELECTIVE1'),    -- Elective (4 credits)
-    (2, 4, 8, 'I', 'ELECTIVE1'),    -- Elective (4 credits)
+    (2, 4, 8, 'I', 'ELECTIVE'),    -- Elective (4 credits)
+    (2, 4, 8, 'I', 'ELECTIVE'),    -- Elective (4 credits)
     (2, 4, 8, 'I', 'CS400_B');      -- Thesis II
 
 -- Semester 8
@@ -1088,8 +1123,8 @@ VALUES
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
     (2, 4, 8, 'II', 'CS432'),       -- Computer Networks and Data Communications
-    (2, 4, 8, 'II', 'ELECTIVE1'),   -- Elective (4 credits)
-    (2, 4, 8, 'II', 'ELECTIVE1'),   -- Elective (4 credits)
+    (2, 4, 8, 'II', 'ELECTIVE'),   -- Elective (4 credits)
+    (2, 4, 8, 'II', 'ELECTIVE'),   -- Elective (4 credits)
     (2, 4, 8, 'II', 'CS410');       -- Applied Project
 
 -- Semester 8
@@ -1097,8 +1132,8 @@ VALUES
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
     (2, 4, 8, 'III', 'CS432'),      -- Computer Networks and Data Communications
-    (2, 4, 8, 'III', 'ELECTIVE1'),  -- Elective (4 credits)
-    (2, 4, 8, 'III', 'ELECTIVE1'),  -- Elective (4 credits)
+    (2, 4, 8, 'III', 'ELECTIVE'),  -- Elective (4 credits)
+    (2, 4, 8, 'III', 'ELECTIVE'),  -- Elective (4 credits)
     (2, 4, 8, 'III', 'BUSA401_A');  -- Entrepreneurship I (Capstone)
 
 -- MIS
@@ -1120,6 +1155,15 @@ VALUES
     (3, 1, 1, 'II', 'ENGL112'),  -- Written and Oral Communication
     (3, 1, 1, 'II', 'BUSA161'),  -- Foundations of Design and Entrepreneurship I
     (3, 1, 1, 'II', 'CS111');    -- Introduction to Computing and Information Systems
+
+-- Type III (Introducing MATH101 as an alternative to MATH121)
+INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
+VALUES
+    (3, 1, 1, 'III', 'AS111'),       -- Ashesi Success
+    (3, 1, 1, 'III', 'MATH101'),      -- College Algebra (replaces MATH121)
+    (3, 1, 1, 'III', 'ENGL112'),      -- Written and Oral Communication
+    (3, 1, 1, 'III', 'BUSA161'),      -- Foundations of Design and Entrepreneurship I
+    (3, 1, 1, 'III', 'CS111');        -- Introduction to Computing and Information Systems
 
 -- Year 1 Semester 2 - Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -1162,7 +1206,7 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (3, 2, 4, 'II', 'MATH143'),    -- Quantitative Methods
     (3, 2, 4, 'II', 'SOAN311'),    -- Leadership Seminar 3: The Economic Development of a Good Society
-    (3, 2, 4, 'II', 'ELECTIVE1'),  -- Non-Major Elective
+    (3, 2, 4, 'II', 'ELECTIVE2'),  -- Non-Major Elective
     (3, 2, 4, 'II', 'CS323'),      -- Database Systems
     (3, 2, 4, 'II', 'CS254');      -- Introduction to Artificial Intelligence
 
@@ -1205,7 +1249,7 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (3, 4, 7, 'I', 'CS442'),       -- E-Commerce (Elective)
     (3, 4, 7, 'I', 'IS451'),       -- Information and Systems Security (Elective)
-    (3, 4, 7, 'I', 'ELECTIVE1'),   -- Elective (4 credits)
+    (3, 4, 7, 'I', 'ELECTIVE'),   -- Elective (4 credits)
     (3, 4, 7, 'I', 'BUSA400_A');   -- Thesis 1
 
 -- Year 4 Semester 7 - Type II
@@ -1213,7 +1257,7 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (3, 4, 7, 'II', 'CS442'),       -- E-Commerce (Elective)
     (3, 4, 7, 'II', 'IS451'),       -- Information and Systems Security (Elective)
-    (3, 4, 7, 'II', 'ELECTIVE1'),   -- Elective (4 credits)
+    (3, 4, 7, 'II', 'ELECTIVE'),   -- Elective (4 credits)
     (3, 4, 7, 'II', 'BUSA401_A');   -- Entrepreneurship I (Capstone)
 
 -- Year 4 Semester 7 - Type III
@@ -1221,56 +1265,34 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (3, 4, 7, 'III', 'CS442'),       -- E-Commerce (Elective)
     (3, 4, 7, 'III', 'IS451'),       -- Information and Systems Security (Elective)
-    (3, 4, 7, 'III', 'ELECTIVE1'),   -- Elective (4 credits)
-    (3, 4, 7, 'III', 'ELECTIVE2');   -- Extra Major Elective
+    (3, 4, 7, 'III', 'ELECTIVE'),   -- Elective (4 credits)
+    (3, 4, 7, 'III', 'ELECTIVE1');   -- Extra Major Elective
 
--- Year 4 Semester 7 - Type IV
-INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
-VALUES
-    (3, 4, 7, 'IV', 'CS442'),        -- E-Commerce (Elective)
-    (3, 4, 7, 'IV', 'IS451'),        -- Information and Systems Security (Elective)
-    (3, 4, 7, 'IV', 'ELECTIVE1'),    -- Elective (4 credits)
-    (3, 4, 7, 'IV', 'CS400_A'),      -- Thesis I (Capstone)
-    (3, 4, 7, 'IV', 'BUSA401_A');    -- Entrepreneurship I (Capstone)
 
--- Year 4 Semester 7 - Type V
-INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
-VALUES
-    (3, 4, 7, 'V', 'CS442'),        -- E-Commerce (Elective)
-    (3, 4, 7, 'V', 'IS451'),        -- Information and Systems Security (Elective)
-    (3, 4, 7, 'V', 'ELECTIVE1'),    -- Elective (4 credits)
-    (3, 4, 7, 'V', 'BUSA401_A');    -- Entrepreneurship I (Capstone)
 
--- Year 4 Semester 7 - Type VI
-INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
-VALUES
-    (3, 4, 7, 'VI', 'CS442'),        -- E-Commerce (Elective)
-    (3, 4, 7, 'VI', 'IS451'),        -- Information and Systems Security (Elective)
-    (3, 4, 7, 'VI', 'ELECTIVE1'),    -- Elective (4 credits)
-    (3, 4, 7, 'VI', 'ELECTIVE2');    -- Extra Major Elective
 
 -- Year 4 Semester 8 - Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
     (3, 4, 8, 'I', 'CS432'),         -- Computer Networks and Data Communications
-    (3, 4, 8, 'I', 'ELECTIVE1'),     -- Elective (4 credits)
-    (3, 4, 8, 'I', 'ELECTIVE1'),     -- Elective (4 credits)
+    (3, 4, 8, 'I', 'ELECTIVE'),     -- Elective (4 credits)
+    (3, 4, 8, 'I', 'ELECTIVE'),     -- Elective (4 credits)
     (3, 4, 8, 'I', 'CS400_B');       -- Thesis II
 
 -- Year 4 Semester 8 - Type II
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
     (3, 4, 8, 'II', 'CS432'),         -- Computer Networks and Data Communications
-    (3, 4, 8, 'II', 'ELECTIVE1'),     -- Elective (4 credits)
-    (3, 4, 8, 'II', 'ELECTIVE1'),     -- Elective (4 credits)
+    (3, 4, 8, 'II', 'ELECTIVE'),     -- Elective (4 credits)
+    (3, 4, 8, 'II', 'ELECTIVE'),     -- Elective (4 credits)
     (3, 4, 8, 'II', 'CS410');         -- Applied Project
 
 -- Year 4 Semester 8 - Type III
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
     (3, 4, 8, 'III', 'CS432'),        -- Computer Networks and Data Communications
-    (3, 4, 8, 'III', 'ELECTIVE1'),    -- Elective (4 credits)
-    (3, 4, 8, 'III', 'ELECTIVE1'),    -- Elective (4 credits)
+    (3, 4, 8, 'III', 'ELECTIVE'),    -- Elective (4 credits)
+    (3, 4, 8, 'III', 'ELECTIVE'),    -- Elective (4 credits)
     (3, 4, 8, 'III', 'BUSA401_B');    -- Entrepreneurship II (Capstone)
 
 
@@ -1343,7 +1365,7 @@ VALUES
     (4, 4, 7, '', 'ELECTIVE1'),        -- CE Elective (4 credits)
     (4, 4, 7, '', 'ECON100'),          -- Principles of Economics
     (4, 4, 7, '', 'CE451'),            -- Embedded Systems
-    (4, 4, 7, '', 'ELECTIVE2');        -- Elective (4 credits)
+    (4, 4, 7, '', 'ELECTIVE');        -- Elective (4 credits)
 
 -- Year 4, Semester 8 - Core and Elective Courses
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -1429,7 +1451,7 @@ VALUES
     (6, 4, 7, '', 'ME311'),        -- Mechanics of Materials/Structural Engineering
     (6, 4, 7, '', 'ME340'),        -- Heat and Mass Transfer
     (6, 4, 7, '', 'ECON100'),      -- Principles of Economics
-    (6, 4, 7, '', 'CE451'),        -- Embedded Systems
+    (6, 4, 7, '', 'ELECTIVE'),        
     (6, 4, 7, '', 'ELECTIVE1');    -- Elective (4 credits)
 
 -- Semester 8
@@ -1438,9 +1460,6 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (6, 4, 8, '', 'ENGR413'),      -- Project Management & Professional Practice
     (6, 4, 8, '', 'ELECTIVE1'),    -- ME Elective
-    (6, 4, 8, '', 'ELECTIVE1'),    -- African Studies Elective
+    (6, 4, 8, '', 'ELECTIVE2'),    -- African Studies Elective
     (6, 4, 8, '', 'ENGR401');      -- Senior Project and Seminar (Capstone)
-
-
-
 

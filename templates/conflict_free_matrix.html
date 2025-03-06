@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Conflict-Free Matrix View</title>
-  <!-- Include Bootstrap CSS if not already included -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+{% extends "base.html" %}
+
+{% block content %}
+  {# You can include page-specific CSS here if needed #}
   <style>
+    /* Conflict-Free Matrix Page Specific Styles */
     .matrix-table {
       table-layout: fixed;
       width: 100%;
@@ -20,12 +18,11 @@
     .session-box {
       margin: 2px 0;
       padding: 4px;
-      color: #fff; /* fixed text color */
+      color: #fff;
       font-size: 0.85rem;
       border-radius: 4px;
       position: relative;
     }
-    /* If you want a small left border for room color: */
     .session-box::before {
       content: "";
       display: inline-block;
@@ -36,12 +33,9 @@
       left: 0;
       top: 0;
     }
-    /* For conflict highlighting (double-booked rooms). */
     .conflict-border {
       border: 2px dashed red !important;
     }
-    
-    /* Legend styles */
     .legend-container {
       margin-bottom: 1rem;
     }
@@ -71,7 +65,6 @@
       border: 1px solid #999;
       position: relative;
     }
-    /* A narrower vertical bar for room color. */
     .legend-swatch-room::before {
       content: "";
       display: block;
@@ -84,183 +77,154 @@
       border-radius: 2px 0 0 2px;
     }
   </style>
-</head>
-<body class="container py-3">
 
-  <h1>Conflict-Free Matrix View</h1>
-  <p class="text-muted">
-    Rows = Start times of sessions &bullet; Columns = Monday–Friday
-  </p>
+  <div class="py-3">
+    <h1>Conflict-Free Matrix View</h1>
+    <p class="text-muted">
+      Rows = Start times of sessions &bullet; Columns = Monday–Friday
+    </p>
 
-  <!-- =========================
-       LEGEND SECTION
-       (Cohort legend removed; only room and year legends remain)
-  ========================== -->
-  <div class="legend-container">
-    <div class="d-flex mb-2">
-      <!-- Room Legend (for left border color) -->
-      <div class="mr-5">
-        <span class="legend-title">Rooms:</span>
-        <ul class="legend-list">
-          {% for room_name, border_color in room_colors.items() %}
-          <li>
-            <span class="legend-swatch legend-swatch-room"
-                  style="background-color: #fff; border-color: #999; position: relative;">
-              <span style="
-                position:absolute;
-                left:0;
-                top:0;
-                height:100%;
-                width:4px;
-                border-radius:2px 0 0 2px;
-                background-color: {{ border_color }};
-              "></span>
-            </span>
-            <span>{{ room_name }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-      
-      <!-- Year Legend (for plan info color-coding) -->
-      <div>
-        <span class="legend-title">Years (In Plan):</span>
-        <ul class="legend-list">
-          {% set year_colors = {
-              1: '#f86c6b',
-              2: '#20a8d8',
-              3: '#4dbd74',
-              4: '#ffc107'
-          } %}
-          {% for yr, color in year_colors.items() %}
-          <li>
-            <span class="legend-swatch" style="background-color: {{ color }};"></span>
-            <span>Y{{ yr }}</span>
-          </li>
-          {% endfor %}
-        </ul>
+    <!-- Legend Section -->
+    <div class="legend-container">
+      <div class="d-flex mb-2">
+        <!-- Room Legend -->
+        <div class="mr-5">
+          <span class="legend-title">Rooms:</span>
+          <ul class="legend-list">
+            {% for room_name, border_color in room_colors.items() %}
+            <li>
+              <span class="legend-swatch legend-swatch-room" style="background-color: #fff; border-color: #999; position: relative;">
+                <span style="position:absolute; left:0; top:0; height:100%; width:4px; border-radius:2px 0 0 2px; background-color: {{ border_color }};"></span>
+              </span>
+              <span>{{ room_name }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Year Legend -->
+        <div>
+          <span class="legend-title">Years (In Plan):</span>
+          <ul class="legend-list">
+            {% set year_colors = {1: '#f86c6b', 2: '#20a8d8', 3: '#4dbd74', 4: '#ffc107'} %}
+            {% for yr, color in year_colors.items() %}
+            <li>
+              <span class="legend-swatch" style="background-color: {{ color }};"></span>
+              <span>Y{{ yr }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-  <!-- END LEGEND -->
 
-  {# Define year_colors for tooltip usage #}
-  {% set year_colors = {
-    1: '#f86c6b',
-    2: '#20a8d8',
-    3: '#4dbd74',
-    4: '#ffc107'
-  } %}
+    {# Define the same year_colors mapping for use below #}
+    {% set year_colors = {1: '#f86c6b', 2: '#20a8d8', 3: '#4dbd74', 4: '#ffc107'} %}
 
-  <div class="table-responsive">
-    <table class="matrix-table table table-bordered">
-      <thead>
-        <tr>
-          <th>Time</th>
-          {% for day in days %}
-            <th>{{ day }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in timeslots %}
-        <tr>
-          <!-- Time Column -->
-          <th scope="row">{{ t }}</th>
-          <!-- Day Columns -->
-          {% for day in days %}
-            {% set cell_sessions = matrix_data[day][t] %}
-            
-            {# Detect if there's a "double-booking" (same room in one cell) #}
-            {% set room_counts = {} %}
-            {% for s in cell_sessions %}
-              {% set r = s.RoomName %}
-              {% if r in room_counts %}
-                {% set _ = room_counts.update({r: room_counts[r] + 1}) %}
-              {% else %}
-                {% set _ = room_counts.update({r: 1}) %}
-              {% endif %}
+    <div class="table-responsive">
+      <table class="matrix-table table table-bordered">
+        <thead>
+          <tr>
+            <th>Time</th>
+            {% for day in days %}
+              <th>{{ day }}</th>
             {% endfor %}
-            
-            {% set is_conflict = false %}
-            {% for rname, cnt in room_counts.items() %}
-              {% if cnt > 1 %}
-                {% set is_conflict = true %}
-              {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in timeslots %}
+          <tr>
+            <!-- Time Column -->
+            <th scope="row">{{ t }}</th>
+            <!-- Day Columns -->
+            {% for day in days %}
+              {% set cell_sessions = matrix_data[day][t] %}
+              {# Build a room count to detect conflicts #}
+              {% set room_counts = {} %}
+              {% for s in cell_sessions %}
+                {% set r = s.RoomName %}
+                {% if r in room_counts %}
+                  {% set _ = room_counts.update({r: room_counts[r] + 1}) %}
+                {% else %}
+                  {% set _ = room_counts.update({r: 1}) %}
+                {% endif %}
+              {% endfor %}
+              {% set is_conflict = false %}
+              {% for rname, cnt in room_counts.items() %}
+                {% if cnt > 1 %}
+                  {% set is_conflict = true %}
+                {% endif %}
+              {% endfor %}
+              
+              <td class="{% if is_conflict %}conflict-border{% endif %}">
+                {% if cell_sessions|length == 0 %}
+                  <span class="text-muted">-</span>
+                {% else %}
+                  {% for sess in cell_sessions %}
+                    {% set c = sess.get('CohortName', 'Unknown') %}
+                    {% set r = sess.get('RoomName', 'TBD') %}
+                    {% set enroll = sess.get('NumberOfEnrollments', 'n/a') %}
+                    {% set course = sess.get('CourseCode', '') %}
+                    {% set lecturer = sess.get('Lecturer', '') %}
+                    {% set stype = sess.get('SessionType', '') %}
+                    
+                    {# Build the base tooltip text #}
+                    {% set tooltip_text =
+                      "Course: " ~ course ~
+                      "<br>Cohort: " ~ c ~
+                      "<br>Lecturer: " ~ lecturer ~
+                      "<br>Room: " ~ r ~
+                      "<br>Enrollments: " ~ enroll ~
+                      "<br>Type: " ~ stype
+                    %}
+                    
+                    {# Add Program Plan info if available #}
+                    {% if sess.PlanInfo and sess.PlanInfo|length > 0 %}
+                      {% set first_pi = sess.PlanInfo[0] %}
+                      {% set first_year = first_pi.YearNumber|int %}
+                      {% set plan_color = year_colors[first_year] if first_year in year_colors else '#999' %}
+                      {% set plan_str_list = [] %}
+                      {% for pi in sess.PlanInfo %}
+                        {% set pi_text = pi.MajorName ~ " Y" ~ pi.YearNumber ~ "S" ~ pi.SemesterNumber %}
+                        {% if pi.SubType %}
+                          {% set pi_text = pi_text ~ " (" ~ pi.SubType ~ ")" %}
+                        {% endif %}
+                        {% set _ = plan_str_list.append(pi_text) %}
+                      {% endfor %}
+                      {% set plan_info_html = "<span style='color:" ~ plan_color ~ "'>" ~ plan_str_list|join("; ") ~ "</span>" %}
+                      {% set tooltip_text = tooltip_text ~ "<br><strong>In Plan:</strong> " ~ plan_info_html %}
+                    {% else %}
+                      {% set tooltip_text = tooltip_text ~ "<br><em>Not in ProgramPlan</em>" %}
+                    {% endif %}
+                    
+                    <div class="session-box mb-1"
+                      style="background-color: {{ plan_color or '#555' }}; border-left: 6px solid {{ room_colors[r] or '#999' }};"
+                      data-toggle="tooltip"
+                      data-html="true"
+                      title="{{ tooltip_text }}">
+                      {{ course }} ({{ c }}) - {{ r }}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </td>
             {% endfor %}
-            
-            <td class="{% if is_conflict %}conflict-border{% endif %}">
-              {% if cell_sessions|length == 0 %}
-                <span class="text-muted">-</span>
-              {% else %}
-                {% for sess in cell_sessions %}
-                  {% set c = sess.get('CohortName', 'Unknown') %}
-                  {% set r = sess.get('RoomName', 'TBD') %}
-                  {% set enroll = sess.get('NumberOfEnrollments', 'n/a') %}
-                  {% set course = sess.get('CourseCode', '') %}
-                  {% set lecturer = sess.get('Lecturer', '') %}
-                  {% set stype = sess.get('SessionType', '') %}
-                  
-                  {# Build the base tooltip text #}
-                  {% set tooltip_text =
-                    "Course: " ~ course
-                    ~ "<br>Cohort: " ~ c
-                    ~ "<br>Lecturer: " ~ lecturer
-                    ~ "<br>Room: " ~ r
-                    ~ "<br>Enrollments: " ~ enroll
-                    ~ "<br>Type: " ~ stype
-                  %}
-                  
-                  {#
-                     PROGRAM PLAN INFO:
-                     If there is plan info, use the first plan entry's YearNumber to choose a color.
-                     If none is present, default to '#999'.
-                  #}
-                  {% if sess.PlanInfo and sess.PlanInfo|length > 0 %}
-                    {% set first_pi = sess.PlanInfo[0] %}
-                    {% set first_year = first_pi.YearNumber|int %}
-                    {% set plan_color = year_colors[first_year] if first_year in year_colors else '#999' %}
-                    {% set plan_str_list = [] %}
-                    {% for pi in sess.PlanInfo %}
-                      {% set pi_text = pi.MajorName ~ " Y" ~ pi.YearNumber ~ "S" ~ pi.SemesterNumber %}
-                      {% if pi.SubType %}
-                        {% set pi_text = pi_text ~ " (" ~ pi.SubType ~ ")" %}
-                      {% endif %}
-                      {% set _ = plan_str_list.append(pi_text) %}
-                    {% endfor %}
-                    {% set plan_info_html = "<span style='color:" ~ plan_color ~ "'>" ~ plan_str_list|join("; ") ~ "</span>" %}
-                    {% set tooltip_text = tooltip_text ~ "<br><strong>In Plan:</strong> " ~ plan_info_html %}
-                  {% else %}
-                    {% set tooltip_text = tooltip_text ~ "<br><em>Not in ProgramPlan</em>" %}
-                  {% endif %}
-                  
-                  <div class="session-box mb-1"
-                    style="background-color: {{ plan_color or '#555' }}; border-left: 6px solid {{ room_colors[r] or '#999' }};"
-                    data-toggle="tooltip"
-                    data-html="true"
-                    title="{{ tooltip_text }}">
-                {{ course }} ({{ c }}) - {{ r }}
-                </div>
-                {% endfor %}
-              {% endif %}
-            </td>
+          </tr>
           {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
+{% endblock %}
 
-  <!-- Tooltips (Bootstrap + jQuery) -->
+{% block scripts %}
+  {{ super() }}
+  {# Include any additional JS needed for this page (e.g. to enable tooltips) #}
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  
   <script>
     $(function () {
       $('[data-toggle="tooltip"]').tooltip();
     });
   </script>
-
-</body>
-</html>
+{% endblock %}

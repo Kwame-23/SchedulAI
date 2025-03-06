@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import mysql.connector
 import re
@@ -13,13 +12,16 @@ import random
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Local module imports
+# Import the feasibility blueprint and function from the scheduling package.
+from scheduling.feasibility_checker import feasibility_bp, generate_all_feasible_timetables_with_conflicts
 from scheduling.scheduler import schedule_sessions as run_schedule
-from scheduling.feasibility_checker import run_feasibility_check, timetable_combinations
-from scheduling.feasibility_checker import feasibility_bp
 
 app = Flask(__name__)
 app.secret_key = 'YOUR_SECRET_KEY'  # Replace with a secure secret key
-app.register_blueprint(feasibility_bp)
+
+# Register the feasibility blueprint with an appropriate URL prefix.
+# Here we register it at the root so that endpoints like /feasibility_check are available.
+app.register_blueprint(feasibility_bp, url_prefix='/')
 # ----------------------------------------------------
 # Configure Logging
 # ----------------------------------------------------
@@ -655,7 +657,7 @@ def lecturers():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
     
     try:
         with conn.cursor() as cursor:
@@ -697,7 +699,7 @@ def rooms():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
     
     try:
         with conn.cursor() as cursor:
@@ -738,7 +740,7 @@ def assign_sessions():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
     
     try:
         with conn.cursor() as cursor:
@@ -855,54 +857,10 @@ def run_scheduler_route():
         except Exception as e:
             flash(f"Error scheduling: {e}", "danger")
             logging.error(f"Scheduler failed: {e}")
-        return redirect(url_for('summary'))
+        return redirect(url_for('timetable'))
     
     return render_template('run_scheduler.html')
 
-# ----------------------------------------------------
-# ROUTE 5: Summary Page
-# ----------------------------------------------------
-@app.route('/summary')
-def summary():
-    logging.info("Accessed /summary route.")
-    conn = get_db_connection()
-    if conn is None:
-        flash("Failed DB connection.", "danger")
-        return redirect(url_for('home'))
-    
-    try:
-        with conn.cursor(dictionary=True) as cursor:
-            query = """
-                SELECT sc.ScheduleID,
-                       s.SessionID,
-                       s.CourseCode,
-                       s.LecturerName,
-                       s.SessionType,
-                       sc.DayOfWeek,
-                       sc.StartTime,
-                       sc.EndTime,
-                       sc.RoomName
-                FROM SessionSchedule sc
-                JOIN SessionAssignments s ON sc.SessionID = s.SessionID
-                ORDER BY s.SessionID
-            """
-            cursor.execute(query)
-            assignments = cursor.fetchall()
-    
-        # Convert TIME fields to "HH:MM" format
-        for assignment in assignments:
-            assignment["StartTime"] = convert_time_to_hhmm(assignment["StartTime"])
-            assignment["EndTime"] = convert_time_to_hhmm(assignment["EndTime"])
-    
-    except mysql.connector.Error as err:
-        logging.error(f"Error fetching summary: {err}")
-        flash("An error occurred while fetching the summary.", "danger")
-        assignments = []
-    finally:
-        cursor.close()
-        conn.close()
-    
-    return render_template('summary.html', assignments=assignments)
 
 @app.route('/schedule_builder')
 def schedule_builder():
@@ -953,7 +911,7 @@ def courses():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
     
     try:
         with conn.cursor() as cursor:
@@ -984,24 +942,18 @@ def courses():
 # ----------------------------------------------------
 # Feasibility Check
 # ----------------------------------------------------
+
 @app.route('/feasibility', methods=['GET'])
 def feasibility():
-    """
-    Renders the Feasibility Check page, displaying detailed conflict information
-    for student groups based on their scheduling.
-    """
     logging.info("Accessed /feasibility route.")
     try:
-        # Run the feasibility check to get conflict details
-        conflicts = run_feasibility_check()
-        logging.info(f"Feasibility check completed with {len(conflicts)} conflicts.")
+        feasibility_results = generate_all_feasible_timetables_with_conflicts()
+        logging.info("Feasibility check completed successfully.")
     except Exception as e:
         logging.error(f"Error during feasibility check: {e}")
         flash("An error occurred during the feasibility check.", "danger")
-        conflicts = []
-    
-    # Render the 'feasibility.html' template with the conflicts data
-    return render_template('feasibility.html', conflicts=conflicts)
+        feasibility_results = {}
+    return render_template('feasibility.html', feasibility_results=feasibility_results)
 
 # ----------------------------------------------------
 # Route: Student->Courses bridging
@@ -1012,7 +964,7 @@ def student_courses():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
     
     try:
         with conn.cursor(dictionary=True) as cursor:
@@ -1198,7 +1150,7 @@ def conflicts():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return redirect(url_for('home'))
+        return redirect(url_for('homepage'))
     
     try:
         with conn.cursor(dictionary=True) as cursor:
@@ -1674,7 +1626,6 @@ def get_full_plan():
 # ----------------------------------------------------
 # ROUTE: Timetable Page
 # ----------------------------------------------------
-# ... [existing imports and configurations] ...
 
 @app.route('/timetable', methods=['GET'])
 def timetable():
@@ -1687,7 +1638,7 @@ def timetable():
         conn = get_db_connection()
         if conn is None:
             flash("Database connection failed.", "danger")
-            return redirect(url_for('home'))
+            return redirect(url_for('homepage'))
         
         with conn.cursor(dictionary=True) as cursor:
             cursor.execute("SELECT Location AS RoomName FROM Room WHERE ActiveFlag = 1 ORDER BY Location")
@@ -1779,7 +1730,7 @@ major_prefix_mapping = {
     1: ['BUSA', 'ECON'],  # Business Administration
     2: ['CS'],            # Computer Science
     3: ['IS'],            # Management Information Systems
-    4: ['CE', 'ENGR'],    # Computer Engineering
+    4: ['CE', 'ENGR', 'CS'],    # Computer Engineering
     5: ['MECH'],          # Mechatronics Engineering (Assumed prefix)
     6: ['ME', 'ENGR'],    # Mechanical Engineering
     7: ['EE', 'ENGR'],    # Electrical and Electronic Engineering
@@ -1788,19 +1739,19 @@ major_prefix_mapping = {
 }
 
 # ----------------------------------------------------
-# ROUTE: Home Page
+# ROUTE: Student Timetables Page
 # ----------------------------------------------------
-@app.route('/')
-def home():
+@app.route('/student_timetables')
+def student_timetables():
     """
-    Home page of the application.
-    Lists all students with links to their timetables.
+    Student Timetables page.
+    Displays a list of all students with links to their individual timetables.
     """
     conn = get_db_connection()
     if not conn:
         flash('Database connection failed.', 'danger')
-        logging.error("Failed to connect to the database while accessing the home page.")
-        return render_template('home.html', students=[])
+        logging.error("Failed to connect to the database while accessing the Student Timetables page.")
+        return render_template('student_timetables.html', students=[])
     
     try:
         with conn.cursor(dictionary=True) as cursor:
@@ -1820,7 +1771,7 @@ def home():
         conn.close()
         logging.debug("Database connection closed after fetching students.")
     
-    return render_template('home.html', students=students)
+    return render_template('student_timetables.html', students=students)
 
 # ----------------------------------------------------
 # ROUTE: Student Timetable with Electives
@@ -1839,14 +1790,14 @@ def student_timetable(student_id, day_of_week):
     if day_of_week not in valid_days:
         logging.warning(f"Invalid day_of_week received: {day_of_week}")
         flash('Invalid day of week selected.', 'danger')
-        return redirect(url_for('home'))
+        return redirect(url_for('student_timetables'))
     
     # Establish database connection
     conn = get_db_connection()
     if not conn:
         flash('Database connection failed.', 'danger')
         logging.error(f"Failed to connect to the database for StudentID {student_id}.")
-        return redirect(url_for('home'))
+        return redirect(url_for('student_timetables'))
     
     try:
         with conn.cursor(dictionary=True) as cursor:
@@ -1861,7 +1812,7 @@ def student_timetable(student_id, day_of_week):
             if not student_info:
                 logging.warning(f"StudentID {student_id} not found.")
                 flash('Student not found.', 'danger')
-                return redirect(url_for('home'))
+                return redirect(url_for('student_timetables'))
             
             major_id = student_info['MajorID']
             major_name = student_info['MajorName']
@@ -1876,7 +1827,7 @@ def student_timetable(student_id, day_of_week):
             if not major_prefixes:
                 logging.warning(f"No major prefixes defined for MajorID {major_id} (StudentID {student_id}).")
                 flash('No major prefixes defined for this student\'s major.', 'danger')
-                return redirect(url_for('home'))
+                return redirect(url_for('student_timetables'))
 
             # ---------------------------------------------------------------------
             # UPDATED SECTION: Fetch ALL Active Elective Courses for This Day
@@ -2228,7 +2179,7 @@ def student_timetable_grid(student_id):
     conn = get_db_connection()
     if not conn:
         flash("Database connection failed.", "danger")
-        return redirect(url_for("home"))
+        return redirect(url_for("homepage"))
 
     try:
         with conn.cursor(dictionary=True) as cursor:
@@ -2242,7 +2193,7 @@ def student_timetable_grid(student_id):
             student_info = cursor.fetchone()
             if not student_info:
                 flash("Student not found.", "danger")
-                return redirect(url_for("home"))
+                return redirect(url_for("homepage"))
 
             major_id   = student_info["MajorID"]
             major_name = student_info["MajorName"]
@@ -2253,7 +2204,7 @@ def student_timetable_grid(student_id):
             major_prefixes = major_prefix_mapping.get(major_id, [])
             if not major_prefixes:
                 flash("No major prefixes defined for this student’s major.", "danger")
-                return redirect(url_for("home"))
+                return redirect(url_for("homepage"))
 
             # (3) Fetch regular (non-elective) sessions for the student
             cursor.execute("""
@@ -2346,7 +2297,7 @@ def student_timetable_grid(student_id):
     except mysql.connector.Error as err:
         logging.error(f"Database error in student_timetable_grid: {err}")
         flash("An error occurred while fetching timetable data.", "danger")
-        return redirect(url_for("home"))
+        return redirect(url_for("homepage"))
     finally:
         conn.close()
 
@@ -2528,6 +2479,10 @@ def manage_students():
         conn.close()
     
     return render_template('manage_students.html', students=students, program_plans=program_plans, majors=majors)
+
+@app.route('/')
+def index():
+    return redirect(url_for('homepage')) 
 
 # ----------------------------------------------------
 # Main

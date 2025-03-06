@@ -1,0 +1,47 @@
+<!-- templates/student_timetables.html -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h1 class="mt-4">Student Timetables</h1>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} mt-3" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  <table class="table table-striped table-bordered mt-4">
+    <thead class="table-dark">
+      <tr>
+        <th>Student ID</th>
+        <th>Major</th>
+        <th>Year</th>
+        <th>View Timetable</th>
+        <th>View as Grid</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+        <tr>
+          <td>{{ student.StudentID }}</td>
+          <td>{{ student.MajorName }}</td>
+          <td>{{ student.YearNumber }}</td>
+          <td>
+            <a href="{{ url_for('student_timetable', student_id=student.StudentID, day_of_week='Monday') }}" class="btn btn-primary btn-sm">
+              View Timetable
+            </a>
+          </td>
+          <td>
+            <a href="{{ url_for('student_timetable_grid', student_id=student.StudentID) }}" class="btn btn-secondary btn-sm">
+              View as Grid
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
