@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <h1>Timetable Analysis Dashboard</h1>
+  
+  <!-- Update Staging Table Button -->
+  <div style="margin-bottom: 20px;">
+    <form action="{{ url_for('start_review') }}" method="post">
+      <button type="submit" class="btn btn-primary">Update Staging Table</button>
+    </form>
+  </div>
+  
+  <!-- Analysis Report (includes summary and conflict counts) -->
+  <div class="report">
+    {{ report|safe }}
+  </div>
+  
+  <hr>
+  
+  <!-- Visualizations Section -->
+  <h3>Visualizations</h3>
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Room Utilization</h4>
+      <img src="data:image/png;base64,{{ room_util_img }}" class="img-fluid">
+    </div>
+    <div class="col-md-6">
+      <h4>Lecturer Load</h4>
+      <img src="data:image/png;base64,{{ lecturer_load_img }}" class="img-fluid">
+    </div>
+  </div>
+  
+  <hr>
+  
+  <!-- Detailed Conflict Information -->
+  <h3>Detailed Room Conflicts</h3>
+  {% if room_conflict_details and room_conflict_details|length > 0 %}
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Room</th>
+          <th>Conflict Between Sessions</th>
+          <th>Time Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conflict in room_conflict_details %}
+        <tr>
+          <td>{{ conflict.day }}</td>
+          <td>{{ conflict.room }}</td>
+          <td>{{ conflict.conflict_between[0] }} &amp; {{ conflict.conflict_between[1] }}</td>
+          <td>Ends at {{ conflict.current_end }}, Starts at {{ conflict.next_start }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No room conflicts detected.</p>
+  {% endif %}
+  
+  <h3>Detailed Lecturer Conflicts</h3>
+  {% if lecturer_conflict_details and lecturer_conflict_details|length > 0 %}
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Lecturer</th>
+          <th>Conflict Between Sessions</th>
+          <th>Time Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conflict in lecturer_conflict_details %}
+        <tr>
+          <td>{{ conflict.day }}</td>
+          <td>{{ conflict.lecturer }}</td>
+          <td>{{ conflict.conflict_between[0] }} &amp; {{ conflict.conflict_between[1] }}</td>
+          <td>Ends at {{ conflict.current_end }}, Starts at {{ conflict.next_start }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No lecturer conflicts detected.</p>
+  {% endif %}
+  
+  <hr>
+  
+  <!-- Anomaly Section -->
+  <h3>Overworked Lecturers (Anomalies)</h3>
+  {% if anomalies and anomalies|length > 0 %}
+    <ul>
+      {% for anomaly in anomalies %}
+        <li>{{ anomaly.Day_Lecturer }}: {{ anomaly.Load }} minutes</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No anomalies detected.</p>
+  {% endif %}
+  
+</div>
+{% endblock %}
