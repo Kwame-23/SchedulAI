@@ -1463,3 +1463,4 @@ VALUES
     (6, 4, 8, '', 'ELECTIVE2'),    -- African Studies Elective
     (6, 4, 8, '', 'ENGR401');      -- Senior Project and Seminar (Capstone)
 
+CREATE TABLE IF NOT EXISTS UpdatedSessionSchedule LIKE SessionSchedule;
