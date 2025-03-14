@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-  {# You can include page-specific CSS here if needed #}
   <style>
     /* Conflict-Free Matrix Page Specific Styles */
     .matrix-table {
@@ -22,6 +21,7 @@
       font-size: 0.85rem;
       border-radius: 4px;
       position: relative;
+      cursor: move;
     }
     .session-box::before {
       content: "";
@@ -76,6 +76,9 @@
       background: #000;
       border-radius: 2px 0 0 2px;
     }
+    .cell-hover {
+      background-color: #f0f0f0;
+    }
   </style>
 
   <div class="py-3">
@@ -83,6 +86,11 @@
     <p class="text-muted">
       Rows = Start times of sessions &bullet; Columns = Monday–Friday
     </p>
+
+    <!-- Start Review Button -->
+    <form action="{{ url_for('start_review') }}" method="post" style="margin-bottom: 20px;">
+      <button type="submit" class="btn btn-primary">Start Review</button>
+    </form>
 
     <!-- Legend Section -->
     <div class="legend-container">
@@ -168,7 +176,7 @@
                     {% set lecturer = sess.get('Lecturer', '') %}
                     {% set stype = sess.get('SessionType', '') %}
                     
-                    {# Build the base tooltip text #}
+                    {# Build the tooltip text #}
                     {% set tooltip_text =
                       "Course: " ~ course ~
                       "<br>Cohort: " ~ c ~
@@ -178,7 +186,6 @@
                       "<br>Type: " ~ stype
                     %}
                     
-                    {# Add Program Plan info if available #}
                     {% if sess.PlanInfo and sess.PlanInfo|length > 0 %}
                       {% set first_pi = sess.PlanInfo[0] %}
                       {% set first_year = first_pi.YearNumber|int %}
@@ -198,6 +205,8 @@
                     {% endif %}
                     
                     <div class="session-box mb-1"
+                      data-session-id="{{ sess.SessionID }}"
+                      data-room="{{ r }}"
                       style="background-color: {{ plan_color or '#555' }}; border-left: 6px solid {{ room_colors[r] or '#999' }};"
                       data-toggle="tooltip"
                       data-html="true"
@@ -218,13 +227,70 @@
 
 {% block scripts %}
   {{ super() }}
-  {# Include any additional JS needed for this page (e.g. to enable tooltips) #}
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <!-- Include jQuery (full version), jQuery UI, Popper, and Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script>
     $(function () {
+      // Enable tooltips
       $('[data-toggle="tooltip"]').tooltip();
+
+      // Make session boxes draggable
+      $(".session-box").draggable({
+        revert: "invalid",
+        containment: ".matrix-table",  // restrict within the timetable
+        helper: "clone",
+        start: function(event, ui) {
+          // Optionally, add visual cues when dragging starts
+        }
+      });
+
+      // Make table cells droppable
+      $(".matrix-table td").droppable({
+        accept: ".session-box",
+        hoverClass: "cell-hover",
+        drop: function(event, ui) {
+          var droppedSession = ui.draggable;
+          // Get the new cell's time from the first th element in the row
+          var newTime = $(this).closest("tr").find("th").first().text();
+          // Determine the column index (assuming the first column is time)
+          var colIndex = $(this).index();
+          var days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+          var newDay = days[colIndex - 1]; // adjust if needed
+
+          // Update the UI: Move the session box into the new cell
+          $(this).append(droppedSession);
+
+          // Retrieve the session ID and current room
+          var sessionID = droppedSession.data("session-id");
+          var room = droppedSession.data("room");
+
+          // Prepare the updated session data.
+          var updatedSession = {
+            SessionID: sessionID,
+            DayOfWeek: newDay,
+            StartTime: newTime,
+            EndTime: newTime,  // Adjust as necessary based on duration
+            RoomName: room    // Optionally, allow room changes
+          };
+
+          // Send the update via AJAX to update the staging table
+          $.ajax({
+            url: "/save_updated_timetable",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify([updatedSession]), // Batch in an array if needed
+            success: function(response) {
+              console.log(response.message);
+            },
+            error: function(xhr) {
+              alert("Error updating session: " + xhr.responseJSON.message);
+            }
+          });
+        }
+      });
     });
   </script>
 {% endblock %}
