@@ -1,33 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Select Active Courses</title>
-    <!-- Bootstrap CSS for styling and responsiveness -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons (Optional) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        /* Custom Styles */
-        body {
-            background-color: #f8f9fa;
-        }
-        .course-card {
-            margin-bottom: 15px;
-        }
-        .submit-btn {
-            width: 100%;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Select Active Courses</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Bootstrap CSS for styling and responsiveness -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons (Optional) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Global Styles & Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      color: #1E1E1E;
+      background-color: #f8f9fa;
+      margin: 0;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background-color: #1E1E1E;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo-container {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo-container img {
+      max-width: 100%;
+      height: auto;
+    }
+    .menu {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .menu li {
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .menu a {
+      display: block;
+      padding: 15px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .menu a:hover {
+      background-color: #00bf63;
+    }
+    /* Highlight the active page if needed (optional) */
+    /* .menu a.active { background-color: #00bf63; } */
+    .logout-container {
+      padding: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .logout-container a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .logout-container a:hover {
+      color: #00bf63;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      background-color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    /* TOP BAR */
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .top-bar input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    /* PAGE CONTENT (Placed directly without an extra container) */
+    .content {
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #f7f9fc;
+    }
+    .content .row + .row {
+      margin-top: 1rem;
+    }
+    .content h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .content p.text-muted {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .course-card {
+      margin-bottom: 15px;
+    }
+    .submit-btn {
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-    <div class="container my-5">
+  <div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <!-- Replace with your own logo path -->
+        <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
+      </div>
+      <nav class="menu">
+        <ul>
+          <li><a href="{{ url_for('lecturers') }}">Lecturers</a></li>
+          <li><a href="{{ url_for('courses') }}" style="background-color: #00bf63;">Courses</a></li>
+          <li><a href="{{ url_for('student_courses') }}">Student Course Selection</a></li>
+          <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
+          <li><a href="{{ url_for('assign_sessions') }}">Assign Sessions</a></li>
+          <li><a href="{{ url_for('run_scheduler_route') }}">Generate Timetable</a></li>
+        </ul>
+      </nav>
+      <div class="logout-container">
+        <a href="{{ url_for('dashboard') }}">Back</a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOP BAR (optional) -->
+      <header class="top-bar">
+        <input type="text" placeholder="Search" />
+      </header>
+
+      <!-- PAGE CONTENT (Directly placed content) -->
+      <div class="content">
         <!-- Page Header -->
         <div class="row mb-4">
-            <div class="col">
-                <h1 class="text-center">Select Active Courses</h1>
-                <p class="text-center text-muted">Choose the courses you wish to activate for scheduling sessions.</p>
-            </div>
+          <div class="col">
+            <h1 class="text-center">Select Active Courses</h1>
+            <p class="text-center text-muted">
+              Choose the courses you wish to activate for scheduling sessions.
+            </p>
+          </div>
         </div>
 
         <!-- Flash Messages for User Feedback -->
@@ -48,49 +199,49 @@
 
         <!-- Select All Checkbox -->
         <div class="row mb-3">
-            <div class="col">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="select_all_courses">
-                    <label class="form-check-label fw-bold" for="select_all_courses">
-                        Select All Courses
-                    </label>
-                </div>
+          <div class="col">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="select_all_courses">
+              <label class="form-check-label fw-bold" for="select_all_courses">
+                Select All Courses
+              </label>
             </div>
-            <div class="col text-end">
-                <span id="selectedCount">0</span> courses selected
-            </div>
+          </div>
+          <div class="col text-end">
+            <span id="selectedCount">0</span> courses selected
+          </div>
         </div>
 
         <!-- Form Start -->
         <form method="POST">
-            <!-- Courses Display -->
-            <div class="row">
-                {% for course in courses %}
-                    {# course is a tuple like (CourseID, CourseCode, CourseName, Credits) #}
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card course-card shadow-sm">
-                            <div class="card-body">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="course_{{ course[0] }}" name="course_ids" value="{{ course[0] }}">
-                                    <label class="form-check-label fw-bold" for="course_{{ course[0] }}">
-                                        {{ course[1] }} - {{ course[2] }}
-                                    </label>
-                                </div>
-                                <p class="card-text">Credits: <strong>{{ course[3] }}</strong></p>
-                            </div>
-                        </div>
+          <!-- Courses Display -->
+          <div class="row">
+            {% for course in courses %}
+              {# course is a tuple like (CourseID, CourseCode, CourseName, Credits) #}
+              <div class="col-md-4 col-sm-6">
+                <div class="card course-card shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="course_{{ course[0] }}" name="course_ids" value="{{ course[0] }}">
+                      <label class="form-check-label fw-bold" for="course_{{ course[0] }}">
+                        {{ course[1] }} - {{ course[2] }}
+                      </label>
                     </div>
-                {% endfor %}
-            </div>
-
-            <!-- Submit Button -->
-            <div class="row">
-                <div class="col">
-                    <button type="button" class="btn btn-primary submit-btn" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
-                        <i class="bi bi-arrow-right-circle-fill"></i> Proceed to Assign Sessions
-                    </button>
+                    <p class="card-text">Credits: <strong>{{ course[3] }}</strong></p>
+                  </div>
                 </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Submit Button -->
+          <div class="row">
+            <div class="col">
+              <button type="button" class="btn btn-primary submit-btn" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
+                <i class="bi bi-arrow-right-circle-fill"></i> Proceed to Assign Sessions
+              </button>
             </div>
+          </div>
         </form>
         <!-- Form End -->
 
@@ -115,30 +266,32 @@
           </div>
         </div>
 
-    </div>
+      </div><!-- end .content -->
+    </main>
+  </div><!-- end .dashboard-container -->
 
-    <!-- Bootstrap JS Bundle with Popper for interactive components -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Handle Select All functionality
-        document.getElementById('select_all_courses').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('input[name="course_ids"]');
-            checkboxes.forEach(cb => cb.checked = this.checked);
-            updateSelectedCount();
-        });
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Handle Select All functionality
+    document.getElementById('select_all_courses').addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('input[name="course_ids"]');
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateSelectedCount();
+    });
 
-        // Update selected courses count
-        const courseCheckboxes = document.querySelectorAll('input[name="course_ids"]');
-        const selectedCountSpan = document.getElementById('selectedCount');
+    // Update selected courses count
+    const courseCheckboxes = document.querySelectorAll('input[name="course_ids"]');
+    const selectedCountSpan = document.getElementById('selectedCount');
 
-        function updateSelectedCount() {
-            const count = document.querySelectorAll('input[name="course_ids"]:checked').length;
-            selectedCountSpan.textContent = count;
-        }
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('input[name="course_ids"]:checked').length;
+      selectedCountSpan.textContent = count;
+    }
 
-        courseCheckboxes.forEach(cb => cb.addEventListener('change', updateSelectedCount));
-        // Initialize count on page load
-        updateSelectedCount();
-    </script>
+    courseCheckboxes.forEach(cb => cb.addEventListener('change', updateSelectedCount));
+    // Initialize count on page load
+    updateSelectedCount();
+  </script>
 </body>
 </html>

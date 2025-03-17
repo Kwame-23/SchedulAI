@@ -2,90 +2,289 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Manage Lectures</title>
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Poppins', sans-serif; background: #f7f9fc; padding: 2rem; }
-    .container { max-width: 900px; margin: auto; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-    h1 { text-align: center; margin-bottom: 1.5rem; }
-    form { margin-bottom: 2rem; }
-    form input, form select, form button { padding: 0.75rem; margin-right: 0.5rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; }
-    form button { background: #28a745; color: #fff; border: none; cursor: pointer; transition: background 0.3s ease; }
-    form button:hover { background: #218838; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: 0.75rem; border: 1px solid #ddd; text-align: center; }
-    th { background: #007bff; color: #fff; }
-    .action-btn { padding: 0.5rem 0.8rem; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: background 0.3s ease; }
-    .update-btn { background: #ffc107; color: #fff; }
-    .update-btn:hover { background: #e0a800; }
-    .delete-btn { background: #dc3545; color: #fff; }
-    .delete-btn:hover { background: #c82333; }
-    .back-link { text-align: center; margin-top: 1.5rem; }
-    .back-link a { color: #007bff; text-decoration: none; font-weight: 600; }
-    .back-link a:hover { text-decoration: underline; }
+    /* Reset and basic global styling */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; /* Slightly small, but readable */
+      color: #1E1E1E;
+      margin: 0;
+    }
+
+    /* Layout: sidebar + main content */
+    .dashboard-container {
+      display: flex;
+      height: 100vh; /* Full viewport height */
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background-color: #1E1E1E;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo-container {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .logo-container img {
+      max-width: 100%;
+      height: auto;
+    }
+    .menu {
+      flex: 1;
+      overflow-y: auto; /* scroll if needed */
+    }
+    .menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .menu li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .menu a {
+      display: block;
+      padding: 15px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .menu a:hover {
+      background-color: #00bf63;
+    }
+    /* Highlight the active page in the sidebar */
+    .menu a.active {
+      background-color: #00bf63;
+    }
+
+    /* Logout link at bottom of sidebar */
+    .logout-container {
+      padding: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .logout-container a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .logout-container a:hover {
+      color: #00bf63;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      background-color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Top bar with a search field */
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .top-bar input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    /* Main scrollable content area */
+    .content {
+      padding: 20px;
+      overflow-y: auto; /* If content gets long, allow scroll */
+      background: #f7f9fc;
+    }
+
+    /* Page content styles (formerly inside .container) */
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    form {
+      margin-bottom: 2rem;
+    }
+    form input,
+    form select,
+    form button {
+      padding: 0.75rem;
+      margin-right: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    form button {
+      background: #28a745;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    form button:hover {
+      background: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th,
+    td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: #fff;
+    }
+    .action-btn {
+      padding: 0.5rem 0.8rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s ease;
+    }
+    .update-btn {
+      background: #ffc107;
+      color: #fff;
+    }
+    .update-btn:hover {
+      background: #e0a800;
+    }
+    .delete-btn {
+      background: #dc3545;
+      color: #fff;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    .back-link {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    .back-link a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Manage Lectures</h1>
-    
-    <!-- Form to add a new lecturer -->
-    <form method="POST" action="{{ url_for('manage_lectures') }}">
-      <input type="hidden" name="action" value="add" />
-      <input type="text" name="lecturer_name" placeholder="Lecturer Name" required />
-      <select name="faculty_type_id" required>
-        <option value="">Select Faculty Type</option>
-        {% for ft in faculty_types %}
-          <option value="{{ ft.FacultyTypeID }}">{{ ft.FacultyTypeName }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit">Add Lecturer</button>
-    </form>
-    
-    <!-- Table listing existing lecturers -->
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Lecturer Name</th>
-          <th>Faculty Type</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for lecturer in lecturers %}
-        <tr>
+  <div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <!-- Replace with your own logo path -->
+        <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
+      </div>
+      <nav class="menu">
+        <ul>
+          <li><a href="{{ url_for('manage_rooms') }}">Manage Rooms</a></li>
+          <li><a href="{{ url_for('manage_lectures') }}" class="active">Manage Lectures</a></li>
+          <li><a href="{{ url_for('manage_courses') }}">Manage Courses</a></li>
+          <li><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
+          <li><a href="{{ url_for('schedule_builder') }}">Build Timetable</a></li>
+          <li><a href="#">History</a></li>
+        </ul>
+      </nav>
+      <div class="logout-container">
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <input type="text" placeholder="Search" />
+      </header>
+
+      <!-- PAGE CONTENT (Content placed directly without a container wrapper) -->
+      <div class="content">
+          <h1>Manage Lectures</h1>
+          
+          <!-- Form to add a new lecturer -->
           <form method="POST" action="{{ url_for('manage_lectures') }}">
-            <td>{{ lecturer.LecturerID }}</td>
-            <td>
-              <input type="text" name="lecturer_name" value="{{ lecturer.LecturerName }}" required />
-            </td>
-            <td>
-              <select name="faculty_type_id" required>
-                {% for ft in faculty_types %}
-                  <option value="{{ ft.FacultyTypeID }}" {% if lecturer.FacultyTypeID == ft.FacultyTypeID %}selected{% endif %}>
-                    {{ ft.FacultyTypeName }}
-                  </option>
-                {% endfor %}
-              </select>
-            </td>
-            <td>
-              <input type="hidden" name="lecturer_id" value="{{ lecturer.LecturerID }}" />
-              <button type="submit" name="action" value="update" class="action-btn update-btn">Update</button>
-              <button type="submit" name="action" value="delete" class="action-btn delete-btn" onclick="return confirm('Are you sure?')">Delete</button>
-            </td>
+            <input type="hidden" name="action" value="add" />
+            <input type="text" name="lecturer_name" placeholder="Lecturer Name" required />
+            <select name="faculty_type_id" required>
+              <option value="">Select Faculty Type</option>
+              {% for ft in faculty_types %}
+                <option value="{{ ft.FacultyTypeID }}">{{ ft.FacultyTypeName }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit">Add Lecturer</button>
           </form>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    
-    <div class="back-link">
-      <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
-    </div>
+          
+          <!-- Table listing existing lecturers -->
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Lecturer Name</th>
+                <th>Faculty Type</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lecturer in lecturers %}
+              <tr>
+                <form method="POST" action="{{ url_for('manage_lectures') }}">
+                  <td>{{ lecturer.LecturerID }}</td>
+                  <td>
+                    <input type="text" name="lecturer_name" value="{{ lecturer.LecturerName }}" required />
+                  </td>
+                  <td>
+                    <select name="faculty_type_id" required>
+                      {% for ft in faculty_types %}
+                        <option value="{{ ft.FacultyTypeID }}" {% if lecturer.FacultyTypeID == ft.FacultyTypeID %}selected{% endif %}>
+                          {{ ft.FacultyTypeName }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td>
+                    <input type="hidden" name="lecturer_id" value="{{ lecturer.LecturerID }}" />
+                    <button type="submit" name="action" value="update" class="action-btn update-btn">Update</button>
+                    <button type="submit" name="action" value="delete" class="action-btn delete-btn" onclick="return confirm('Are you sure?')">Delete</button>
+                  </td>
+                </form>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          
+          <div class="back-link">
+            <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+          </div>
+      </div>
+    </main>
   </div>
 </body>
 </html>

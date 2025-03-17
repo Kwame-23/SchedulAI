@@ -97,25 +97,18 @@ def fetch_data(session_preferences_csv_path):
     cursor.close()
     conn.close()
 
-    # 3D. Read CSV for session preferences
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    full_csv_path = os.path.join(script_dir, 'Session_Location_Preferences.csv')
+    # 3D. Read session preferences from the database
+    conn = get_db_connection()
+    if conn is None:
+        logging.error("Database connection not established for session preferences.")
+        raise Exception("Database connection error.")
 
-    if not os.path.exists(full_csv_path):
-        logging.error(f"CSV file not found at: {full_csv_path}")
-        raise FileNotFoundError(f"CSV file not found at: {full_csv_path}")
+    # Query only the necessary columns from SessionLocationPreferences
+    query = "SELECT CourseCode, CourseName, Location, SessionType FROM SessionLocationPreferences"
+    session_preferences_data = pd.read_sql(query, conn)
+    conn.close()
 
-    session_preferences_data = pd.read_csv(full_csv_path)
-
-    # 3E. If "Course Code - Course Name" column exists, split it
-    if 'Course Code - Course Name' in session_preferences_data.columns:
-        session_preferences_data[['Course Code', 'Course Name']] = (
-            session_preferences_data['Course Code - Course Name']
-            .str.split(' - ', n=1, expand=True)
-        )
-        session_preferences_data = session_preferences_data[['Course Code', 'Location', 'Session Type']]
-
-    logging.info("Data fetched successfully from the database and CSV.")
+    logging.info("Session preferences data fetched successfully from the database.")
     return sessions_df, rooms_df, session_preferences_data
 
 # ----------------------------------------------------
@@ -271,7 +264,7 @@ def store_unassigned_sessions(unassigned_list):
 # ----------------------------------------------------
 def write_schedule_to_db(assigned_sessions):
     """
-    Inserts the final assigned schedule into the SessionSchedule table.
+    Inserts the final assigned schedule into both the SessionSchedule and UpdatedSessionSchedule tables.
     Each entry in assigned_sessions is a dict with:
     {
         "Session ID": 206,
@@ -291,11 +284,17 @@ def write_schedule_to_db(assigned_sessions):
 
     cursor = conn.cursor()
 
+    # Define SQL queries for inserting into both tables.
     insert_sql = """
     INSERT INTO SessionSchedule (SessionID, DayOfWeek, StartTime, EndTime, RoomName)
     VALUES (%s, %s, %s, %s, %s)
     """
+    insert_staging_sql = """
+    INSERT INTO UpdatedSessionSchedule (SessionID, DayOfWeek, StartTime, EndTime, RoomName)
+    VALUES (%s, %s, %s, %s, %s)
+    """
 
+    # Loop through each assigned session and insert into both tables.
     for s in assigned_sessions:
         session_id  = s["Session ID"]
         day_of_week = s["Day"]
@@ -303,13 +302,15 @@ def write_schedule_to_db(assigned_sessions):
         end_time    = s["End Time"]
         room_name   = s["Room"]
 
-        # Insert each scheduled row into SessionSchedule
+        # Insert into SessionSchedule
         cursor.execute(insert_sql, (session_id, day_of_week, start_time, end_time, room_name))
+        # Insert into UpdatedSessionSchedule
+        cursor.execute(insert_staging_sql, (session_id, day_of_week, start_time, end_time, room_name))
 
     conn.commit()
     cursor.close()
     conn.close()
-    print("Schedule has been written to SessionSchedule table.")
+    print("Schedule has been written to both SessionSchedule and UpdatedSessionSchedule tables.")
 
 # ----------------------------------------------------
 # 6B. Main Scheduling Function
@@ -335,7 +336,7 @@ def schedule_sessions(session_preferences_csv_path):
     # 6B-3. Time definitions
     start_time        = 8 * 60    # 8 AM in minutes
     end_time          = 17 * 60   # 5 PM in minutes
-    morning_end_time  = 11 * 60   # 11 AM
+    morning_end_time  = 12 * 60   # 12 PM
     time_blocks       = 15
     time_slots_per_day= (end_time - start_time) // time_blocks
     days_of_week      = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']

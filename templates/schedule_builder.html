@@ -5,57 +5,142 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Schedule Builder</title>
   <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
     rel="stylesheet"
   />
   <style>
-    /* Global Styles */
-    body {
+    /* RESET & BASE STYLES */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+    body {
       font-family: 'Poppins', sans-serif;
-      background: #f7f9fc;
-      color: #333;
-    }
-    .header {
-      background: #673ab7; /* A deep purple for a modern look */
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
-    }
-    .header h1 {
+      background: #fff; /* white background for the main content area */
+      color: #1E1E1E;
       margin: 0;
+      font-size: 14px;
+    }
+
+    /* DASHBOARD LAYOUT: SIDEBAR + MAIN CONTENT */
+    .dashboard-container {
+      display: flex;
+      height: 100vh; /* full viewport height */
+    }
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background-color: #1E1E1E;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo-container {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .logo-container img {
+      max-width: 100%;
+      height: auto;
+    }
+    .menu {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .menu li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .menu a {
+      display: block;
+      padding: 15px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .menu a:hover {
+      background-color: #00bf63;
+    }
+    /* LOGOUT LINK AT BOTTOM */
+    .logout-container {
+      padding: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .logout-container a {
+      color: #fff;
+      text-decoration: none;
+      transition: color 0.3s;
       font-weight: 600;
     }
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    .logout-container a:hover {
+      color: #00bf63;
     }
-    .container h2 {
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #fff;
+    }
+    /* TOP BAR (SEARCH) */
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .top-bar input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    /* PAGE CONTENT */
+    .content {
+      padding: 20px;
+      overflow-y: auto; /* if content gets long, allow scroll */
+      background: #f7f9fc;
+    }
+    .content h1 {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
       text-align: center;
       font-weight: 600;
-      margin-bottom: 2.5rem;
     }
-    /* Stepper Styles */
+
+    /* STEPPER CONTAINER */
     .stepper {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       position: relative;
+      max-width: 900px;
+      margin: 2rem auto;
     }
-    /* Each step container */
+    /* EACH STEP */
     .step {
       flex: 1;
       position: relative;
       text-align: center;
     }
-    /* Draw a connecting line from this step to the next (except for the last step) */
+    /* CONNECTING LINE BETWEEN STEPS */
     .step:not(:last-child)::after {
       content: "";
       position: absolute;
-      top: 20px; /* half of circle's height */
+      top: 20px; /* half of the circle's height */
       right: 0;
       width: 100%;
       height: 2px;
@@ -63,7 +148,7 @@
       z-index: -1;
       transform: translateX(50%);
     }
-    /* Circle for the step number */
+    /* STEP NUMBER CIRCLE */
     .step-number {
       width: 40px;
       height: 40px;
@@ -77,18 +162,19 @@
       font-weight: 600;
       transition: background-color 0.3s ease;
     }
-    /* Step Title & Link */
+    /* STEP TITLE */
     .step-title {
       font-size: 0.95rem;
       font-weight: 500;
       margin-bottom: 0.5rem;
       color: #333;
     }
+    /* STEP LINKS (BUTTONS) */
     .step a {
       display: inline-block;
       margin-top: 0.5rem;
       padding: 0.45rem 0.8rem;
-      background: #673ab7;
+      background: #00bf63; /* highlight color */
       color: #fff;
       text-decoration: none;
       border-radius: 5px;
@@ -96,60 +182,96 @@
       transition: background-color 0.3s ease;
     }
     .step a:hover {
-      background-color: #452c78;
+      background-color: #009e52; /* a bit darker green on hover */
     }
+    /* ACTIVE/COMPLETED STEP STYLING (OPTIONAL) */
+    /* Example: if a step is active or completed, you can highlight it: 
+       .step.active .step-number, .step.completed .step-number {
+         background-color: #00bf63;
+       }
+    */
   </style>
 </head>
 <body>
-  <header class="header">
-    <h1>Schedule Builder</h1>
-  </header>
-  <div class="container">
-    <h2>Follow the Steps to Build Your Schedule</h2>
-    <!-- Stepper Container -->
-    <div class="stepper">
-      <!-- Step 1: Select Lecturers -->
-      <div class="step">
-        <div class="step-number">1</div>
-        <div class="step-title">Select Lecturers</div>
-        <a href="{{ url_for('lecturers') }}">Start</a>
+  <div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <!-- Replace with your own logo -->
+        <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
       </div>
-      
-      <!-- Step 2: Select Courses -->
-      <div class="step">
-        <div class="step-number">2</div>
-        <div class="step-title">Select Courses</div>
-        <a href="{{ url_for('courses') }}">Next</a>
+      <nav class="menu">
+        <ul>
+          <li><a href="{{ url_for('lecturers') }}">Lecturers</a></li>
+          <li><a href="{{ url_for('courses') }}">Courses</a></li>
+          <li><a href="{{ url_for('student_courses') }}">Student Course Selection</a></li>
+          <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
+          <li><a href="{{ url_for('assign_sessions') }}">Assign Sessions</a></li>
+          <li><a href="{{ url_for('run_scheduler_route') }}">Generate Timetable</a></li>
+        </ul>
+      </nav>
+      <div class="logout-container">
+        <a href="{{ url_for('dashboard') }}">Back</a>
       </div>
+    </aside>
 
-      <!-- Step 3: Select Student Courses -->
-      <div class="step">
-        <div class="step-number">3</div>
-        <div class="step-title">Select Student Courses</div>
-        <a href="{{ url_for('student_courses') }}">Next</a>
-      </div>
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOP BAR (SEARCH) -->
+      <header class="top-bar">
+        <input type="text" placeholder="Search" />
+      </header>
 
-      <!-- Step 4: Select Rooms -->
-      <div class="step">
-        <div class="step-number">4</div>
-        <div class="step-title">Select Rooms</div>
-        <a href="{{ url_for('rooms') }}">Next</a>
-      </div>
+      <!-- CONTENT -->
+      <div class="content">
+        <h1>Schedule Builder</h1>
 
-      <!-- Step 5: Assign Sessions -->
-      <div class="step">
-        <div class="step-number">5</div>
-        <div class="step-title">Assign Sessions</div>
-        <a href="{{ url_for('assign_sessions') }}">Next</a>
-      </div>
+        <!-- Stepper -->
+        <div class="stepper">
+          <!-- Step 1: Lecturers -->
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-title">Select Lecturers</div>
+            <a href="{{ url_for('lecturers') }}">Start</a>
+          </div>
 
-      <!-- Step 6: Generate Timetable -->
-      <div class="step">
-        <div class="step-number">6</div>
-        <div class="step-title">Generate Timetable</div>
-        <a href="{{ url_for('run_scheduler_route') }}">Generate</a>
+          <!-- Step 2: Courses -->
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-title">Select Courses</div>
+            <a href="{{ url_for('courses') }}">Next</a>
+          </div>
+
+          <!-- Step 3: Student Course Selection -->
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-title">Select Student Courses</div>
+            <a href="{{ url_for('student_courses') }}">Next</a>
+          </div>
+
+          <!-- Step 4: Rooms -->
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-title">Select Rooms</div>
+            <a href="{{ url_for('rooms') }}">Next</a>
+          </div>
+
+          <!-- Step 5: Assign Sessions -->
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-title">Assign Sessions</div>
+            <a href="{{ url_for('assign_sessions') }}">Next</a>
+          </div>
+
+          <!-- Step 6: Generate Timetable -->
+          <div class="step">
+            <div class="step-number">6</div>
+            <div class="step-title">Generate Timetable</div>
+            <a href="{{ url_for('run_scheduler_route') }}">Generate</a>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 </body>
 </html>

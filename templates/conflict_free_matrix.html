@@ -87,11 +87,6 @@
       Rows = Start times of sessions &bullet; Columns = Monday–Friday
     </p>
 
-    <!-- Start Review Button -->
-    <form action="{{ url_for('start_review') }}" method="post" style="margin-bottom: 20px;">
-      <button type="submit" class="btn btn-primary">Start Review</button>
-    </form>
-
     <!-- Legend Section -->
     <div class="legend-container">
       <div class="d-flex mb-2">
@@ -112,7 +107,7 @@
 
         <!-- Year Legend -->
         <div>
-          <span class="legend-title">Years (In Plan):</span>
+          <span class="legend-title">Years:</span>
           <ul class="legend-list">
             {% set year_colors = {1: '#f86c6b', 2: '#20a8d8', 3: '#4dbd74', 4: '#ffc107'} %}
             {% for yr, color in year_colors.items() %}

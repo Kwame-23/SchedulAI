@@ -3,11 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <title>Select Active Lecturers</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Bootstrap Icons (Optional) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
   <style>
-    /* Global Resets & Typography */
+    /* RESET & BASE STYLES */
     * {
       margin: 0;
       padding: 0;
@@ -15,108 +31,296 @@
     }
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f7f9fc;
-      color: #333;
-    }
-    /* Page Header */
-    .header {
-      background-color: #673ab7;
-      color: #fff;
-      padding: 1.5rem;
-      text-align: center;
-    }
-    .header h1 {
-      font-weight: 600;
+      font-size: 14px;
+      color: #1E1E1E;
       margin: 0;
-    }
-    /* Container */
-    .container {
-      max-width: 600px;
-      margin: 2rem auto;
       background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 2rem;
     }
-    .container h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-weight: 600;
-      font-size: 1.4rem;
-      color: #333;
+
+    /* DASHBOARD LAYOUT: SIDEBAR + MAIN CONTENT */
+    .dashboard-container {
+      display: flex;
+      height: 100vh; /* full viewport height */
+      overflow: hidden; /* avoid horizontal scroll if content overflows */
     }
-    /* Instructions */
-    .instructions {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-      color: #555;
-    }
-    /* Checkbox List */
-    .checkbox-group {
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background-color: #1E1E1E;
+      color: #fff;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
     }
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      font-size: 0.95rem;
+    .logo-container {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .checkbox-item input[type="checkbox"] {
-      margin-right: 0.5rem;
-      transform: scale(1.2);
-      cursor: pointer;
+    .logo-container img {
+      max-width: 100%;
+      height: auto;
     }
-    /* Submit Button */
-    .btn-submit {
-      display: inline-block;
-      background-color: #673ab7;
+    .menu {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .menu li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .menu a {
+      display: block;
+      padding: 15px 20px;
       color: #fff;
-      padding: 0.75rem 1.25rem;
-      border-radius: 5px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .menu a:hover {
+      background-color: #00bf63;
+    }
+
+    /* LOGOUT/BACK LINK AT BOTTOM */
+    .logout-container {
+      padding: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .logout-container a {
+      color: #fff;
       text-decoration: none;
       font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: background-color 0.3s ease;
+      transition: color 0.3s;
     }
-    .btn-submit:hover {
-      background-color: #452c78;
+    .logout-container a:hover {
+      color: #00bf63;
     }
-    /* Center the button */
-    .btn-wrapper {
-      text-align: center;
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      background-color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    /* TOP BAR (with optional search) */
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .top-bar input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    /* PAGE CONTENT */
+    .content {
+      padding: 20px;
+      overflow-y: auto; /* scroll if needed */
+      background-color: #f7f9fc;
+    }
+
+    /* LECTURER PAGE STYLES */
+    .lecturer-card {
+      margin-bottom: 15px;
+    }
+    .submit-btn {
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <!-- Page Header -->
-  <header class="header">
-    <h1>Schedule Builder</h1>
-  </header>
+  <div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <!-- Replace with your own logo path -->
+        <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
+      </div>
+      <nav class="menu">
+        <ul>
+          <li><a href="{{ url_for('lecturers') }}" style="background-color: #00bf63;">Lecturers</a></li>
+          <li><a href="{{ url_for('courses') }}">Courses</a></li>
+          <li><a href="{{ url_for('student_courses') }}">Student Course Selection</a></li>
+          <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
+          <li><a href="{{ url_for('assign_sessions') }}">Assign Sessions</a></li>
+          <li><a href="{{ url_for('run_scheduler_route') }}">Generate Timetable</a></li>
+        </ul>
+      </nav>
+      <div class="logout-container">
+        <a href="{{ url_for('dashboard') }}">Back</a>
+      </div>
+    </aside>
 
-  <!-- Main Content Container -->
-  <div class="container">
-    <h2>Select Active Lecturers</h2>
-    <p class="instructions">Please check the box next to each lecturer you want to activate.</p>
-    
-    <!-- Updated Form: The form now submits to the 'courses' route -->
-    <form method="POST" action="{{ url_for('courses') }}">
-      <div class="checkbox-group">
-        {% for lec in lecturers %}
-          <div class="checkbox-item">
-            <input type="checkbox" id="lec_{{ lec[0] }}" name="lecturer_ids" value="{{ lec[0] }}">
-            <label for="lec_{{ lec[0] }}">{{ lec[1] }}</label>
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <!-- Optionally add a search field or remove if not needed -->
+        <input type="text" placeholder="Search" />
+      </header>
+
+      <!-- CONTENT AREA -->
+      <div class="content">
+        <div class="container my-5">
+          <!-- Page Header -->
+          <div class="row mb-4">
+            <div class="col">
+              <h1 class="text-center">Select Active Lecturers</h1>
+              <p class="text-center text-muted">Please check the box next to each lecturer you want to activate.</p>
+            </div>
           </div>
-        {% endfor %}
-      </div>
 
-      <div class="btn-wrapper">
-        <button type="submit" class="btn-submit">Next (Courses)</button>
-      </div>
-    </form>
-  </div>
+          <!-- Flash Messages (Optional) -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="row mb-4">
+                <div class="col">
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                      {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <!-- Select All Checkbox -->
+          <div class="row mb-3">
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="select_all_lecturers" />
+                <label class="form-check-label fw-bold" for="select_all_lecturers">
+                  Select All Lecturers
+                </label>
+              </div>
+            </div>
+            <div class="col text-end">
+              <span id="selectedCount">0</span> lecturers selected
+            </div>
+          </div>
+
+          <!-- Form Start -->
+          <form method="POST" action="{{ url_for('courses') }}">
+            <!-- Lecturers Display -->
+            <div class="row">
+              {% for lec in lecturers %}
+                <!-- Example: lec is (id, name) -->
+                <div class="col-md-4 col-sm-6">
+                  <div class="card lecturer-card shadow-sm">
+                    <div class="card-body">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="lec_{{ lec[0] }}"
+                          name="lecturer_ids"
+                          value="{{ lec[0] }}"
+                        />
+                        <label class="form-check-label fw-bold" for="lec_{{ lec[0] }}">
+                          {{ lec[1] }}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Next Button (Modal Trigger) -->
+            <div class="row">
+              <div class="col">
+                <button
+                  type="button"
+                  class="btn btn-primary submit-btn"
+                  data-bs-toggle="modal"
+                  data-bs-target="#confirmSubmitModal"
+                >
+                  <i class="bi bi-arrow-right-circle-fill"></i>
+                  Next (Courses)
+                </button>
+              </div>
+            </div>
+          </form>
+          <!-- Form End -->
+
+          <!-- Confirmation Modal -->
+          <div
+            class="modal fade"
+            id="confirmSubmitModal"
+            tabindex="-1"
+            aria-labelledby="confirmSubmitModalLabel"
+            aria-hidden="true"
+          >
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="POST" action="{{ url_for('courses') }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="confirmSubmitModalLabel">Confirm Submission</h5>
+                    <button
+                      type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <div class="modal-body">
+                    Are you sure you want to proceed with the selected lecturers?
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      data-bs-dismiss="modal"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                      Yes, Go to Courses
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div><!-- end .container -->
+      </div><!-- end .content -->
+    </main>
+  </div><!-- end .dashboard-container -->
+
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Handle "Select All" functionality
+    document.getElementById('select_all_lecturers').addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('input[name="lecturer_ids"]');
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateSelectedCount();
+    });
+
+    // Update selected lecturers count
+    const lecturerCheckboxes = document.querySelectorAll('input[name="lecturer_ids"]');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('input[name="lecturer_ids"]:checked').length;
+      selectedCountSpan.textContent = count;
+    }
+
+    lecturerCheckboxes.forEach(cb => cb.addEventListener('change', updateSelectedCount));
+    // Initialize count on page load
+    updateSelectedCount();
+  </script>
 </body>
 </html>

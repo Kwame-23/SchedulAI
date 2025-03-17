@@ -25,9 +25,9 @@
             {% for session in matrix_data[day][time] %}
               <div class="session-block"
                    style="background-color: {{ cohort_colors[session.CohortName] | default('#6c757d') }};"
-                   onclick="showSessionDetails('{{ session.CourseCode }}', '{{ session.LecturerName }}', '{{ session.SessionType }}', '{{ session.RoomName }}', '{{ session.StartTime }} - {{ session.EndTime }}', '{{ session.CohortName }}', '{{ day }}')">
+                   onclick="showSessionDetails('{{ session.CourseCode }}{% if session.CourseName %} - {{ session.CourseName }}{% endif %}', '{{ session.LecturerName }}', '{{ session.SessionType }}', '{{ session.RoomName }}', '{{ session.StartTime }} - {{ session.EndTime }}', '{{ session.CohortName }}', '{{ day }}')">
                 <div class="session-content">
-                  <strong>{{ session.CourseCode }}</strong><br>
+                  <strong>{{ session.CourseCode }}{% if session.CourseName %} - {{ session.CourseName }}{% endif %}</strong><br>
                   {{ session.LecturerName }}<br>
                   {{ session.SessionType }}<br>
                   <small>{{ session.CohortName }}</small>
@@ -52,7 +52,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p><strong>Course Code:</strong> <span id="modal-course-code"></span></p>
+        <p><strong>Course:</strong> <span id="modal-course-code"></span></p>
         <p><strong>Lecturer:</strong> <span id="modal-lecturer"></span></p>
         <p><strong>Session Type:</strong> <span id="modal-session-type"></span></p>
         <p><strong>Room:</strong> <span id="modal-room"></span></p>
@@ -93,7 +93,7 @@
     min-height: 60px;
   }
   .timetable-table th {
-    background-color: #f8f9fa;
+    background-color: #00bf63;
     text-align: center;
     font-weight: bold;
   }

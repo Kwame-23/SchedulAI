@@ -1,4 +1,3 @@
-<!-- templates/conflict_resolution.html -->
 {% extends 'base.html' %}
 
 {% block content %}
@@ -8,8 +7,8 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Session ID</th>
                 <th>Course Code</th>
+                <th>Course Name</th>
                 <th>Cohort</th>
                 <th>Lecturer</th>
                 <th>Duration</th>
@@ -20,8 +19,8 @@
         <tbody>
             {% for s in unassigned %}
             <tr>
-                <td>{{ s.SessionID }}</td>
                 <td>{{ s.CourseCode }}</td>
+                <td>{{ s.CourseName }}</td>
                 <td>{{ s.CohortName }}</td>
                 <td>{{ s.LecturerName }}</td>
                 <td>{{ s.Duration }}</td>
