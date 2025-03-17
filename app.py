@@ -662,8 +662,8 @@ def fetch_sessions_join_schedule():
 
 def fetch_sessions_join_schedule_for_updated_schedule():
     """
-    Pulls data from SessionAssignments + UpdatedSessionSchedule (staging timetable)
-    and converts TIME columns to "HH:MM" strings.
+    Pulls data from SessionAssignments + UpdatedSessionSchedule (staging timetable),
+    joins with the Course table to include CourseName, and converts TIME columns to "HH:MM" strings.
     """
     conn = get_db_connection()
     if conn is None:
@@ -676,6 +676,7 @@ def fetch_sessions_join_schedule_for_updated_schedule():
                 SELECT 
                   sa.SessionID,
                   sa.CourseCode,
+                  c.CourseName,
                   sa.SessionType,
                   sa.LecturerName AS Lecturer,
                   sa.CohortName,
@@ -686,6 +687,8 @@ def fetch_sessions_join_schedule_for_updated_schedule():
                 FROM SessionAssignments sa
                 JOIN UpdatedSessionSchedule us 
                   ON sa.SessionID = us.SessionID
+                LEFT JOIN Course c
+                  ON sa.CourseCode = c.CourseCode
                 ORDER BY sa.SessionID
             """
             cursor.execute(sql)
@@ -852,8 +855,8 @@ def assign_sessions():
                     # Insert to DB
                     insert_sql = """
                         INSERT INTO SessionAssignments
-                        (CourseCode, LecturerName, CohortName, SessionType, Duration, NumberOfEnrollments)
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        (CourseCode, LecturerName, CohortName, SessionType, Duration, NumberOfEnrollments, AdditionalStaff)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """
                     cursor.execute(insert_sql, (
                         course_code,
@@ -861,7 +864,8 @@ def assign_sessions():
                         cohort_name,
                         session_type,
                         duration_str,
-                        enrollments
+                        enrollments,
+                        lecturer_intern  # Store Faculty Intern in AdditionalStaff
                     ))
     
                 conn.commit()
@@ -1212,7 +1216,12 @@ def conflicts():
     
     try:
         with conn.cursor(dictionary=True) as cursor:
-            cursor.execute("SELECT * FROM UnassignedSessions")
+            # Retrieve unassigned sessions with CourseName via LEFT JOIN with Course table
+            cursor.execute("""
+                SELECT u.*, c.CourseName
+                FROM UnassignedSessions u
+                LEFT JOIN Course c ON u.CourseCode = c.CourseCode
+            """)
             unassigned = cursor.fetchall()
     
             cursor.execute("SELECT Location, Location AS RoomName, MaxRoomCapacity FROM Room WHERE ActiveFlag=1")
@@ -1236,7 +1245,8 @@ def conflicts():
 def suggest_alternatives():
     """
     Suggests alternative time slots based on lecturer availability, room capacity, session duration,
-    excluding days already in the lecturer's existing schedule, and considering Friday prayer constraints.
+    excluding days already in the lecturer's existing schedule as well as days on which the course
+    is already scheduled, and considering Friday prayer constraints.
     """
     data = request.json
     session_id  = data.get("SessionID")
@@ -1291,13 +1301,31 @@ def suggest_alternatives():
                 return jsonify({"message": "Invalid session duration format."}), 400
 
             # B: Determine possible days based on lecturer's current assignments
-            assigned_days = lecturer_assigned_days(lecturer)
             all_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            # Exclude days already assigned to the lecturer
-            possible_days = [day for day in all_days if day not in assigned_days]
-
+            assigned_days = lecturer_assigned_days(lecturer)
             logging.debug(f"Assigned days for lecturer {lecturer}: {assigned_days}")
-            logging.debug(f"Possible alternative days: {possible_days}")
+
+            # --- NEW RULE: Exclude days already used by the course ---
+            # Retrieve the course code for the session:
+            cursor.execute("SELECT CourseCode FROM SessionAssignments WHERE SessionID = %s", (session_id,))
+            course_row = cursor.fetchone()
+            course_code = course_row["CourseCode"] if course_row else None
+            course_days = set()
+            if course_code:
+                cursor.execute("""
+                    SELECT DISTINCT ss.DayOfWeek
+                    FROM SessionSchedule ss
+                    JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
+                    WHERE sa.CourseCode = %s
+                """, (course_code,))
+                rows = cursor.fetchall()
+                course_days = {r["DayOfWeek"] for r in rows}
+                logging.debug(f"Existing scheduled days for course {course_code}: {course_days}")
+
+            # Exclude both lecturer assigned days and course scheduled days
+            excluded_days = set(assigned_days) | course_days
+            possible_days = [day for day in all_days if day not in excluded_days]
+            logging.debug(f"Possible alternative days after exclusion: {possible_days}")
 
             # C: Define possible timeslots (HH:MM format)
             possible_times = [
@@ -1689,7 +1717,7 @@ def get_full_plan():
 def timetable():
     logging.info("Accessed /timetable route.")
     try:
-        sessions = fetch_sessions_join_schedule()
+        sessions = fetch_sessions_join_schedule_for_updated_schedule()
         logging.info(f"Fetched {len(sessions)} sessions for timetable.")
         
         # Fetch all active rooms
@@ -1890,19 +1918,13 @@ def student_timetable(student_id, day_of_week):
             # ---------------------------------------------------------------------
             # UPDATED SECTION: Fetch ALL Active Elective Courses for This Day
             # ---------------------------------------------------------------------
-            # We'll retrieve any course whose RequirementType indicates 'Elective'
-            # and that has an active session on the specified day_of_week.
-            #
-            # Then we'll classify them as Major or Non-Major by checking their code
-            # against the student's major_prefixes.
-
             cursor.execute("""
                 SELECT c.CourseCode, c.CourseName,
-                    sa.LecturerName, sa.CohortName,    -- Added sa.CohortName here
+                    sa.LecturerName, sa.CohortName,
                     ss.RoomName, ss.StartTime, ss.EndTime
                 FROM Course c
                 JOIN SessionAssignments sa ON c.CourseCode = sa.CourseCode
-                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                JOIN UpdatedSessionSchedule ss ON sa.SessionID = ss.SessionID
                 WHERE c.RequirementType LIKE '%Elective%'
                 AND c.ActiveFlag = 1
                 AND ss.DayOfWeek = %s
@@ -1921,7 +1943,6 @@ def student_timetable(student_id, day_of_week):
                     f"{convert_timedelta_to_hhmm(row['StartTime'])}"
                     f" - {convert_timedelta_to_hhmm(row['EndTime'])}"
                 )
-
                 # Check if CourseCode starts with any major prefix
                 course_code = row['CourseCode']
                 if any(course_code.startswith(prefix) for prefix in major_prefixes):
@@ -1934,16 +1955,16 @@ def student_timetable(student_id, day_of_week):
                          f"{len(non_major_elective_details)} non-major elective sessions.")
 
             # --- (8) Fetch Regular (Non-Elective) Sessions ---
-            # (unchanged from your original code)
             cursor.execute("""
                 SELECT sa.CourseCode,
+                       c.CourseName,
                        sa.LecturerName,
                        sa.CohortName,
                        ss.StartTime,
                        ss.EndTime,
                        ss.RoomName
                 FROM SessionAssignments sa
-                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                JOIN UpdatedSessionSchedule ss ON sa.SessionID = ss.SessionID
                 JOIN Course c ON sa.CourseCode = c.CourseCode
                 WHERE sa.CourseCode IN (
                     SELECT DISTINCT scc.CourseCode
@@ -1976,13 +1997,11 @@ def student_timetable(student_id, day_of_week):
         conn.close()
         logging.debug(f"Database connection closed for StudentID {student_id}.")
 
-    # Log warnings if no electives
     if not major_elective_details:
         logging.warning(f"No Major Electives found for StudentID {student_id} on {day_of_week}.")
     if not non_major_elective_details:
         logging.warning(f"No Non-Major Electives found for StudentID {student_id} on {day_of_week}.")
     
-    # --- Render Timetable (unchanged) ---
     return render_template(
         'student_timetable.html',
         student_id=student_id,
@@ -2267,6 +2286,7 @@ def student_timetable_grid(student_id):
             # (3) Fetch regular (non-elective) sessions for the student
             cursor.execute("""
                 SELECT sa.CourseCode,
+                       c.CourseName,
                        sa.LecturerName,
                        sa.CohortName,
                        ss.StartTime,
@@ -2274,7 +2294,7 @@ def student_timetable_grid(student_id):
                        ss.RoomName,
                        ss.DayOfWeek
                 FROM SessionAssignments sa
-                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                JOIN UpdatedSessionSchedule ss ON sa.SessionID = ss.SessionID
                 JOIN Course c ON sa.CourseCode = c.CourseCode
                 WHERE sa.CourseCode IN (
                     SELECT DISTINCT scc.CourseCode
@@ -2299,7 +2319,7 @@ def student_timetable_grid(student_id):
                        ss.DayOfWeek
                 FROM Course c
                 JOIN SessionAssignments sa ON c.CourseCode = sa.CourseCode
-                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                JOIN UpdatedSessionSchedule ss ON sa.SessionID = ss.SessionID
                 WHERE c.RequirementType LIKE '%Elective%'
                   AND c.ActiveFlag = 1
                 ORDER BY c.CourseCode, ss.DayOfWeek, ss.StartTime
@@ -2343,11 +2363,11 @@ def student_timetable_grid(student_id):
             # (10) Build a cohort_colors mapping from the sessions.
             cohorts = {sess["CohortName"] for sess in all_sessions if sess.get("CohortName")}
             color_palette = [
-                "#FF6666", "#66B3FF", "#99FF99", "#FFCC66", "#C0C0C0", "#FF99CC",  # Original 6 colors
-                "#FF6666", "#FFB366", "#FFFF66", "#B3FF66", "#66FF66", "#66FFB3",  # Additional colors
-                "#66FFFF", "#66B3FF", "#6666FF", "#B366FF", "#FF66FF", "#FF66B3",  # More colors
-                "#FF6666", "#FF8C66", "#FFB366", "#FFD966", "#FFFF66", "#D9FF66",  # Even more colors
-                "#B3FF66", "#8CFF66", "#66FF66", "#66FF8C", "#66FFB3", "#66FFD9"   # Final colors
+                "#FF6666", "#66B3FF", "#99FF99", "#FFCC66", "#C0C0C0", "#FF99CC",
+                "#FF6666", "#FFB366", "#FFFF66", "#B3FF66", "#66FF66", "#66FFB3",
+                "#66FFFF", "#66B3FF", "#6666FF", "#B366FF", "#FF66FF", "#FF66B3",
+                "#FF6666", "#FF8C66", "#FFB366", "#FFD966", "#FFFF66", "#D9FF66",
+                "#B3FF66", "#8CFF66", "#66FF66", "#66FF8C", "#66FFB3", "#66FFD9"
             ]
             cohort_colors = {}
             for i, cohort in enumerate(sorted(cohorts)):
@@ -3001,6 +3021,80 @@ def start_review():
     finally:
         conn.close()
     return redirect(url_for('conflict_free_matrix'))
+
+
+@app.route('/export_csv', methods=['GET', 'POST'])
+def export_csv():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        semester = request.form.get('semester')  # e.g., "Semester 2"
+        if not title or not semester:
+            flash("Please provide a title and select a semester.", "warning")
+            return redirect(url_for('export_csv'))
+        
+        conn = get_db_connection()
+        if conn is None:
+            flash("Database connection failed.", "danger")
+            return redirect(url_for('export_csv'))
+        try:
+            with conn.cursor(dictionary=True) as cursor:
+                # Join data from UpdatedSessionSchedule, SessionAssignments, and Course
+                sql = """
+                    SELECT 
+                        us.DayOfWeek AS Day,
+                        sa.SessionType AS `Period Name`,
+                        DATE_FORMAT(us.StartTime, '%H:%i') AS `From Time`,
+                        DATE_FORMAT(us.EndTime, '%H:%i') AS `To Time`,
+                        us.RoomName AS Location,
+                        CONCAT(sa.CourseCode, ' - ', c.CourseName) AS `Course Code - Course Name`,
+                        sa.LecturerName AS `Staff Code - Staff Name`,
+                        sa.AdditionalStaff AS `Additional Staff`,
+                        sa.CohortName AS Section,
+                        %s AS `Semester/Year`,
+                        sa.NumberOfEnrollments AS `Number of Enrollments`
+                    FROM UpdatedSessionSchedule us
+                    JOIN SessionAssignments sa ON us.SessionID = sa.SessionID
+                    JOIN Course c ON sa.CourseCode = c.CourseCode
+                    ORDER BY us.DayOfWeek, us.StartTime
+                """
+                cursor.execute(sql, (semester,))
+                rows = cursor.fetchall()
+        except mysql.connector.Error as err:
+            flash("Error fetching data: " + str(err), "danger")
+            return redirect(url_for('export_csv'))
+        finally:
+            conn.close()
+        
+        # Use the csv module to write each field into its own column
+        import csv, io
+        output = io.StringIO()
+        fieldnames = [
+            "Day",
+            "Period Name",
+            "From Time",
+            "To Time",
+            "Location",
+            "Course Code - Course Name",
+            "Staff Code - Staff Name",
+            "Additional Staff",
+            "Section",
+            "Semester/Year",
+            "Number of Enrollments"
+        ]
+        writer = csv.DictWriter(output, fieldnames=fieldnames, delimiter=',')
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+        csv_content = output.getvalue()
+        output.close()
+
+        from flask import Response
+        filename = f"{title.replace(' ', '_')}.csv"
+        response = Response(csv_content, mimetype="text/csv")
+        response.headers.set("Content-Disposition", "attachment", filename=filename)
+        return response
+
+    return render_template('export_csv.html')
 
 
 @app.route('/')

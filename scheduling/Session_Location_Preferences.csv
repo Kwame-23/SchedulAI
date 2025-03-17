@@ -10,10 +10,10 @@ AS111 - Ashesi Success,Fab Lab 103,Seminar
 AS111 - Ashesi Success,Fab Lab 203,Seminar
 AS111 - Ashesi Success,Fab Lab 303,Seminar
 AS111 - Ashesi Success,Nutor Hall 115,Seminar
-BUSA 432 - Organisational Development,Radichel MPR,Lecture
-BUSA 432 - Organisational Development,Radichel MPR,Discussion
-BUSA 432 - Organisational Development,Apt Hall 216,Lecture
-BUSA 432 - Organisational Development,Jackson Hall 115,Discussion
+BUSA432 - Organisational Development,Radichel MPR,Lecture
+BUSA432 - Organisational Development,Radichel MPR,Discussion
+BUSA432 - Organisational Development,Apt Hall 216,Lecture
+BUSA432 - Organisational Development,Jackson Hall 115,Discussion
 BUSA132 - Organizational Behaviour,Jackson Lab 221,Lecture
 BUSA132 - Organizational Behaviour,Nutor Hall 100,Discussion
 BUSA132 - Organizational Behaviour,Jackson Hall 115,Lecture
@@ -139,10 +139,10 @@ CE322 - Digital Systems Design,Fab Lab 203,Lecture
 CE451 - Embedded Systems,Fab Lab 203,Lab
 CE451 - Embedded Systems,Fab Lab 203,Lecture
 CE451 - Embedded Systems,Fab Lab 303,Lab
-CS 452 - Machine Learning,Fab Lab 203,Lecture
-CS 452 - Machine Learning,Fab Lab 203,Lab
-CS 452 - Machine Learning,D-Lab 102,Lecture
-CS 452 - Machine Learning,D-Lab 102,Lab
+CS452 - Machine Learning,Fab Lab 203,Lecture
+CS452 - Machine Learning,Fab Lab 203,Lab
+CS452 - Machine Learning,D-Lab 102,Lecture
+CS452 - Machine Learning,D-Lab 102,Lab
 CS111 - Introduction to Computing and Information Systems,Jackson Lab 222,Lecture
 CS111 - Introduction to Computing and Information Systems,Jackson Lab 222,Lab
 CS111 - Introduction to Computing and Information Systems,Jackson Lab 221,Lecture
@@ -192,8 +192,8 @@ CS353 - Introduction to AI Robotics,Apt Hall 217,Lecture
 CS353 - Introduction to AI Robotics,Jackson Lab 222,Lab
 CS361 - Introduction to Modelling & Simulation,Jackson Lab 222,Lecture
 CS361 - Introduction to Modelling & Simulation,Jackson Lab 222,Lab
-CS410-SEM - CSIS Capstone Seminar,Nutor Hall 100,Seminar
-CS410-SEM - CSIS Capstone Seminar,Nutor Hall 100,Set up for grading only
+CS410 - CSIS Capstone Seminar,Nutor Hall 100,Seminar
+CS410 - CSIS Capstone Seminar,Nutor Hall 100,Set up for grading only
 CS413 - Concepts of Programming Languages,Jackson Lab 221,Lecture
 CS413 - Concepts of Programming Languages,Jackson Hall 116,Discussion
 CS415 - Software Engineering,Jackson Lab 222,Lab
@@ -213,8 +213,8 @@ CS442 - E-Commerce,Jackson Lab 221,Lecture
 CS442 - E-Commerce,Fab Lab 303,Lab
 CS443 - Mobile Web Programming / Mobile Application Development,Jackson Lab 221,Lecture
 CS443 - Mobile Web Programming / Mobile Application Development,Jackson Lab 221,Lab
-CS452 - Computer Graphics,D-Lab 102,Lecture
-CS452 - Computer Graphics,D-Lab 102,Lab
+CS451 - Computer Graphics,D-Lab 102,Lecture
+CS451 - Computer Graphics,D-Lab 102,Lab
 CS456 - Algorithm Design and Analysis,Nutor Hall 100,Lecture
 CS456 - Algorithm Design and Analysis,Nutor Hall 115,Lab
 CS456 - Algorithm Design and Analysis,Nutor Hall 216,Lab
@@ -260,9 +260,9 @@ ECON303 - Intermediate Macroeconomic Theory I,Apt Hall 216,Lecture
 ECON303 - Intermediate Macroeconomic Theory I,Apt Hall 216,Discussion
 ECON451 - Development Economics,Nutor Hall 100,Lecture
 ECON451 - Development Economics,Nutor Hall 100,Discussion
-EE 422 - Advanced Communication Systems,Science Lab,Lab
-EE 422 - Advanced Communication Systems,EE lab,Lecture
-EE 422 - Advanced Communication Systems,Bio Lab,Lecture
+EE422 - Advanced Communication Systems,Science Lab,Lab
+EE422 - Advanced Communication Systems,EE lab,Lecture
+EE422 - Advanced Communication Systems,Bio Lab,Lecture
 EE222 - Circuits and Electronics,EE lab,Lecture
 EE222 - Circuits and Electronics,EE lab,Lab
 EE320 - Signals & Systems,Fab Lab 203,Lab
@@ -335,8 +335,8 @@ ENGR311 - System Dynamics,Fab Lab 303,Lecture
 ENGR312 - Control Systems,Fab Lab 303,Lab
 ENGR312 - Control Systems,Fab Lab 303,Lecture
 ENGR401 - Senior Project  & Seminar,Databank Foundation Hall 218,Seminar
-ENGR401-SEM - Engineering Capstone Seminar,Fab Lab 303,Seminar
-ENGR401-SEM - Engineering Capstone Seminar,Nutor Hall 216,Seminar
+ENGR401 - Senior Project  & Seminar,Fab Lab 303,Seminar
+ENGR401 - Senior Project  & Seminar,Nutor Hall 216,Seminar
 ENGR412 - Synthetic Biological Engineering,Bio Lab,Lecture
 ENGR412 - Synthetic Biological Engineering,Bio Lab,Lab
 ENGR413 - Project Management and Professional Practice,Nutor Hall 216,Lecture
@@ -360,9 +360,9 @@ IS451 - Information and Systems Security,Apt Hall 216,Lecture
 IS451 - Information and Systems Security,Nutor Hall 115,Lab
 IS451 - Information and Systems Security,Nutor Hall 100,Lecture
 IS451 - Information and Systems Security,Jackson Hall 115,Lab
-MATH 212 - Linear Algebra,Nutor Hall 115,Lecture
-MATH 212 - Linear Algebra,Apt Hall 217,Discussion
-MATH 212 - Linear Algebra,Apt Hall 217,Lab
+MATH212 - Linear Algebra,Nutor Hall 115,Lecture
+MATH212 - Linear Algebra,Apt Hall 217,Discussion
+MATH212 - Linear Algebra,Apt Hall 217,Lab
 MATH101 - College Algebra,Nutor Hall 115,Lecture
 MATH101 - College Algebra,Nutor Hall 216,Lecture
 MATH101 - College Algebra,Nutor Hall 115,Discussion
@@ -460,10 +460,10 @@ ME444 - Advanced Mechanical Machine Design,Science Lab,Lecture
 ME445 - Machine Shop and Factory Design,Radichel MPR,Lab
 ME445 - Machine Shop and Factory Design,Bio Lab,Lecture
 ME445 - Machine Shop and Factory Design,Norton-Motulsky 207B,Lecture
-POLS 322 - China-Africa Relations,Jackson Lab 221,Lecture
-POLS 322 - China-Africa Relations,Norton-Motulsky 207A,Discussion
-POLS 334 - Introduction to Public Policy,Jackson Hall 115,Lecture
-POLS 334 - Introduction to Public Policy,Jackson Hall 115,Discussion
+POLS322 - China-Africa Relations,Jackson Lab 221,Lecture
+POLS322 - China-Africa Relations,Norton-Motulsky 207A,Discussion
+POLS334 - Introduction to Public Policy,Jackson Hall 115,Lecture
+POLS334 - Introduction to Public Policy,Jackson Hall 115,Discussion
 POLS221 - African Philosophical Thought,Nutor Hall 100,Lecture
 POLS221 - African Philosophical Thought,Nutor Hall 115,Discussion
 POLS234 - Comparative Politics,Jackson Lab 222,Lecture
@@ -476,10 +476,10 @@ SC113 - Physics: Electromagnetism,Science Lab,Lab
 SC113 - Physics: Electromagnetism,Science Lab,Lecture
 SC221 - Materials Science & Chemistry,Science Lab,Lecture
 SC221 - Materials Science & Chemistry,Science Lab,Lab
-SOAN 322 - African Cultural Institutions,Jackson Hall 116,Lecture
-SOAN 322 - African Cultural Institutions,Jackson Lab 222,Discussion
-SOAN 322 - African Cultural Institutions,Apt Hall 217,Lecture
-SOAN 322 - African Cultural Institutions,Jackson Hall 115,Discussion
+SOAN322 - African Cultural Institutions,Jackson Hall 116,Lecture
+SOAN322 - African Cultural Institutions,Jackson Lab 222,Discussion
+SOAN322 - African Cultural Institutions,Apt Hall 217,Lecture
+SOAN322 - African Cultural Institutions,Jackson Hall 115,Discussion
 SOAN111 - Leadership Seminar I: What Makes a Good Leader?,Nutor Hall 115,Discussion
 SOAN111 - Leadership Seminar I: What Makes a Good Leader?,Norton-Motulsky 207A,Lecture
 SOAN111 - Leadership Seminar I: What Makes a Good Leader?,Norton-Motulsky 207A,Discussion
@@ -492,27 +492,27 @@ SOAN111 - Leadership Seminar I: What Makes a Good Leader?,Norton-Motulsky 207A,S
 SOAN111 - Leadership Seminar I: What Makes a Good Leader?,Jackson Lab 222,Seminar
 SOAN111 - Leadership Seminar I: What Makes a Good Leader?,D-Lab 102,Seminar
 SOAN111 - Leadership Seminar I: What Makes a Good Leader?,Nutor Hall 115,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 115,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 216,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 100,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Hall 115,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",D-Lab 102,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Lab 222,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 216,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 100,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 217,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Radichel MPR,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Lab 222,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 216,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 216,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Norton-Motulsky 207A,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 217,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Science Lab,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Fab Lab 203,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Databank Foundation Hall 218,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 115,Discussion
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Hall 115,Seminar
-"SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Lab 221,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 115,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 216,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 100,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Hall 115,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",D-Lab 102,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Lab 222,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 216,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 100,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 217,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Radichel MPR,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Lab 222,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 216,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 216,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Norton-Motulsky 207A,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Apt Hall 217,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Science Lab,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Fab Lab 203,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Databank Foundation Hall 218,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Nutor Hall 115,Discussion
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Hall 115,Seminar
+SOAN211 - Leadership Seminar II: Rights, Ethics and Rule of Law",Jackson Lab 221,Seminar
 SOAN225 - Ghanaian Popular Culture,Jackson Lab 221,Lecture
 SOAN225 - Ghanaian Popular Culture,Jackson Hall 116,Discussion
 SOAN225 - Ghanaian Popular Culture,EE lab,Lecture
@@ -546,8 +546,8 @@ SOAN311 - Leadership Seminar III: The Economic Organization of a Good Society,Ra
 SOAN311 - Leadership Seminar III: The Economic Organization of a Good Society,Nutor Hall 115,Seminar
 SOAN311 - Leadership Seminar III: The Economic Organization of a Good Society,Norton-Motulsky 207B,Seminar
 SOAN311 - Leadership Seminar III: The Economic Organization of a Good Society,Jackson Lab 221,Discussion
-"SOAN320 - World Hunger, Population and Food Supplies",Bio Lab,Lecture
-"SOAN320 - World Hunger, Population and Food Supplies",Science Lab,Discussion
+SOAN320 - World Hunger, Population and Food Supplies",Bio Lab,Lecture
+SOAN320 - World Hunger, Population and Food Supplies",Science Lab,Discussion
 SOAN325 - Research Methods,Jackson Lab 222,Discussion
 SOAN325 - Research Methods,Nutor Hall 100,Lecture
 SOAN325 - Research Methods,Nutor Hall 115,Lecture
@@ -570,4 +570,4 @@ SOAN411 - Leadership Seminar IV: Leadership as Service,Fab Lab 203,Seminar
 SOAN411 - Leadership Seminar IV: Leadership as Service,Nutor Hall 100,Seminar
 SOAN411 - Leadership Seminar IV: Leadership as Service,Jackson Hall 115,Seminar
 SOAN411 - Leadership Seminar IV: Leadership as Service,Apt Hall 217,Seminar
-SOAN411_A - Leadership Seminar IV for Engineers: Leadership as Service,Apt Hall 217,Seminar
+SOAN411- Leadership Seminar IV for Engineers: Leadership as Service,Apt Hall 217,Seminar

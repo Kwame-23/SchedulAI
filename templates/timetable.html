@@ -78,7 +78,7 @@
     padding: 0;
     vertical-align: top;
   }
-  .timetable-table th { background-color: #f8f9fa; text-align: center; }
+  .timetable-table th { background-color: #00bf63; text-align: center; }
   .time-slot {
     width: 60px;
     text-align: right;
@@ -170,15 +170,16 @@
               const block = document.createElement('div');
               block.classList.add('session-block', sessionTypeClass);
               block.innerHTML = `
-                <strong>${session.CourseCode}</strong><br>
+                <strong>${session.CourseCode} - ${session.CourseName || ""}</strong><br>
                 ${session.Lecturer}<br>
                 ${session.SessionType}
               `;
-              block.title = `Course: ${session.CourseCode}\nLecturer: ${session.Lecturer}\nType: ${session.SessionType}`;
+              block.title = `Course: ${session.CourseCode} - ${session.CourseName || ""}\nLecturer: ${session.Lecturer}\nType: ${session.SessionType}`;
               block.addEventListener('click', function() {
                 console.log("Session block clicked:", session);
                 showSessionDetails(
                   session.CourseCode,
+                  session.CourseName,
                   session.Lecturer,
                   session.SessionType,
                   session.RoomName,
@@ -209,8 +210,8 @@
   });
 
   // Show session details in modal and store the details.
-  function showSessionDetails(courseCode, lecturer, sessionType, room, time, day) {
-    document.getElementById('modal-course-code').innerText = courseCode;
+  function showSessionDetails(courseCode, courseName, lecturer, sessionType, room, time, day) {
+    document.getElementById('modal-course-code').innerText = courseCode + " - " + courseName;
     document.getElementById('modal-lecturer').innerText = lecturer;
     document.getElementById('modal-session-type').innerText = sessionType;
     document.getElementById('modal-room').innerText = room;
@@ -221,6 +222,7 @@
 
     currentSessionDetails = {
       courseCode: courseCode,
+      courseName: courseName,
       lecturer: lecturer,
       sessionType: sessionType,
       room: room,
@@ -266,7 +268,7 @@
   function highlightCurrentTimeSlot() {
     const now = new Date();
     // getDay() returns 0-6 (0=Sunday); days array is [Mon..Fri], so if today is Sun it won't highlight
-    const currentDay = days[now.getDay()];  // e.g. "Monday", "Tuesday", ...
+    const currentDay = days[now.getDay()];
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
     const currentTime = hh + ':' + mm;

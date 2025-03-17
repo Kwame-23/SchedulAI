@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Export Timetable as CSV</h2>
+    <form method="POST" action="{{ url_for('export_csv') }}">
+      <div class="mb-3">
+        <label for="title" class="form-label">Timetable Title</label>
+        <input type="text" class="form-control" id="title" name="title" placeholder="Enter a title for your timetable" required>
+      </div>
+      <div class="mb-3">
+        <label for="semester" class="form-label">Select Semester</label>
+        <select class="form-select" id="semester" name="semester" required>
+          <option value="">-- Select Semester --</option>
+          <option value="Semester 1">Semester 1</option>
+          <option value="Semester 2">Semester 2</option>
+          <option value="Semester 3">Semester 3</option>
+          <option value="Semester 4">Semester 4</option>
+          <option value="Semester 5">Semester 5</option>
+          <option value="Semester 6">Semester 6</option>
+          <option value="Semester 7">Semester 7</option>
+          <option value="Semester 8">Semester 8</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Export CSV</button>
+    </form>
+</div>
+{% endblock %}

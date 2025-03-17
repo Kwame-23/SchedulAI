@@ -4,79 +4,196 @@
   <meta charset="UTF-8" />
   <title>Run Scheduler</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Bootstrap CSS for styling -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  
+  <!-- Google Fonts: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons (Optional) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
+    /* RESET & BASE STYLES */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      background: #f7f9fc;
       font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      color: #1E1E1E;
+      background: #f7f9fc;
+      margin: 0;
     }
-    /* Header Navbar */
-    .navbar-custom {
-      background: #673ab7;
+    
+    /* DASHBOARD LAYOUT: SIDEBAR + MAIN CONTENT */
+    .dashboard-container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
     }
-    .navbar-custom .navbar-brand,
-    .navbar-custom .btn-outline-light {
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background-color: #1E1E1E;
       color: #fff;
+      display: flex;
+      flex-direction: column;
     }
-    .navbar-custom .btn-outline-light:hover {
-      color: #673ab7;
+    .sidebar .logo-container {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar .logo-container img {
+      max-width: 100%;
+      height: auto;
+    }
+    .sidebar .menu {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .sidebar .menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar .menu li {
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sidebar .menu a {
+      display: block;
+      padding: 15px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .sidebar .menu a:hover,
+    .sidebar .menu a.active {
+      background-color: #00bf63;
+    }
+    .sidebar .logout-container {
+      padding: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar .logout-container a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .sidebar .logout-container a:hover {
+      color: #00bf63;
+    }
+    
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
       background-color: #fff;
+      display: flex;
+      flex-direction: column;
     }
-    /* Main Content Styles */
-    .content-wrapper {
+    /* TOP BAR */
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .top-bar input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 200px;
+    }
+    /* CONTENT AREA */
+    .content {
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .content h1 {
+      margin-bottom: 30px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .content .content-wrapper {
       text-align: center;
       margin-top: 50px;
     }
-    .robot-img {
+    .content .robot-img {
       max-width: 300px;
       margin-bottom: 20px;
     }
-    h1 {
-      margin-bottom: 30px;
-    }
   </style>
 </head>
-<body class="bg-light">
-  <!-- Header with Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container">
-      <a class="navbar-brand" href="{{ url_for('schedule_builder') }}">Schedule Builder</a>
-      <button class="btn btn-outline-light" onclick="window.location.href='{{ url_for('schedule_builder') }}'">
-        Back to Schedule Builder
-      </button>
-    </div>
-  </nav>
-
-  <div class="container my-5">
-    <h1 class="text-center">Run Scheduler</h1>
-
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="alert alert-info">
-          {% for msg in messages %}
-            <p class="m-0">{{ msg }}</p>
-          {% endfor %}
+<body>
+  <div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <!-- Replace with your logo path -->
+       <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
+      </div>
+      <nav class="menu">
+        <ul>
+          <li><a href="{{ url_for('lecturers') }}">Lecturers</a></li>
+          <li><a href="{{ url_for('courses') }}">Courses</a></li>
+          <li><a href="{{ url_for('student_courses') }}">Student Course Selection</a></li>
+          <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
+          <li><a href="{{ url_for('assign_sessions') }}">Assign Sessions</a></li>
+          <li><a href="{{ url_for('run_scheduler_route') }}" style="background-color: #00bf63;">Generate Timetable</a></li>
+        </ul>
+      </nav>
+      <div class="logout-container">
+        <a href="{{ url_for('dashboard') }}">Back</a>
+      </div>
+    </aside>
+    
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- Optional Top Bar -->
+      <header class="top-bar">
+        <input type="text" placeholder="Search" />
+      </header>
+      
+      <!-- CONTENT AREA -->
+      <div class="content">
+        <h1>Run Scheduler</h1>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert alert-info">
+              {% for msg in messages %}
+                <p class="m-0">{{ msg }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        
+        <div class="content-wrapper">
+          <!-- Centered robot image -->
+          <img src="{{ url_for('static', filename='robot.png') }}" alt="Robot" class="robot-img img-fluid">
+          
+          {% if scheduled %}
+            <!-- After scheduling is done, show the View Timetable button -->
+            <a href="{{ url_for('timetable') }}" class="btn btn-success btn-lg">View Timetable</a>
+          {% else %}
+            <!-- Before scheduling, show the Start Scheduling button -->
+            <form method="POST">
+              <button type="submit" class="btn btn-primary btn-lg">Start Scheduling</button>
+            </form>
+          {% endif %}
         </div>
-      {% endif %}
-    {% endwith %}
-
-    <div class="content-wrapper">
-      <!-- Centered robot image -->
-      <img src="{{ url_for('static', filename='robot.png') }}" alt="Robot" class="robot-img img-fluid">
-
-      {% if scheduled %}
-        <!-- After scheduling is done, show the View Timetable button -->
-        <a href="{{ url_for('timetable') }}" class="btn btn-success btn-lg">View Timetable</a>
-      {% else %}
-        <!-- Before scheduling, show the Start Scheduling button -->
-        <form method="POST">
-          <button type="submit" class="btn btn-primary btn-lg">Start Scheduling</button>
-        </form>
-      {% endif %}
-    </div>
+      </div>
+    </main>
   </div>
-
+  
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
