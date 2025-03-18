@@ -501,7 +501,7 @@ def lecturer_assigned_days(lecturer_name):
         with conn.cursor(dictionary=True) as cursor:
             sql = """
                 SELECT DISTINCT ss.DayOfWeek AS day
-                FROM SessionSchedule ss
+                FROM UpdatedSessionSchedule  ss
                 JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
                 WHERE sa.LecturerName = %s
             """
@@ -546,7 +546,7 @@ def rooms_free_for_timeslot(day_of_week, start_time_str, end_time_str):
             # Find rooms booked in overlapping times
             sql_booked = """
                 SELECT DISTINCT RoomName
-                FROM SessionSchedule
+                FROM UpdatedSessionSchedule 
                 WHERE DayOfWeek = %s
                   AND StartTime < %s
                   AND EndTime > %s
@@ -592,7 +592,7 @@ def lecturer_is_free(lecturer_name, day_of_week, start_time_str, end_time_str):
         with conn.cursor(dictionary=True) as cursor:
             sql = """
                 SELECT ss.*
-                FROM SessionSchedule ss
+                FROM UpdatedSessionSchedule  ss
                 JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
                 WHERE sa.LecturerName = %s
                   AND ss.DayOfWeek = %s
@@ -615,7 +615,7 @@ def lecturer_is_free(lecturer_name, day_of_week, start_time_str, end_time_str):
 # ----------------------------------------------------
 def fetch_sessions_join_schedule():
     """
-    Pulls data from SessionAssignments + SessionSchedule => combined schedule.
+    Pulls data from SessionAssignments + UpdatedSessionSchedule  => combined schedule.
     Converts TIME columns to "HH:MM" for StartTime/EndTime.
     Also includes CohortName so we can display it in the matrix.
     """
@@ -1187,7 +1187,7 @@ def save_timetable():
                 en   = sess["EndTime"]
                 location = sess["Location"]
                 sql  = """
-                  UPDATE SessionSchedule
+                  UPDATE UpdatedSessionSchedule 
                   SET DayOfWeek=%s, StartTime=%s, EndTime=%s, RoomName=%s
                   WHERE SessionID=%s
                 """
@@ -1314,7 +1314,7 @@ def suggest_alternatives():
             if course_code:
                 cursor.execute("""
                     SELECT DISTINCT ss.DayOfWeek
-                    FROM SessionSchedule ss
+                    FROM UpdatedSessionSchedule  ss
                     JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
                     WHERE sa.CourseCode = %s
                 """, (course_code,))
@@ -1432,7 +1432,7 @@ def suggest_alternatives():
     return jsonify({"alternatives": free_slots})
 
 # ----------------------------------------------------
-# Route: Resolve Conflict -> move from UnassignedSessions -> SessionSchedule
+# Route: Resolve Conflict -> move from UnassignedSessions -> UpdatedSessionSchedule 
 # ----------------------------------------------------
 @app.route('/resolve_conflict', methods=['POST'])
 def resolve_conflict():
@@ -1467,7 +1467,7 @@ def resolve_conflict():
         with conn.cursor() as cursor:
             # Check if room is available
             sql_room = """
-                SELECT COUNT(*) FROM SessionSchedule
+                SELECT COUNT(*) FROM UpdatedSessionSchedule 
                 WHERE DayOfWeek = %s
                   AND RoomName = %s
                   AND StartTime < %s
@@ -1489,7 +1489,7 @@ def resolve_conflict():
             lecturer_name = lecturer_row[0]
     
             cursor.execute("""
-                SELECT COUNT(*) FROM SessionSchedule ss
+                SELECT COUNT(*) FROM UpdatedSessionSchedule  ss
                 JOIN SessionAssignments sa ON ss.SessionID = sa.SessionID
                 WHERE sa.LecturerName = %s
                   AND ss.DayOfWeek = %s
@@ -1505,9 +1505,9 @@ def resolve_conflict():
             # Remove from UnassignedSessions
             cursor.execute("DELETE FROM UnassignedSessions WHERE SessionID=%s", (session_id,))
     
-            # Insert into SessionSchedule
+            # Insert into UpdatedSessionSchedule 
             insert_sql = """
-                INSERT INTO SessionSchedule (SessionID, DayOfWeek, StartTime, EndTime, RoomName)
+                INSERT INTO UpdatedSessionSchedule  (SessionID, DayOfWeek, StartTime, EndTime, RoomName)
                 VALUES (%s, %s, %s, %s, %s)
             """
             cursor.execute(insert_sql, (session_id, day_of_week, start_time, end_time, location))
@@ -1556,7 +1556,7 @@ def get_existing_schedule():
             sql = """
                 SELECT sc.DayOfWeek, sc.StartTime, sc.EndTime, sc.RoomName, sa.SessionType, sa.LecturerName
                 FROM SessionAssignments sa
-                JOIN SessionSchedule sc ON sa.SessionID = sc.SessionID
+                JOIN UpdatedSessionSchedule  sc ON sa.SessionID = sc.SessionID
                 WHERE sa.CourseCode = %s AND sa.CohortName = %s
                 ORDER BY sc.DayOfWeek, sc.StartTime
             """
@@ -2067,7 +2067,7 @@ def enforce_15_min_break(room_name, day_of_week):
         # 1) Select sessions
         sql = """
             SELECT ScheduleID, StartTime, EndTime
-            FROM SessionSchedule
+            FROM UpdatedSessionSchedule 
             WHERE RoomName = %s
               AND DayOfWeek = %s
             ORDER BY StartTime
@@ -2104,7 +2104,7 @@ def enforce_15_min_break(room_name, day_of_week):
 
                     # DB update
                     update_sql = """
-                        UPDATE SessionSchedule
+                        UPDATE UpdatedSessionSchedule 
                         SET StartTime = %s, EndTime = %s
                         WHERE ScheduleID = %s
                     """
