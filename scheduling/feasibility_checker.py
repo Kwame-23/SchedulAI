@@ -10,7 +10,7 @@ selected courses (as stored in StudentCourseSelection). For each student (identi
      expand it into the list of actual elective course codes (retrieved from the Course table
      and filtered by the student’s major via major_prefix_mapping). Then, for each course code
      (either from the original selection or from expansion), fetch available sections (cohorts)
-     along with their sessions from SessionAssignments joined with SessionSchedule.
+     along with their sessions from SessionAssignments joined with UpdatedSessionSchedule .
   3. Generate every combination (Cartesian product) of one section per course.
   4. Check for time conflicts among the sessions in each combination.
   5. Return the feasible (conflict‑free) timetables (and, for debugging, also those with conflicts).
@@ -141,7 +141,7 @@ def expand_electives(course_code, student_id):
 def fetch_sections_for_course(course_code):
     """
     For a given course code, fetch available sections (cohorts)
-    and their sessions from SessionAssignments joined with SessionSchedule.
+    and their sessions from SessionAssignments joined with UpdatedSessionSchedule .
     Returns a list of section dictionaries.
     """
     sections = defaultdict(list)
@@ -153,7 +153,7 @@ def fetch_sections_for_course(course_code):
             query = """
                 SELECT sa.CohortName, ss.DayOfWeek, ss.StartTime, ss.EndTime
                 FROM SessionAssignments sa
-                JOIN SessionSchedule ss ON sa.SessionID = ss.SessionID
+                JOIN UpdatedSessionSchedule  ss ON sa.SessionID = ss.SessionID
                 WHERE sa.CourseCode = %s
             """
             cursor.execute(query, (course_code,))
