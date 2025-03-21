@@ -978,15 +978,26 @@ def courses():
     try:
         with conn.cursor() as cursor:
             if request.method == 'POST':
-                selected_course_codes = request.form.getlist('course_codes')
-                session['selected_courses'] = selected_course_codes
-                logging.info(f"Selected courses: {selected_course_codes}")
+                # Retrieve list of course IDs from the form; these are strings so you might want to cast if needed.
+                selected_course_ids = request.form.getlist('course_ids')
+                logging.info(f"Selected courses: {selected_course_ids}")
+                
+                # Reset all courses to inactive.
+                cursor.execute("UPDATE Course SET ActiveFlag = 0")
+                
+                # If some courses were selected, update them to active.
+                if selected_course_ids:
+                    placeholders = ','.join(['%s'] * len(selected_course_ids))
+                    update_sql = f"UPDATE Course SET ActiveFlag = 1 WHERE CourseID IN ({placeholders})"
+                    cursor.execute(update_sql, selected_course_ids)
+                
+                conn.commit()
                 return redirect(url_for('courses'))
     
+            # For GET, fetch all courses (including their active flag)
             cursor.execute("""
-                SELECT CourseCode, CourseName, Credits
+                SELECT CourseID, CourseCode, CourseName, Credits, ActiveFlag
                 FROM Course
-                WHERE ActiveFlag = 1
                 ORDER BY CourseCode
             """)
             courses_data = cursor.fetchall()

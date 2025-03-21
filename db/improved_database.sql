@@ -473,6 +473,11 @@ VALUES
     ('BUSA400_B', 'Thesis 2', 'Core', 1, 1.0)
 ON DUPLICATE KEY UPDATE CourseCode = CourseCode;
 
+INSERT INTO Course (CourseCode, CourseName, RequirementType, Credits)
+VALUES
+    ('BUSA422', 'Corporate Finance', 'Core', 1),
+    ('IS351', 'Systems Analysis and Design', 'Core', 1);
+
 -- ----------------------------------------------------
 -- 8. Create Cohort Table and Insert Data
 -- ----------------------------------------------------
