@@ -8,6 +8,9 @@ CREATE TABLE Roles (
     RoleName VARCHAR(50) UNIQUE NOT NULL
 );
 
+INSERT INTO Roles (RoleName) VALUES ('Admin');
+INSERT INTO Roles (RoleName) VALUES ('User');
+
 CREATE TABLE Users (
     UserID INT PRIMARY KEY AUTO_INCREMENT,
     Username VARCHAR(50) UNIQUE NOT NULL,
@@ -285,6 +288,90 @@ VALUES
 (178, 'Yaw Mpeani-Brantuo', 1),
 (179, 'Yvonne Dewortor', 1);
 
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (179, 'Amma Gyaama Kuma', 3),
+    (180, 'Benjamin Dzivenu Akakpo', 3),
+    (181, 'Abdul-Karim Ngoliba', 3),
+    (182, 'Abigail Awuah', 3),
+    (183, 'Adelle Maame Ama Barko Hasford', 3),
+    (184, 'Alfred Berkoh', 3),
+    (185, 'Alhassan Hassan', 3),
+    (186, 'Annaliese Susan Blessing Korkor Nartey', 3),
+    (187, 'Anthony Aninagyei', 3),
+    (188, 'Benjamin Dzivenu Akakpo', 3),
+    (189, 'Brenda Adjoa Gerbs', 3),
+    (190, 'Clifford Yeboah', 3),
+    (191, 'Daniel Mawuli Seworye', 3),
+    (192, 'Delali Esi Enyonam Segbor', 3),
+    (193, 'Derrick Addo-Aikins', 3),
+    (194, 'Edna Naa Tetteh', 3),
+    (195, 'Enoch Nganigme Aho', 3),
+    (196, 'Erica Naa Kai Anang', 3),
+    (197, 'Eugene Eluerkeh', 3),
+    (198, 'Eyram Tawia', 3),
+    (199, 'Felicia Engmann', 3),
+    (200, 'Fortune Amenuvor', 3),
+    (201, 'Gerhard Nana Addo Opare-Addo', 3),
+    (202, 'Hafiz Adjei', 3),
+    (203, 'Hassana Mahama', 3),
+    (204, 'Henry Owusu', 3),
+    (205, 'Isabella Sompa Twum-Antwi', 3),
+    (206, 'Jadis Azade Aganda', 3),
+    (207, 'James Abugre', 3),
+    (208, 'Joe Ghartey', 3),
+    (209, 'Joel Osei-Asamoah', 3),
+    (210, 'John Terence Manful', 3),
+    (211, 'Joseph Mensah Asare', 3),
+    (212, 'Kojo Anyinam-Boateng', 3),
+    (213, 'Kwadwo Asare Debrah', 3),
+    (214, 'Leanne Maame Mozuma Annor-Adjaye', 3),
+    (215, 'Maureen Kyere', 3),
+    (216, 'Naa Dromo Aryee', 3),
+    (217, 'Nana Amma Opoku-Boadu', 3),
+    (218, 'Natasha Skult', 3),
+    (219, 'Nathalie Blandine N''Guessan', 3),
+    (220, 'Nii-Tete Yartey', 3),
+    (221, 'Oheneba Dade', 3),
+    (222, 'Olaf Hall-Holt', 3),
+    (223, 'Philip Asare', 3),
+    (224, 'Phoebe Nuoyong Continua', 3),
+    (225, 'Pius Gadosey', 3),
+    (226, 'Raymond Honu', 3),
+    (227, 'Reynolds Okyere Boakye', 3),
+    (228, 'Samuel Kwame Osei Blankson', 3),
+    (229, 'Samuel Kwasi Asiedu Awuah', 3),
+    (230, 'Selasi Kwaku Ocloo', 3),
+    (231, 'Siphiwe Abraham', 3),
+    (232, 'Stanley Agudu', 3),
+    (233, 'Stephen Nii Adu Tagoe', 3),
+    (234, 'Suzette Carlotta Zwennes', 3),
+    (235, 'Thelma Boakyewaa Asiedu', 3),
+    (236, 'Thomas Kojo Yesu Quarshie', 3),
+    (237, 'Tiffany Ampene', 3),
+    (238, 'Wendy Osei', 3),
+    (239, 'William Akuffo', 3),
+    (240, 'Yasmin Angaa-Mwini Kamal-Deen Gbontaa', 3),
+    (241, 'Jamal-Deen Abdulai', 3),
+    (242, 'Facilitator A', 1),
+    (243, 'Facilitator B', 1),
+    (244, 'Facilitator C', 1),
+    (245, 'Facilitator D', 1),
+    (246, 'Facilitator E', 1),
+    (247, 'Facilitator F', 1),
+    (248, 'Facilitator G', 1),
+    (249, 'Facilitator H', 1),
+    (250, 'Facilitator I', 1),
+    (251, 'Facilitator J', 1),
+    (252, 'Facilitator K', 1),
+    (253, 'Facilitator L', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES (254, 'None', 3);
+
+
+
 CREATE TABLE Duration (
     DurationID INT PRIMARY KEY AUTO_INCREMENT,
     Duration TIME NOT NULL
@@ -533,7 +620,7 @@ VALUES
 (239, 'CS463', 'Computer Game Development', 'Elective', 1, 1.0),
 (240, 'AS111', 'Ashesi Success', 'Core', 1, 0.0),
 (241, 'BUSA400_B', 'Thesis 2', 'Core', 1, 1.0),
-(78, 'BUSA410_B', 'Applied Senior Project', 'Capstone', 1, 1.0),
+(878, 'BUSA410_B', 'Applied Senior Project', 'Capstone', 1, 1.0),
 (242, 'MATH121', 'Pre-calculus 1', 'Core', 1, 1.0),
 (243, 'MATH122', 'Pre-calculus 2', 'Core', 1, 1.0),
 (244, 'MATH143', 'Quantitative Methods', 'Core', 1, 1.0),
@@ -616,6 +703,11 @@ VALUES (430, 'ENGR412', 'Synthetic Biological Engineering', 'Elective', 1, 1.0);
 
 INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES (470, 'ENGR461', 'Financial Engineering', 'Elective', 1, 1.0);
+
+INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES
+    (260, 'BUSA422', 'Corporate Finance', 'Core', 1, 1.0),
+    (261, 'IS351', 'Systems Analysis and Design', 'Core', 1, 1.0);
 
 
 CREATE TABLE Cohort (

@@ -75,8 +75,6 @@
     .menu a:hover {
       background-color: #00bf63;
     }
-    /* Highlight the active page if needed (optional) */
-    /* .menu a.active { background-color: #00bf63; } */
     .logout-container {
       padding: 20px;
       border-top: 1px solid rgba(255,255,255,0.1);
@@ -114,7 +112,7 @@
       width: 200px;
     }
 
-    /* PAGE CONTENT (Placed directly without an extra container) */
+    /* PAGE CONTENT */
     .content {
       padding: 20px;
       overflow-y: auto;
@@ -144,7 +142,6 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="logo-container">
-        <!-- Replace with your own logo path -->
         <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
       </div>
       <nav class="menu">
@@ -164,14 +161,13 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-      <!-- TOP BAR (optional) -->
+      <!-- TOP BAR -->
       <header class="top-bar">
         <input type="text" placeholder="Search" />
       </header>
 
-      <!-- PAGE CONTENT (Directly placed content) -->
+      <!-- PAGE CONTENT -->
       <div class="content">
-        <!-- Page Header -->
         <div class="row mb-4">
           <div class="col">
             <h1 class="text-center">Select Active Courses</h1>
@@ -181,7 +177,7 @@
           </div>
         </div>
 
-        <!-- Flash Messages for User Feedback -->
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="row mb-4">
@@ -212,17 +208,18 @@
           </div>
         </div>
 
-        <!-- Form Start -->
-        <form method="POST">
+        <!-- Outer Form Start -->
+        <form method="POST" id="coursesForm">
           <!-- Courses Display -->
           <div class="row">
             {% for course in courses %}
-              {# course is a tuple like (CourseID, CourseCode, CourseName, Credits) #}
+              {# Each course is a tuple: (CourseID, CourseCode, CourseName, Credits, ActiveFlag) #}
               <div class="col-md-4 col-sm-6">
                 <div class="card course-card shadow-sm">
                   <div class="card-body">
                     <div class="form-check">
-                      <input class="form-check-input" type="checkbox" id="course_{{ course[0] }}" name="course_ids" value="{{ course[0] }}">
+                      <input class="form-check-input" type="checkbox" id="course_{{ course[0] }}" name="course_ids" value="{{ course[0] }}"
+                        {% if course[4] == 1 %} checked {% endif %}>
                       <label class="form-check-label fw-bold" for="course_{{ course[0] }}">
                         {{ course[1] }} - {{ course[2] }}
                       </label>
@@ -234,7 +231,7 @@
             {% endfor %}
           </div>
 
-          <!-- Submit Button -->
+          <!-- Submit Button (Modal Trigger) -->
           <div class="row">
             <div class="col">
               <button type="button" class="btn btn-primary submit-btn" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
@@ -243,25 +240,24 @@
             </div>
           </div>
         </form>
-        <!-- Form End -->
+        <!-- Outer Form End -->
 
-        <!-- Confirmation Modal -->
+        <!-- Confirmation Modal (Outside the form) -->
         <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitModalLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
-              <form method="POST">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="confirmSubmitModalLabel">Confirm Submission</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                  Are you sure you want to activate the selected courses?
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" class="btn btn-primary">Yes, Proceed</button>
-                </div>
-              </form>
+              <div class="modal-header">
+                <h5 class="modal-title" id="confirmSubmitModalLabel">Confirm Submission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to activate the selected courses?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <!-- This button will submit the outer form -->
+                <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Yes, Proceed</button>
+              </div>
             </div>
           </div>
         </div>
@@ -273,7 +269,7 @@
   <!-- Bootstrap JS Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Handle Select All functionality
+    // Handle "Select All" functionality
     document.getElementById('select_all_courses').addEventListener('change', function() {
       const checkboxes = document.querySelectorAll('input[name="course_ids"]');
       checkboxes.forEach(cb => cb.checked = this.checked);
@@ -292,6 +288,11 @@
     courseCheckboxes.forEach(cb => cb.addEventListener('change', updateSelectedCount));
     // Initialize count on page load
     updateSelectedCount();
+
+    // Submit the outer form when confirmation button is clicked
+    document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
+      document.getElementById('coursesForm').submit();
+    });
   </script>
 </body>
 </html>
