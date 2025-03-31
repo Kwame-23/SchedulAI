@@ -8,6 +8,9 @@ CREATE TABLE Roles (
     RoleName VARCHAR(50) UNIQUE NOT NULL
 );
 
+INSERT INTO Roles (RoleName) VALUES ('Admin');
+INSERT INTO Roles (RoleName) VALUES ('User');
+
 CREATE TABLE Users (
     UserID INT PRIMARY KEY AUTO_INCREMENT,
     Username VARCHAR(50) UNIQUE NOT NULL,
@@ -102,8 +105,10 @@ CREATE TABLE Lecturer (
     FOREIGN KEY (FacultyTypeID) REFERENCES FacultyType(FacultyTypeID)
 ) ENGINE=InnoDB;
 
+
+
 -- Populate Lecturer table with extracted lecturer names
-INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+INSERT IGNORE INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
 VALUES
 (1, 'Acheampong Antwi Afari', 1),
 (2, 'Afiah Agyeman Amponsah-Mensah', 1),
@@ -285,6 +290,166 @@ VALUES
 (178, 'Yaw Mpeani-Brantuo', 1),
 (179, 'Yvonne Dewortor', 1);
 
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (442, 'Keren Arthur', 3),
+    (443, 'Aisha Fremah Yeboah Ansah', 3),
+    (444, 'Nana Kwasi Karikari', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (944, 'Adwoa Opoku-Agyemang', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (945, 'Nicholas Tali', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (946, 'Peter Lawerh Kwao', 3);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (947, 'Yamoah Frimpong Attafuah', 3);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (960, 'Abraham Joojo Afun', 3);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (961, 'Prisca Amponsah', 3);
+
+
+
+
+
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (700, 'Amma Gyaama Kuma', 3),
+    (180, 'Benjamin Dzivenu Akakpo', 3),
+    (181, 'Abdul-Karim Ngoliba', 3),
+    (182, 'Abigail Awuah', 3),
+    (183, 'Adelle Maame Ama Barko Hasford', 3),
+    (184, 'Alfred Berkoh', 3),
+    (185, 'Alhassan Hassan', 3),
+    (186, 'Annaliese Susan Blessing Korkor Nartey', 3),
+    (187, 'Anthony Aninagyei', 3),
+    (188, 'Benjamin Dzivenu Akakpo', 3),
+    (189, 'Brenda Adjoa Gerbs', 3),
+    (190, 'Clifford Yeboah', 3),
+    (191, 'Daniel Mawuli Seworye', 3),
+    (192, 'Delali Esi Enyonam Segbor', 3),
+    (193, 'Derrick Addo-Aikins', 3),
+    (194, 'Edna Naa Tetteh', 3),
+    (195, 'Enoch Nganigme Aho', 3),
+    (196, 'Erica Naa Kai Anang', 3),
+    (197, 'Eugene Eluerkeh', 3),
+    (198, 'Eyram Tawia', 3),
+    (199, 'Felicia Engmann', 3),
+    (200, 'Fortune Amenuvor', 3),
+    (201, 'Gerhard Nana Addo Opare-Addo', 3),
+    (202, 'Hafiz Adjei', 3),
+    (203, 'Hassana Mahama', 3),
+    (204, 'Henry Owusu', 3),
+    (205, 'Isabella Sompa Twum-Antwi', 3),
+    (206, 'Jadis Azade Aganda', 3),
+    (207, 'James Abugre', 3),
+    (208, 'Joe Ghartey', 3),
+    (209, 'Joel Osei-Asamoah', 3),
+    (210, 'John Terence Manful', 3),
+    (211, 'Joseph Mensah Asare', 3),
+    (212, 'Kojo Anyinam-Boateng', 3),
+    (213, 'Kwadwo Asare Debrah', 3),
+    (214, 'Leanne Maame Mozuma Annor-Adjaye', 3),
+    (215, 'Maureen Kyere', 3),
+    (216, 'Naa Dromo Aryee', 3),
+    (217, 'Nana Amma Opoku-Boadu', 3),
+    (218, 'Natasha Skult', 3),
+    (219, 'Nathalie Blandine N''Guessan', 3),
+    (220, 'Nii-Tete Yartey', 3),
+    (221, 'Oheneba Dade', 3),
+    (222, 'Olaf Hall-Holt', 3),
+    (223, 'Philip Asare', 3),
+    (224, 'Phoebe Nuoyong Continua', 3),
+    (225, 'Pius Gadosey', 3),
+    (226, 'Raymond Honu', 3),
+    (227, 'Reynolds Okyere Boakye', 3),
+    (228, 'Samuel Kwame Osei Blankson', 3),
+    (229, 'Samuel Kwasi Asiedu Awuah', 3),
+    (230, 'Selasi Kwaku Ocloo', 3),
+    (231, 'Siphiwe Abraham', 3),
+    (232, 'Stanley Agudu', 3),
+    (233, 'Stephen Nii Adu Tagoe', 3),
+    (234, 'Suzette Carlotta Zwennes', 3),
+    (235, 'Thelma Boakyewaa Asiedu', 3),
+    (236, 'Thomas Kojo Yesu Quarshie', 3),
+    (237, 'Tiffany Ampene', 3),
+    (238, 'Wendy Osei', 3),
+    (239, 'William Akuffo', 3),
+    (240, 'Yasmin Angaa-Mwini Kamal-Deen Gbontaa', 3),
+    (241, 'Jamal-Deen Abdulai', 3),
+    (242, 'Facilitator A', 1),
+    (243, 'Facilitator B', 1),
+    (244, 'Facilitator C', 1),
+    (245, 'Facilitator D', 1),
+    (246, 'Facilitator E', 1),
+    (247, 'Facilitator F', 1),
+    (248, 'Facilitator G', 1),
+    (249, 'Facilitator H', 1),
+    (250, 'Facilitator I', 1),
+    (251, 'Facilitator J', 1),
+    (252, 'Facilitator K', 1),
+    (253, 'Facilitator L', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (254, 'Facilitator M', 1),
+    (255, 'Facilitator N', 1),
+    (256, 'Facilitator O', 1),
+    (257, 'Facilitator P', 1),
+    (258, 'Facilitator Q', 1),
+    (259, 'Facilitator R', 1),
+    (260, 'Facilitator S', 1),
+    (261, 'Facilitator T', 1);
+
+
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES (262, 'None', 3);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (777, 'Mohammed Elmir', 3);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (790, 'Victoria Osei-Bonsu', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (807, 'Hassana Mahama', 1);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (810, 'Joseph Kwabena Fosu  Okyere', 3);
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (809, 'Noah Adasi', 3);
+
+
+INSERT INTO Lecturer (LecturerID, LecturerName, FacultyTypeID)
+VALUES
+    (811, 'Bright Anim Antwi', 3);
+
+
+
+
+
+
 CREATE TABLE Duration (
     DurationID INT PRIMARY KEY AUTO_INCREMENT,
     Duration TIME NOT NULL
@@ -340,28 +505,25 @@ VALUES
 (29, 'CS331', 'Computer Architecture', 'Core', 1, 1.0),
 (30, 'CS333', 'Operating Systems', 'Core', 1, 1.0),
 (31, 'CS341', 'Web Development', 'Elective', 1, 1.0),
-(32, 'CS353', 'Artificial Intelligence', 'Elective', 1, 1.0),
+(32, 'CS353', 'Introduction to AI Robotics', 'Elective', 1, 1.0),
 (33, 'BUSA201', 'Financial Accounting', 'Core', 1, 1.0),
 (34, 'BUSA311', 'Managerial Accounting', 'Core', 1, 1.0),
-(35, 'BUSA203', 'Marketing', 'Core', 1, 1.0),
+(35, 'BUSA341', 'Marketing', 'Core', 1, 1.0),
 (36, 'BUSA204', 'Business Strategy', 'Core', 1, 1.0),
 (37, 'EE201', 'Introduction to Electrical Circuits', 'Core', 1, 1.0),
 (38, 'EE301', 'Power Systems', 'Core', 1, 1.0),
 (39, 'ME101', 'Introduction to Mechanics', 'Core', 1, 1.0),
 (40, 'ME201', 'Thermodynamics', 'Core', 1, 1.0),
 (42, 'MIS201', 'Enterprise Systems', 'Core', 1, 1.0),
-(43, 'BUSA341', 'Organizational Behavior', 'Core', 1, 1.0),
+(43, 'BUSA132', 'Organizational Behavior', 'Core', 1, 1.0),
 (45, 'BUSA350', 'International Trade & Policy', 'Core', 1, 1.0),
-(46, 'BUSA402', 'Corporate Finance', 'Core', 1, 1.0),
-(47, 'BUSA332', 'Business Law', 'Core', 1, 1.0),
+(46, 'BUSA323', 'Corporate Finance', 'Core', 1, 1.0),
 (48, 'SC231', 'Introduction to Chemistry', 'Core', 1, 1.0),
 (49, 'ENG101', 'English Composition', 'Core', 1, 1.0),
 (51, 'EE451', 'Power Engineering', 'Elective', 1, 1.0),
 (52, 'CS453', 'Robotics', 'Elective', 1, 1.0),
-(53, 'ME411', 'Fluid Mechanics', 'Core', 1, 1.0),
-(54, 'ME431', 'Thermal Systems', 'Core', 1, 1.0),
+(53, 'ME431', 'Fluid Mechanics', 'Core', 1, 1.0),
 (55, 'CS457', 'Data Mining', 'Elective', 1, 1.0),
-(56, 'BUSA462', 'Real Estate Development', 'Elective', 1, 1.0),
 (57, 'SOAN233', 'African Music and Dance', 'Elective', 1, 1.0),
 (58, 'POLS233', 'African Philosophy', 'Elective', 1, 1.0),
 (59, 'ECON102', 'Macroeconomics', 'Core', 1, 1.0),
@@ -373,20 +535,21 @@ VALUES
 (65, 'ENGR413', 'Project Management', 'Core', 1, 1.0),
 (66, 'CS454', 'Artificial Intelligence', 'Elective', 1, 1.0),
 (68, 'CS424', 'Advanced Database Systems', 'Elective', 1, 1.0),
+(700, 'BUSA455', 'Project Management', 'Elective', 1, 1.0),
 (69, 'CS451', 'Computer Graphics', 'Elective', 1, 1.0),
-(71, 'ECON321', 'Risk Management', 'Elective', 1, 1.0),
+(71, 'ECON321', ' Econometrics I', 'Elective', 1, 1.0),
 (72, 'ECON341', 'Operations Research', 'Elective', 1, 1.0),
 (74, 'BUSA401_A', 'Entrepreneurship I', 'Capstone', 1, 1.0),
 (75, 'BUSA401_B', 'Entrepreneurship II', 'Capstone', 1, 1.0),
 (76, 'CS400_A', 'Thesis I', 'Capstone', 1, 1.0),
 (77, 'CS400_B', 'Thesis II', 'Capstone', 1, 1.0),
-(78, 'BUSA410_A', 'Applied Senior Project', 'Capstone', 1, 1.0),
+(78, 'BUSA411', 'Applied Senior Project I', 'Core', 1, 1.0),
 (79, 'MIS301', 'E-commerce', 'Core', 1, 1.0),
 (80, 'MIS302', 'Advanced Database Systems', 'Core', 1, 1.0),
 (81, 'MIS303', 'Networks and Distributed Computing', 'Core', 1, 1.0),
 (82, 'MIS304', 'Programming II', 'Core', 1, 1.0),
 (83, 'BUSA442', 'Strategic Brand Management', 'Elective', 1, 1.0),
-(84, 'BUSA423', 'New Product Development', 'Elective', 1, 1.0),
+(84, 'BUSA462', 'New Product Development', 'Elective', 1, 1.0),
 (85, 'ENGR300', 'Third Year Group Project & Seminar', 'Core', 1, 0.5),
 (86, 'CE122', 'Applied Programming for Engineers', 'Core', 1, 0.5),
 (87, 'ENGR212', 'Instrumentation for Engineering', 'Core', 1, 0.5),
@@ -405,7 +568,6 @@ VALUES
 (104, 'CS412', 'Concepts of Programming Languages', 'Elective', 1, 1.0),
 (106, 'CS443', 'Mobile App Development', 'Elective', 1, 1.0),
 (108, 'CS455', 'Applied Cryptography and Security', 'Elective', 1, 1.0),
-(110, 'CS413', 'Human-Computer Interaction', 'Elective', 1, 1.0),
 (111, 'ENGR400', 'Senior Project', 'Capstone', 1, 1.0),
 (112, 'ENGR401', 'Senior Project and Seminar', 'Capstone', 1, 1.0),
 (113, 'ENGR414', 'Environmental Science and Engineering', 'Elective', 1, 1.0),
@@ -442,15 +604,14 @@ VALUES
 (147, 'BUSA100', 'Business Fundamentals', 'Core', 1, 1.0),
 (148, 'BUSA101', 'Introduction to Accounting', 'Core', 1, 1.0),
 (149, 'CS456', 'Algorithm Design', 'Core', 1, 1.0),
-(150, 'CS461', 'Digital Forensics', 'Elective', 1, 1.0),
-(151, 'ENGR500', 'Advanced Control Systems', 'Core', 1, 1.0),
+(151, 'ENGR411', 'Advanced Control Systems', 'Elective', 1, 1.0),
 (152, 'ENGR501', 'Microcontroller Programming', 'Elective', 1, 1.0),
 (153, 'ENGR502', 'Advanced Robotics', 'Elective', 1, 1.0),
 (154, 'CS320', 'Data Visualization', 'Elective', 1, 1.0),
 (155, 'CS480', 'Capstone Project', 'Capstone', 1, 1.0),
 (156, 'MIS210', 'Business Intelligence', 'Core', 1, 1.0),
 (157, 'MIS411', 'Information Systems Auditing', 'Elective', 1, 1.0),
-(158, 'EE310', 'Power Electronics', 'Core', 1, 1.0),
+(158, 'EE442', 'Power Electronics', 'Core', 1, 1.0),
 (159, 'EE450', 'Electromagnetic Field Theory', 'Core', 1, 1.0),
 (160, 'EE499', 'Capstone Project in Electrical Engineering', 'Capstone', 1, 1.0),
 (161, 'ME422', 'Heat and Mass Transfer', 'Core', 1, 1.0),
@@ -463,7 +624,7 @@ VALUES
 (169, 'CS444', 'Advanced Software Engineering', 'Elective', 1, 1.0),
 (170, 'CS482', 'Natural Language Processing', 'Elective', 1, 1.0),
 (171, 'CS483', 'Computer Vision', 'Elective', 1, 1.0),
-(172, 'ENGR600', 'Advanced Thermodynamics', 'Elective', 1, 1.0),
+(172, 'ME412', 'Advanced Thermodynamics', 'Elective', 1, 1.0),
 (173, 'ME450', 'Sustainable Engineering Design', 'Elective', 1, 1.0),
 (174, 'BUSA500', 'Global Business Strategy', 'Elective', 1, 1.0),
 (175, 'BUSA505', 'Leadership and Ethics', 'Core', 1, 1.0),
@@ -499,25 +660,25 @@ VALUES
 (205, 'BUSA220', 'Introduction to Finance', 'Core', 1, 1.0),
 (206, 'BUSA224', 'Finance for Non-Finance', 'Core', 1, 1.0),
 (207, 'BUSA321', 'Investments', 'Core', 1, 1.0),
-(208, 'BUSA400_A', 'Thesis 1', 'Core', 1, 1.0),
+(208, 'BUSA491', 'Thesis 1', 'Core', 1, 1.0),
 (209, 'BUSA402', 'Business Law', 'Core', 1, 1.0),
 (210, 'BUSA405', 'Competitive Strategy', 'Core', 1, 1.0),
 (211, 'BUSA423', 'International Finance', 'Core', 1, 1.0),
 (212, 'BUSA430', 'Human Resource Management', 'Core', 1, 1.0),
-(213, 'BUSA431', 'Real Estate Development', 'Core', 1, 1.0),
+(213, 'BUSA431', 'Real Estate Development', 'Elective', 1, 1.0),
 (214, 'BUSA442', 'Strategic Brand Management', 'Elective', 1, 1.0),
 (215, 'BUSA451', 'Development Economics', 'Elective', 1, 1.0),
 (216, 'ECON452', 'Econometrics', 'Elective', 1, 1.0),
 (217, 'ECON455', 'Managerial Economics', 'Elective', 1, 1.0),
 (218, 'ENGR413', 'Project Management & Professional Practice', 'Elective', 1, 1.0),
-(219, 'BUSA424', 'Venture Capital Investment', 'Elective', 1, 1.0),
+(219, 'BUSA425', 'Venture Capital Investment', 'Elective', 1, 1.0),
 (220, 'BUSA432', 'Organization Development', 'Elective', 1, 1.0),
 (221, 'BUSA441', 'Service Marketing', 'Elective', 1, 1.0),
 (222, 'BUSA471', 'Social Enterprise', 'Elective', 1, 1.0),
 (223, 'BUS458', 'Data Analytics for Business', 'Elective', 1, 1.0),
 (224, 'CS213', 'Object-Oriented Programming', 'Core', 1, 1.0),
 (225, 'CS221', 'Discrete Structures and Theory', 'Core', 1, 1.0),
-(226, 'CS361', 'Introduction to Modelling and Simulation', 'Elective', 1, 1.0),
+(226, 'CS361', 'Introduction to Modelling and Simulation', 'Elective', 1, 0.5),
 (227, 'CS442', 'E-Commerce', 'Elective', 1, 1.0),
 (228, 'CS461', 'Data Science', 'Elective', 1, 1.0),
 (229, 'IS333', 'IT Infrastructure and Systems Administration', 'Elective', 1, 1.0),
@@ -530,13 +691,13 @@ VALUES
 (236, 'CS462', 'Cloud Computing', 'Elective', 1, 1.0),
 (237, 'IS371', 'Technology & Ethics', 'Elective', 1, 1.0),
 (238, 'IS361', 'IS Project Management', 'Elective', 1, 1.0),
-(239, 'CS463', 'Computer Game Development', 'Elective', 1, 1.0),
+(239, 'CS354', 'Computer Game Development', 'Elective', 1, 1.0),
 (240, 'AS111', 'Ashesi Success', 'Core', 1, 0.0),
-(241, 'BUSA400_B', 'Thesis 2', 'Core', 1, 1.0),
-(78, 'BUSA410_B', 'Applied Senior Project', 'Capstone', 1, 1.0),
+(241, 'BUSA492', 'Thesis 2', 'Core', 1, 1.0),
+(878, 'BUSA412', 'Applied Senior Project II', 'Core', 1, 1.0),
 (242, 'MATH121', 'Pre-calculus 1', 'Core', 1, 1.0),
 (243, 'MATH122', 'Pre-calculus 2', 'Core', 1, 1.0),
-(244, 'MATH143', 'Quantitative Methods', 'Core', 1, 1.0),
+(244, 'MATH223', 'Quantitative Methods', 'Core', 1, 1.0),
 (245, 'BUSA220', 'Introduction to Finance', 'Core', 1, 1.0),
 (246, 'SOAN325', 'Research Methods', 'Core', 1, 1.0),
 (247, 'ECON100', 'Principles of Economics', 'Core', 1, 1.0),
@@ -570,8 +731,7 @@ VALUES
 
 INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES
-(258, 'BUSA231', 'Business Communication and Negotiations', 'Core', 1, 1.0),
-(259, 'BUSA400_B', 'Thesis 2', 'Core', 1, 1.0);
+(258, 'BUSA231', 'Business Communication and Negotiations', 'Core', 1, 1.0);
 
 INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES ('ELECTIVE1', 'Major Elective', 'Elective', 1, 1.0);
@@ -592,6 +752,10 @@ VALUES (
 INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES
 (290, 'SOAN301', 'Introduction to Africana Studies: The Global Black Experience', 'Elective', 1, 1.0);
+
+INSERT INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES
+    (900, 'BUSA446', 'Integrated Marketing Communications', 'Elective', 1, 1.0);
 
 INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES (300, 'MATH101', 'College Algebra', 'Core', 1, 1.0);
@@ -616,6 +780,51 @@ VALUES (430, 'ENGR412', 'Synthetic Biological Engineering', 'Elective', 1, 1.0);
 
 INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
 VALUES (470, 'ENGR461', 'Financial Engineering', 'Elective', 1, 1.0);
+
+INSERT IGNORE INTO Course (CourseID, CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES
+    (261, 'IS351', 'Systems Analysis and Design', 'Core', 1, 1.0);
+
+INSERT IGNORE INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES
+    ('ECON302', 'Intermediate Microeconomic Theory II', 'Elective', 1, 1.0),
+    ('ECON304', 'Intermediate Macroeconomic Theory II', 'Elective', 1, 1.0),
+    ('ECON202', 'Principles of Macroeconomics', 'Elective', 1, 1.0),
+    ('ECON211', 'The Economy of Ghana', 'Elective', 1, 1.0),
+    ('ECON241', 'Introduction to Environmental Economics', 'Elective', 1, 1.0);
+
+
+INSERT IGNORE INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES
+    ('LLB111', 'Language for Law', 'Core', 1, 1.0),
+    ('LLB112', 'Ghana Legal System & Methods', 'Core', 1, 1.0),
+    ('LLB114', 'Legal Writing', 'Core', 1, 1.0),
+    ('LLB150', 'Introduction to Public Policy', 'Core', 1, 1.0),
+    ('LLB213', 'Constitutional Law I', 'Core', 1, 1.0),
+    ('LLB215', 'Contract Law I', 'Core', 1, 1.0);
+
+-- Insert POLS221 - African Philosophical Thought
+INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES ('POLS221', 'African Philosophical Thought', 'Elective', 1, 1.0);
+
+-- Insert POLS222 - Political Economy of Healthcare in Ghana
+INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES ('POLS222', 'Political Economy of Healthcare in Ghana', 'Elective', 1, 1.0);
+
+INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES ('ME432', 'Computational Fluid Dynamics', 'Elective', 1, 1.0);
+
+-- Insert the new elective course
+INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES ('SOAN332', 'Sustainability and Systems Thinking', 'Elective', 1, 1.0);
+
+-- Insert all four elective courses at once
+INSERT INTO Course (CourseCode, CourseName, RequirementType, ActiveFlag, Credits)
+VALUES 
+    ('SOAN225', 'Ghanaian Popular Culture', 'Elective', 1, 1.0),
+    ('SOAN236', 'ESG: Corporate Ethics in Africa', 'Elective', 1, 1.0),
+    ('SOAN239', 'African & Diasporan Choir', 'Elective', 1, 1.0),
+    ('SOAN242', 'Modern Dance Traditions of Ghana', 'Elective', 1, 1.0);
 
 
 CREATE TABLE Cohort (
@@ -914,7 +1123,7 @@ VALUES
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 2, 4, '', 'SOAN311'),
-(1, 2, 4, '', 'MATH143'),
+(1, 2, 4, '', 'MATH223'),
 (1, 2, 4, '', 'ECON102'),
 (1, 2, 4, '', 'BUSA220'),
 (1, 2, 4, '', 'BUSA132');
@@ -925,7 +1134,7 @@ VALUES
 (1, 3, 5, '', 'BUSA304'),
 (1, 3, 5, '', 'BUSA350'),
 (1, 3, 5, '', 'SOAN411'),
-(1, 3, 5, '', 'BUSA203'),
+(1, 3, 5, '', 'BUSA341'),
 (1, 3, 5, '', 'BUSA422');
 
 -- Year 3, Semester 6
@@ -934,7 +1143,7 @@ VALUES
 (1, 3, 6, 'I', 'SOAN325'),
 (1, 3, 6, 'I', 'BUSA311'),
 (1, 3, 6, 'I', 'SOAN411'),
-(1, 3, 6, 'I', 'BUSA402'),
+(1, 3, 6, 'I', 'BUSA323'),
 (1, 3, 6, 'I', 'ELECTIVE1');
 
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -942,7 +1151,7 @@ VALUES
 (1, 3, 6, 'II', 'SOAN325'),
 (1, 3, 6, 'II', 'BUSA311'),
 (1, 3, 6, 'II', 'ELECTIVE'),
-(1, 3, 6, 'II', 'BUSA402'),
+(1, 3, 6, 'II', 'BUSA323'),
 (1, 3, 6, 'II', 'ELECTIVE1');
 
 -- Year 4, Semester 7 - Type I
@@ -951,7 +1160,7 @@ VALUES
 (1, 4, 7, 'I', 'BUSA405'),
 (1, 4, 7, 'I', 'ELECTIVE'),
 (1, 4, 7, 'I', 'BUSA321'),
-(1, 4, 7, 'I', 'BUSA400_A');
+(1, 4, 7, 'I', 'BUSA491');
 
 -- Year 4, Semester 7 - Type II
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -959,7 +1168,7 @@ VALUES
 (1, 4, 7, 'II', 'BUSA405'),
 (1, 4, 7, 'II', 'ELECTIVE'),
 (1, 4, 7, 'II', 'BUSA321'),
-(1, 4, 7, 'II', 'BUSA410_A');
+(1, 4, 7, 'II', 'BUSA411');
 
 -- Year 4, Semester 7 - Type III
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -968,14 +1177,13 @@ VALUES
 (1, 4, 7, 'III', 'ELECTIVE'),
 (1, 4, 7, 'III', 'BUSA321'),
 (1, 4, 7, 'III', 'BUSA401_A');
-
 -- Year 4, Semester 8 - Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
 (1, 4, 8, 'I', 'BUSA231'),
 (1, 4, 8, 'I', 'ELECTIVE'),
 (1, 4, 8, 'I', 'ELECTIVE'),
-(1, 4, 8, 'I', 'BUSA400_B');
+(1, 4, 8, 'I', 'BUSA492');
 
 -- Year 4, Semester 8 - Type II
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -983,7 +1191,7 @@ VALUES
 (1, 4, 8, 'II', 'BUSA231'),
 (1, 4, 8, 'II', 'ELECTIVE'),
 (1, 4, 8, 'II', 'ELECTIVE'),
-(1, 4, 8, 'II', 'BUSA410_B');
+(1, 4, 8, 'II', 'BUSA412');
 
 -- Year 4, Semester 8 - Type III
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -992,6 +1200,7 @@ VALUES
 (1, 4, 8, 'III', 'ELECTIVE'),
 (1, 4, 8, 'III', 'ELECTIVE'),
 (1, 4, 8, 'III', 'BUSA401_B');
+
 
 -- ----------------------------------------------------
 -- Insert Correct ProgramPlan Entries for Computer Science (MajorID = 2)
@@ -1154,8 +1363,8 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (2, 4, 8, 'II', 'CS432'),       -- Computer Networks and Data Communications
     (2, 4, 8, 'II', 'ELECTIVE'),   -- Elective (4 credits)
-    (2, 4, 8, 'II', 'ELECTIVE'),   -- Elective (4 credits)
-    (2, 4, 8, 'II', 'CS410');       -- Applied Project
+    (2, 4, 8, 'II', 'ELECTIVE');   -- Elective (4 credits)
+  
 
 -- Semester 8
 -- Type III
@@ -1164,7 +1373,7 @@ VALUES
     (2, 4, 8, 'III', 'CS432'),      -- Computer Networks and Data Communications
     (2, 4, 8, 'III', 'ELECTIVE'),  -- Elective (4 credits)
     (2, 4, 8, 'III', 'ELECTIVE'),  -- Elective (4 credits)
-    (2, 4, 8, 'III', 'BUSA401_A');  -- Entrepreneurship I (Capstone)
+    (2, 4, 8, 'III', 'BUSA401_B');  -- Entrepreneurship I (Capstone)
 
 -- MIS
 
@@ -1225,7 +1434,7 @@ VALUES
 -- Year 2 Semester 4 - Type I
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
-    (3, 2, 4, 'I', 'MATH143'),   -- Quantitative Methods
+    (3, 2, 4, 'I', 'MATH223'),   -- Quantitative Methods
     (3, 2, 4, 'I', 'SOAN311'),   -- Leadership Seminar 3: The Economic Development of a Good Society
     (3, 2, 4, 'I', 'CS222'),     -- Data Structures and Algorithms
     (3, 2, 4, 'I', 'CS323'),     -- Database Systems
@@ -1234,7 +1443,7 @@ VALUES
 -- Year 2 Semester 4 - Type II
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
 VALUES
-    (3, 2, 4, 'II', 'MATH143'),    -- Quantitative Methods
+    (3, 2, 4, 'II', 'MATH223'),    -- Quantitative Methods
     (3, 2, 4, 'II', 'SOAN311'),    -- Leadership Seminar 3: The Economic Development of a Good Society
     (3, 2, 4, 'II', 'ELECTIVE2'),  -- Non-Major Elective
     (3, 2, 4, 'II', 'CS323'),      -- Database Systems
@@ -1280,7 +1489,7 @@ VALUES
     (3, 4, 7, 'I', 'CS442'),       -- E-Commerce (Elective)
     (3, 4, 7, 'I', 'IS451'),       -- Information and Systems Security (Elective)
     (3, 4, 7, 'I', 'ELECTIVE'),   -- Elective (4 credits)
-    (3, 4, 7, 'I', 'BUSA400_A');   -- Thesis 1
+    (3, 4, 7, 'I', 'BUSA491');   -- Thesis 1
 
 -- Year 4 Semester 7 - Type II
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -1314,8 +1523,8 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (3, 4, 8, 'II', 'CS432'),         -- Computer Networks and Data Communications
     (3, 4, 8, 'II', 'ELECTIVE'),     -- Elective (4 credits)
-    (3, 4, 8, 'II', 'ELECTIVE'),     -- Elective (4 credits)
-    (3, 4, 8, 'II', 'CS410');         -- Applied Project
+    (3, 4, 8, 'II', 'ELECTIVE');     -- Elective (4 credits)
+    
 
 -- Year 4 Semester 8 - Type III
 INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCode)
@@ -1469,7 +1678,7 @@ INSERT INTO ProgramPlan (MajorID, YearNumber, SemesterNumber, SubType, CourseCod
 VALUES
     (6, 3, 6, '', 'ENGR312'),      -- Control Systems
     (6, 3, 6, '', 'ME301'),        -- Mechanical Machine Design
-    (6, 3, 6, '', 'ME411'),        -- Fluid Mechanics
+    (6, 3, 6, '', 'ME431'),        -- Fluid Mechanics
     (6, 3, 6, '', 'ME441'),        -- Manufacturing Processes
     (6, 3, 6, '', 'ELECTIVE1');    -- ME Elective
 

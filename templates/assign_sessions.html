@@ -245,7 +245,7 @@
                       </div>
                       
                       <!-- Keep track of how many sessions we have -->
-                      <input type="hidden" id="session_count_{{ courseCode }}" name="session_count_{{ courseCode }}" value="0">
+                      <input type="hidden" id="session_count_{{ courseCode }}" name="session_count" value="0">
                       
                       <!-- Sessions Table -->
                       <table class="table table-bordered">
@@ -268,7 +268,7 @@
                         Add Another Session
                       </button>
                       <br>
-                      <button type="submit" class="btn btn-success">
+                      <button type="submit" class="btn btn-success" onclick="this.disabled = true; this.form.submit();">
                         Save Assignments
                       </button>
                     </form>
@@ -354,6 +354,8 @@
           addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
         } else if (credits === 0.5) {
           addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
+          addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
+        } else if (credits === 0) {
           addDefaultRow(courseCode, cohortName, 'Discussion', '01:00:00');
         }
       }
