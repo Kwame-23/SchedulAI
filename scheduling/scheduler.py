@@ -329,8 +329,11 @@ def schedule_sessions(session_preferences_csv_path):
     sessions_df, rooms_df, session_preferences_df = fetch_data(session_preferences_csv_path)
     print("Data fetched successfully from the database and CSV.")
 
+    print("Rooms DataFrame columns:", rooms_df.columns)
+    print("Number of rooms fetched:", len(rooms_df))
     # 6B-2. Sort rooms & sessions
-    rooms_df    = rooms_df.sort_values(by='MaxRoomCapacity', ascending=False)
+    rooms_df.rename(columns={'roomid': 'RoomID', 'location': 'Location', 'maxroomcapacity': 'MaxRoomCapacity'}, inplace=True)
+    rooms_df = rooms_df.sort_values(by='MaxRoomCapacity', ascending=False)
     sessions_df = sessions_df.sort_values(by='NumberOfEnrollments', ascending=False)
 
     # 6B-3. Time definitions
@@ -351,7 +354,7 @@ def schedule_sessions(session_preferences_csv_path):
     assigned_sessions     = []
 
     # 6B-5. Build a dictionary of "preferred rooms" for each course code
-    preferred_rooms = session_preferences_df.groupby('Course Code')['Location'].apply(list).to_dict()
+    preferred_rooms = session_preferences_df.groupby('CourseCode')['Location'].apply(list).to_dict()
 
     # 6B-6. Additional tracking
     lecturer_schedule      = {day:{} for day in days_of_week}

@@ -878,11 +878,11 @@ def assign_sessions():
             cursor.execute("SELECT LecturerName FROM Lecturer WHERE ActiveFlag=1")
             lecturers_data = cursor.fetchall()
     
-            cursor.execute("SELECT DISTINCT SessionType FROM SessionAssignments")
+            cursor.execute("SELECT SessionTypeName FROM SessionType")
             session_types_raw = cursor.fetchall()
             session_types_data = [row[0] for row in session_types_raw] if session_types_raw else ['Lecture','Discussion']
-    
-            cursor.execute("SELECT DISTINCT Duration FROM SessionAssignments")
+
+            cursor.execute("SELECT Duration FROM Duration")
             durations_raw = cursor.fetchall()
             durations_data = [str(row[0]) for row in durations_raw] if durations_raw else ['01:00:00','01:30:00']
     
