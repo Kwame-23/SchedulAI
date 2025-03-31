@@ -344,13 +344,11 @@ VALUES
     ('MIS201', 'Enterprise Systems', 'Core', 1.0),
     ('BUSA341', 'Organizational Behavior', 'Core', 1.0),
     ('BUSA350', 'International Trade & Policy', 'Core', 1.0),
-    ('BUSA402', 'Corporate Finance', 'Core', 1.0),
-    ('BUSA332', 'Business Law', 'Core', 1.0),
     ('SC231', 'Introduction to Chemistry', 'Core', 1.0),
     ('ENG101', 'English Composition', 'Core', 1.0),
     ('EE451', 'Power Engineering', 'Elective', 1.0),
     ('CS453', 'Robotics', 'Elective', 1.0),
-    ('ME411', 'Fluid Mechanics', 'Core', 1.0),
+    ('ME431', 'Fluid Mechanics', 'Core', 1.0),
     ('ME431', 'Thermal Systems', 'Core', 1.0),
     ('CS457', 'Data Mining', 'Elective', 1.0),
     ('BUSA462', 'Real Estate Development', 'Elective', 1.0),
@@ -472,6 +470,10 @@ VALUES
     ('BUSA231', 'Business Communication and Negotiations', 'Core', 1, 1.0),
     ('BUSA400_B', 'Thesis 2', 'Core', 1, 1.0)
 ON DUPLICATE KEY UPDATE CourseCode = CourseCode;
+
+INSERT INTO Course (CourseCode, CourseName, RequirementType, Credits)
+VALUES
+    ('IS351', 'Systems Analysis and Design', 'Core', 1);
 
 -- ----------------------------------------------------
 -- 8. Create Cohort Table and Insert Data
@@ -743,3 +745,4 @@ BEGIN
 END $$
 
 DELIMITER ;
+
