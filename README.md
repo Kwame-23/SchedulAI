@@ -1,1 +1,1 @@
-# ScedulAI
+# SchedulAI
