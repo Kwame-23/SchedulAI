@@ -829,7 +829,7 @@ def assign_sessions():
                 cursor.execute("SELECT CourseCode FROM Course WHERE CourseID=%s AND ActiveFlag=1", (course_id,))
                 course_row = cursor.fetchone()
                 if not course_row:
-                    flash("Invalid or inactive course.")
+                    flash("Invalid or inactive course.", "danger")
                     return redirect(url_for('assign_sessions'))
                 course_code = course_row[0]
     
@@ -841,7 +841,7 @@ def assign_sessions():
                     duration_str = request.form.get(f'duration_{i}', '').strip()
                     enrollments = request.form.get(f'enrollments_{i}', '0').strip()
     
-                    # Validate
+                    # Validate required inputs
                     if not all([cohort_name, lecturer_main, session_type, duration_str]):
                         flash(f"Missing data in session row {i+1}.", "warning")
                         continue
@@ -853,13 +853,13 @@ def assign_sessions():
                     except ValueError:
                         enrollments = 0
     
-                    # Choose lecturer
+                    # Choose lecturer: if session type is 'discussion' and faculty intern is provided, use that.
                     if session_type.lower() == 'discussion' and lecturer_intern:
                         chosen_lecturer = lecturer_intern
                     else:
                         chosen_lecturer = lecturer_main
     
-                    # Insert to DB
+                    # Insert the session assignment into the database
                     insert_sql = """
                         INSERT INTO SessionAssignments
                         (CourseCode, LecturerName, CohortName, SessionType, Duration, NumberOfEnrollments, AdditionalStaff)
@@ -878,7 +878,7 @@ def assign_sessions():
                 conn.commit()
                 flash("Sessions saved for selected course!", "success")
     
-            # GET request handling
+            # GET request handling:
             cursor.execute("SELECT CourseID, CourseCode, CourseName, Credits FROM Course WHERE ActiveFlag=1")
             courses_data = cursor.fetchall()
     
@@ -887,11 +887,20 @@ def assign_sessions():
     
             cursor.execute("SELECT SessionTypeName FROM SessionType")
             session_types_raw = cursor.fetchall()
-            session_types_data = [row[0] for row in session_types_raw] if session_types_raw else ['Lecture','Discussion']
-
+            session_types_data = [row[0] for row in session_types_raw] if session_types_raw else ['Lecture', 'Discussion']
+    
             cursor.execute("SELECT Duration FROM Duration")
             durations_raw = cursor.fetchall()
-            durations_data = [str(row[0]) for row in durations_raw] if durations_raw else ['01:00:00','01:30:00']
+            durations_data = [str(row[0]) for row in durations_raw] if durations_raw else ['01:00:00', '01:30:00']
+    
+            # NEW: Use a dictionary cursor for the "View All Sessions" tab.
+            dict_cursor = conn.cursor(dictionary=True)
+            dict_cursor.execute("""
+                SELECT SessionID, CourseCode, LecturerName, CohortName, SessionType, Duration, NumberOfEnrollments
+                FROM SessionAssignments
+            """)
+            all_sessions = dict_cursor.fetchall()
+            dict_cursor.close()
     
     except mysql.connector.Error as err:
         logging.error(f"Error in /assign_sessions route: {err}")
@@ -900,6 +909,7 @@ def assign_sessions():
         lecturers_data = []
         session_types_data = []
         durations_data = []
+        all_sessions = []
     finally:
         cursor.close()
         conn.close()
@@ -908,7 +918,8 @@ def assign_sessions():
                            courses=courses_data,
                            lecturers=lecturers_data,
                            session_types=session_types_data,
-                           durations=durations_data)
+                           durations=durations_data,
+                           all_sessions=all_sessions)
 
 # ----------------------------------------------------
 # ROUTE 4: Run Scheduler

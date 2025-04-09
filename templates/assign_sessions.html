@@ -76,8 +76,6 @@
     .menu a:hover {
       background-color: #00bf63;
     }
-    /* Highlight active link if needed */
-    /* .menu a.active { background-color: #00bf63; } */
     .logout-container {
       padding: 20px;
       border-top: 1px solid rgba(255,255,255,0.1);
@@ -114,7 +112,6 @@
       width: 200px;
     }
     
-    /* CONTENT AREA */
     .content {
       padding: 20px;
       overflow-y: auto;
@@ -138,8 +135,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="logo-container">
-        <!-- Replace with your logo path -->
-       <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
+        <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
       </div>
       <nav class="menu">
         <ul>
@@ -156,16 +152,13 @@
       </div>
     </aside>
     
-    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT with Tabs -->
     <main class="main-content">
-      <!-- TOP BAR (optional search) -->
       <header class="top-bar">
         <input type="text" placeholder="Search" />
       </header>
       
-      <!-- PAGE CONTENT -->
       <div class="content">
-        <!-- Page Header -->
         <div class="page-header">
           <h1>Assign Sessions to Courses</h1>
         </div>
@@ -181,104 +174,124 @@
           {% endif %}
         {% endwith %}
         
-        <!-- Search Bar -->
-        <div class="row mb-3">
-          <div class="col-md-6 offset-md-3">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="bi bi-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search by course code or name..." aria-label="Search" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); filterCourses(); }" id="searchInput">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="assign-tab" data-bs-toggle="tab" data-bs-target="#assign" type="button" role="tab" aria-controls="assign" aria-selected="true">Assign Sessions</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="view-all-tab" data-bs-toggle="tab" data-bs-target="#view-all" type="button" role="tab" aria-controls="view-all" aria-selected="false">View All Sessions</button>
+          </li>
+        </ul>
+        
+        <!-- Tabs Content -->
+        <div class="tab-content" id="sessionTabsContent">
+          <!-- Tab 1: Session Assignment (Existing Functionality) -->
+          <div class="tab-pane fade show active" id="assign" role="tabpanel" aria-labelledby="assign-tab">
+            <div class="row g-3" id="coursesContainer">
+              {% for course in courses %}
+                {% set courseID = course[0] %}
+                {% set courseCode = course[1] %}
+                {% set courseName = course[2] %}
+                {% set credits = course[3] %}
+                <div class="col-sm-6 col-md-4 col-lg-3 d-flex">
+                  <div class="card flex-fill course-card">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title">{{ courseCode }} - {{ courseName }}</h5>
+                      <p class="card-text mb-4">Credits: {{ credits }}</p>
+                      <button type="button" class="btn btn-primary mt-auto align-self-start" data-bs-toggle="modal" data-bs-target="#modalCourse{{ courseID }}" onclick="sessionCounters['{{ courseCode }}'] = 0; clearTable('{{ courseCode }}');">
+                        Assign Sessions
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Modal for each course -->
+                <div class="modal fade" id="modalCourse{{ courseID }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Assign Sessions: {{ courseCode }} - {{ courseName }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form method="POST">
+                          <input type="hidden" name="current_course_id" value="{{ courseID }}">
+                          
+                          <div class="mb-3">
+                            <label for="cohortCount_{{ courseCode }}" class="form-label">Number of Cohorts:</label>
+                            <input type="number" class="form-control" id="cohortCount_{{ courseCode }}" min="1" value="1" required>
+                          </div>
+                          
+                          <div class="mb-3">
+                            <button type="button" class="btn btn-secondary" onclick="generateSessions('{{ courseCode }}', '{{ credits }}')">Generate Default Sessions</button>
+                            <button type="button" class="btn btn-outline-warning" onclick="clearTable('{{ courseCode }}')">Clear Rows</button>
+                          </div>
+                          
+                          <input type="hidden" id="session_count_{{ courseCode }}" name="session_count" value="0">
+                          
+                          <table class="table table-bordered">
+                            <thead>
+                              <tr>
+                                <th>Cohort</th>
+                                <th>Main Lecturer</th>
+                                <th>Faculty Intern</th>
+                                <th>Session Type</th>
+                                <th>Duration</th>
+                                <th>Enrollments</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tbody_{{ courseCode }}">
+                              <!-- Dynamic rows will be added here -->
+                            </tbody>
+                          </table>
+                          
+                          <button type="button" class="btn btn-info mb-2" onclick="addSessionRow('{{ courseCode }}')">Add Another Session</button>
+                          <br>
+                          <button type="submit" class="btn btn-success" onclick="this.disabled = true; this.form.submit();">Save Assignments</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
             </div>
           </div>
-        </div>
-        
-        <!-- Cards Row -->
-        <div class="row g-3" id="coursesContainer">
-          {% for course in courses %}
-            {% set courseID = course[0] %}
-            {% set courseCode = course[1] %}
-            {% set courseName = course[2] %}
-            {% set credits = course[3] %}
-            <div class="col-sm-6 col-md-4 col-lg-3 d-flex">
-              <div class="card flex-fill course-card">
-                <div class="card-body d-flex flex-column">
-                  <h5 class="card-title">{{ courseCode }} - {{ courseName }}</h5>
-                  <p class="card-text mb-4">Credits: {{ credits }}</p>
-                  <!-- Button to open modal -->
-                  <button type="button" class="btn btn-primary mt-auto align-self-start" data-bs-toggle="modal" data-bs-target="#modalCourse{{ courseID }}" onclick="sessionCounters['{{ courseCode }}'] = 0; clearTable('{{ courseCode }}');">
-                    Assign Sessions
-                  </button>
-                </div>
-              </div>
+          
+          <!-- Tab 2: View All Sessions -->
+          <div class="tab-pane fade" id="view-all" role="tabpanel" aria-labelledby="view-all-tab">
+            <div class="mb-3">
+              <input type="text" id="allSessionsSearch" placeholder="Search sessions..." class="form-control">
             </div>
-        
-            <!-- Modal for this course -->
-            <div class="modal fade" id="modalCourse{{ courseID }}" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                  <!-- Modal Header -->
-                  <div class="modal-header">
-                    <h5 class="modal-title">Assign Sessions: {{ courseCode }} - {{ courseName }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <!-- Modal Body -->
-                  <div class="modal-body">
-                    <form method="POST">
-                      <!-- Hidden: which course are we editing? -->
-                      <input type="hidden" name="current_course_id" value="{{ courseID }}">
-                      
-                      <!-- Number of Cohorts -->
-                      <div class="mb-3">
-                        <label for="cohortCount_{{ courseCode }}" class="form-label">Number of Cohorts:</label>
-                        <input type="number" class="form-control" id="cohortCount_{{ courseCode }}" min="1" value="1" required>
-                      </div>
-                      
-                      <!-- Buttons to generate or clear sessions -->
-                      <div class="mb-3">
-                        <button type="button" class="btn btn-secondary" onclick="generateSessions('{{ courseCode }}', '{{ credits }}')">
-                          Generate Default Sessions
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" onclick="clearTable('{{ courseCode }}')">
-                          Clear Rows
-                        </button>
-                      </div>
-                      
-                      <!-- Keep track of how many sessions we have -->
-                      <input type="hidden" id="session_count_{{ courseCode }}" name="session_count" value="0">
-                      
-                      <!-- Sessions Table -->
-                      <table class="table table-bordered">
-                        <thead>
-                          <tr>
-                            <th>Cohort</th>
-                            <th>Main Lecturer</th>
-                            <th>Faculty Intern</th>
-                            <th>Session Type</th>
-                            <th>Duration</th>
-                            <th>Enrollments</th>
-                          </tr>
-                        </thead>
-                        <tbody id="tbody_{{ courseCode }}">
-                          <!-- Rows generated dynamically via JS -->
-                        </tbody>
-                      </table>
-                      
-                      <button type="button" class="btn btn-info mb-2" onclick="addSessionRow('{{ courseCode }}')">
-                        Add Another Session
-                      </button>
-                      <br>
-                      <button type="submit" class="btn btn-success" onclick="this.disabled = true; this.form.submit();">
-                        Save Assignments
-                      </button>
-                    </form>
-                  </div>
-                  <!-- End Modal Body -->
-                </div>
-              </div>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered" id="allSessionsTable">
+                <thead>
+                  <tr>
+                    <th>SessionID</th>
+                    <th>Course Code</th>
+                    <th>Lecturer Name</th>
+                    <th>Cohort Name</th>
+                    <th>Session Type</th>
+                    <th>Duration</th>
+                    <th>Enrollments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for session in all_sessions %}
+                  <tr>
+                    <td>{{ session.SessionID }}</td>
+                    <td>{{ session.CourseCode }}</td>
+                    <td>{{ session.LecturerName }}</td>
+                    <td>{{ session.CohortName }}</td>
+                    <td>{{ session.SessionType }}</td>
+                    <td>{{ session.Duration }}</td>
+                    <td>{{ session.NumberOfEnrollments }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <!-- Optional: Add pagination controls here if needed -->
             </div>
-            <!-- End Modal -->
-          {% endfor %}
+          </div>
         </div>
       </div>
     </main>
@@ -296,23 +309,17 @@
     const sessionTypesData = JSON.parse('{{ session_types|tojson|safe }}');
     const durationsData    = JSON.parse('{{ durations|tojson|safe }}');
     
-    // For each course, store how many rows (sessionCounter) we have so far
+    // Object to track the number of session rows per course
     let sessionCounters = {};
     
-    /* ========== Search Filter Logic ========== */
+    /* ========== Search Filter Logic for Course Cards ========== */
     function filterCourses() {
       const searchValue = document.getElementById('searchInput').value.toLowerCase();
-      // Each course card is wrapped in a column <div> under #coursesContainer
       const courseColumns = document.querySelectorAll('#coursesContainer > div.col-sm-6');
-      
       courseColumns.forEach(col => {
-        // Look for .card-title text
         const titleElem = col.querySelector('.card-title');
         if (!titleElem) return;
-        
         const titleText = titleElem.innerText.toLowerCase();
-        
-        // If the card's text includes the search string, display it; otherwise hide it
         col.style.display = titleText.includes(searchValue) ? 'block' : 'none';
       });
     }
@@ -336,7 +343,6 @@
       const cohortCountInput = document.getElementById('cohortCount_' + courseCode);
       if (!cohortCountInput) return;
       const cohortCount = parseInt(cohortCountInput.value, 10) || 0;
-      
       if (cohortCount < 1) {
         alert("Please specify at least 1 cohort.");
         return;
@@ -344,10 +350,9 @@
       clearTable(courseCode);
       
       for (let i = 0; i < cohortCount; i++) {
-        const letter = String.fromCharCode(65 + i); // 'A' + i
+        const letter = String.fromCharCode(65 + i); // A, B, C, etc.
         const cohortName = 'Section ' + letter;
-        
-        // Example rules based on credits
+        // Example default rule based on credits:
         if (credits === 1.0) {
           addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
           addDefaultRow(courseCode, cohortName, 'Lecture', '01:30:00');
@@ -373,7 +378,7 @@
       let cell = row.insertCell();
       cell.innerHTML = `<input type="text" name="cohort_name_${sc}" value="${cohortName}" readonly class="form-control" required>`;
       
-      // Main lecturer cell
+      // Main Lecturer cell
       cell = row.insertCell();
       cell.innerHTML = buildLecturerSelect(`lecturer_main_name_${sc}`, "Main Lecturer");
       
@@ -429,7 +434,7 @@
       cell = row.insertCell();
       cell.innerHTML = buildLecturerSelect(`lecturer_main_name_${sc}`, "Main Lecturer");
       
-      // Intern Lecturer cell
+      // Faculty Intern cell
       cell = row.insertCell();
       cell.innerHTML = buildLecturerSelect(`lecturer_intern_name_${sc}`, "Faculty Intern");
       
@@ -476,6 +481,16 @@
       html += `</select>`;
       return html;
     }
+    
+    /* ========== Filter for "View All Sessions" Table ========== */
+    document.getElementById('allSessionsSearch').addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#allSessionsTable tbody tr');
+      rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+      });
+    });
   </script>
 </body>
 </html>
