@@ -686,6 +686,7 @@ def fetch_sessions_join_schedule_for_updated_schedule():
                   sa.SessionType,
                   sa.LecturerName AS Lecturer,
                   sa.CohortName,
+                  sa.Duration,
                   us.DayOfWeek,
                   us.StartTime,
                   us.EndTime,
