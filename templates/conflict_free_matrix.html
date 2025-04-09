@@ -163,13 +163,15 @@
                 {% if cell_sessions|length == 0 %}
                   <span class="text-muted">-</span>
                 {% else %}
-                  {% for sess in cell_sessions %}
-                    {% set c = sess.get('CohortName', 'Unknown') %}
-                    {% set r = sess.get('RoomName', 'TBD') %}
-                    {% set enroll = sess.get('NumberOfEnrollments', 'n/a') %}
-                    {% set course = sess.get('CourseCode', '') %}
-                    {% set lecturer = sess.get('Lecturer', '') %}
-                    {% set stype = sess.get('SessionType', '') %}
+                {% for sess in cell_sessions %}
+                  {% set c = sess.get('CohortName', 'Unknown') %}
+                  {% set r = sess.get('RoomName', 'TBD') %}
+                  {% set enroll = sess.get('NumberOfEnrollments', 'n/a') %}
+                  {% set course = sess.get('CourseCode', '') %}
+                  {% set lecturer = sess.get('Lecturer', '') %}
+                  {% set stime = sess.get('StartTime', '00:00') %}
+                  {% set etime = sess.get('EndTime', '00:00') %}
+                  {% set duration = sess.get('Duration', '01:00:00') %} 
                     
                     {# Build the tooltip text #}
                     {% set tooltip_text =
@@ -200,12 +202,13 @@
                     {% endif %}
                     
                     <div class="session-box mb-1"
-                      data-session-id="{{ sess.SessionID }}"
-                      data-room="{{ r }}"
-                      style="background-color: {{ plan_color or '#555' }}; border-left: 6px solid {{ room_colors[r] or '#999' }};"
-                      data-toggle="tooltip"
-                      data-html="true"
-                      title="{{ tooltip_text }}">
+                        data-session-id="{{ sess.SessionID }}"
+                        data-room="{{ r }}"
+                        data-duration="{{ duration }}"  
+                        style="background-color: {{ plan_color or '#555' }}; border-left: 6px solid {{ room_colors[r] or '#999' }};"
+                        data-toggle="tooltip"
+                        data-html="true"
+                        title="{{ tooltip_text }}">
                       {{ course }} ({{ c }}) - {{ r }}
                     </div>
                   {% endfor %}
@@ -258,17 +261,41 @@
           // Update the UI: Move the session box into the new cell
           $(this).append(droppedSession);
 
-          // Retrieve the session ID and current room
+          // Retrieve the session ID and current room and session duration from data attributes
           var sessionID = droppedSession.data("session-id");
           var room = droppedSession.data("room");
+          var durationStr = droppedSession.data("duration");  // Expected format "HH:MM:SS" (or "HH:MM")
 
-          // Prepare the updated session data.
+          // Parse the duration string to get total minutes.
+          // Split the string into hours, minutes (and optionally seconds).
+          var durParts = durationStr.split(':');
+          // Parse hours and minutes (ignore seconds for simplicity or round if desired)
+          var durHours = parseInt(durParts[0], 10);
+          var durMinutes = parseInt(durParts[1], 10);
+          // If seconds are provided, you can round them (optional)
+          var additionalMin = (durParts.length > 2) ? Math.round(parseInt(durParts[2], 10) / 60) : 0;
+          var totalDurationMinutes = durHours * 60 + durMinutes + additionalMin;
+
+          // Create a Date object for the new start time.
+          var timeParts = newTime.split(':');
+          var newStartDate = new Date();
+          newStartDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0, 0);
+
+          // Calculate new end time by adding the duration in minutes.
+          newStartDate.setMinutes(newStartDate.getMinutes() + totalDurationMinutes);
+
+          // Format the new end time as "HH:MM" (leading zeros if necessary)
+          var newEndHours = newStartDate.getHours().toString().padStart(2, '0');
+          var newEndMinutes = newStartDate.getMinutes().toString().padStart(2, '0');
+          var newEndTime = newEndHours + ":" + newEndMinutes;
+
+          // Prepare the updated session data with the new end time computed.
           var updatedSession = {
             SessionID: sessionID,
             DayOfWeek: newDay,
             StartTime: newTime,
-            EndTime: newTime,  // Adjust as necessary based on duration
-            RoomName: room    // Optionally, allow room changes
+            EndTime: newEndTime,  // New computed end time
+            RoomName: room
           };
 
           // Send the update via AJAX to update the staging table
@@ -286,6 +313,6 @@
           });
         }
       });
-    });
-  </script>
+  });
+</script>
 {% endblock %}
