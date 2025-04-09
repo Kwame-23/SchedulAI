@@ -22,14 +22,20 @@ import base64
 from jinja2 import Template
 from sqlalchemy import create_engine
 from urllib.parse import quote_plus
+from flask_socketio import SocketIO, emit
+
 
 # Local module imports
 # Import the feasibility blueprint and function from the scheduling package.
 from scheduling.feasibility_checker import feasibility_bp, generate_all_feasible_timetables_with_conflicts
 from scheduling.scheduler import schedule_sessions as run_schedule
+from scheduling.feasibility_checker import feasibility_bp, generate_all_feasible_timetables_with_conflicts, run_feasibility_check_background
 
 app = Flask(__name__)
 app.secret_key = 'YOUR_SECRET_KEY'  # Replace with a secure secret key
+
+# Initialize SocketIO with the Flask app
+socketio = SocketIO(app)
 
 # Register the feasibility blueprint with an appropriate URL prefix.
 # Here we register it at the root so that endpoints like /feasibility_check are available.
@@ -1018,15 +1024,10 @@ def courses():
 
 @app.route('/feasibility', methods=['GET'])
 def feasibility():
-    logging.info("Accessed /feasibility route.")
-    try:
-        feasibility_results = generate_all_feasible_timetables_with_conflicts()
-        logging.info("Feasibility check completed successfully.")
-    except Exception as e:
-        logging.error(f"Error during feasibility check: {e}")
-        flash("An error occurred during the feasibility check.", "danger")
-        feasibility_results = {}
-    return render_template('feasibility.html', feasibility_results=feasibility_results)
+    return redirect(url_for('feasibility.feasibility_check'))
+
+
+
 
 # ----------------------------------------------------
 # Route: Student->Courses bridging
