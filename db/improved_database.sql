@@ -342,7 +342,6 @@ VALUES
     ('ME101', 'Introduction to Mechanics', 'Core', 1.0),
     ('ME201', 'Thermodynamics', 'Core', 1.0),
     ('MIS201', 'Enterprise Systems', 'Core', 1.0),
-    ('BUSA341', 'Organizational Behavior', 'Core', 1.0),
     ('BUSA350', 'International Trade & Policy', 'Core', 1.0),
     ('SC231', 'Introduction to Chemistry', 'Core', 1.0),
     ('ENG101', 'English Composition', 'Core', 1.0),
