@@ -3109,6 +3109,94 @@ def export_csv():
 
     return render_template('export_csv.html')
 
+@app.route('/manage-preferences', methods=['GET', 'POST'])
+def manage_preferences():
+    # Check if the user is logged in; if not, redirect to login page.
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return render_template('manage_preferences.html', preferences=[])
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            if request.method == 'POST':
+                action = request.form.get('action')
+                # ---- CREATE new preference ----
+                if action == 'add':
+                    course_code = request.form.get('course_code')
+                    course_name = request.form.get('course_name')
+                    location = request.form.get('location')
+                    session_type = request.form.get('session_type')
+                    if not (course_code and course_name and location and session_type):
+                        flash("Please fill in all fields.", "warning")
+                    else:
+                        sql = """
+                            INSERT INTO SessionLocationPreferences
+                            (CourseCode, CourseName, Location, SessionType)
+                            VALUES (%s, %s, %s, %s)
+                        """
+                        try:
+                            cursor.execute(sql, (course_code, course_name, location, session_type))
+                            conn.commit()
+                            flash("Preference added successfully.", "success")
+                        except mysql.connector.Error as err:
+                            conn.rollback()
+                            flash(f"Error adding preference: {err}", "danger")
+                
+                # ---- UPDATE an existing preference ----
+                elif action == 'update':
+                    preference_id = request.form.get('preference_id')
+                    course_code = request.form.get('course_code')
+                    course_name = request.form.get('course_name')
+                    location = request.form.get('location')
+                    session_type = request.form.get('session_type')
+                    if not (preference_id and course_code and course_name and location and session_type):
+                        flash("Missing fields for update.", "warning")
+                    else:
+                        sql = """
+                            UPDATE SessionLocationPreferences 
+                            SET CourseCode = %s, CourseName = %s, Location = %s, SessionType = %s 
+                            WHERE PreferenceID = %s
+                        """
+                        try:
+                            cursor.execute(sql, (course_code, course_name, location, session_type, preference_id))
+                            conn.commit()
+                            flash("Preference updated successfully.", "success")
+                        except mysql.connector.Error as err:
+                            conn.rollback()
+                            flash(f"Error updating preference: {err}", "danger")
+                
+                # ---- DELETE a preference ----
+                elif action == 'delete':
+                    preference_id = request.form.get('preference_id')
+                    if not preference_id:
+                        flash("Preference ID required for deletion.", "warning")
+                    else:
+                        sql = "DELETE FROM SessionLocationPreferences WHERE PreferenceID = %s"
+                        try:
+                            cursor.execute(sql, (preference_id,))
+                            conn.commit()
+                            flash("Preference deleted successfully.", "success")
+                        except mysql.connector.Error as err:
+                            conn.rollback()
+                            flash(f"Error deleting preference: {err}", "danger")
+            
+            # Always read (list) the current preferences from the table.
+            cursor.execute("SELECT * FROM SessionLocationPreferences")
+            preferences = cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        flash(f"Database error: {err}", "danger")
+        preferences = []
+    finally:
+        conn.close()
+    
+    return render_template('manage_preferences.html', preferences=preferences)
+
 
 @app.route('/')
 def index():
