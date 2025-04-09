@@ -3198,6 +3198,119 @@ def manage_preferences():
     return render_template('manage_preferences.html', preferences=preferences)
 
 
+def get_available_rooms_for_session(session):
+    day = session['DayOfWeek']
+    start = session['StartTime']  # Expected to be in "HH:MM" format.
+    end = session['EndTime']      # Expected to be in "HH:MM" format.
+    enrollments = session['NumberOfEnrollments']
+    available = rooms_free_for_timeslot(day, start, end)
+    # Filter available rooms by checking that they have enough capacity.
+    filtered = [room for room in available if room['MaxRoomCapacity'] >= int(enrollments)]
+    return filtered
+
+# --------------------------------------------------------------------
+# Route: Retrieve Only Sessions (Courses) with Room Conflicts for Resolution
+# --------------------------------------------------------------------
+@app.route('/resolve_room_conflicts', methods=['GET'])
+def resolve_room_conflicts():
+    # Use the existing function to load the full timetable as a DataFrame.
+    df = get_timetable_data()
+    if df.empty:
+        flash("No timetable data available.", "danger")
+        return render_template("room_conflict_resolution.html", conflicts=[])
+    
+    # Compute conflicts using your analysis logic.
+    room_conflicts, lecturer_conflicts, room_conflict_details, lecturer_conflict_details = compute_conflicts(df)
+    
+    # Extract unique session IDs involved in any room conflict.
+    conflict_session_ids = set()
+    for conflict in room_conflict_details:
+        for sid in conflict.get("conflict_between", []):
+            conflict_session_ids.add(sid)
+    
+    # Convert any numpy.int64 values to native Python ints
+    conflict_session_ids = {int(sid) for sid in conflict_session_ids}
+    
+    if not conflict_session_ids:
+        flash("No room conflicts found.", "info")
+        return render_template("room_conflict_resolution.html", conflicts=[])
+    
+    # Query the database for session details corresponding to these session IDs.
+    conn = get_db_connection()
+    conflict_sessions = []
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            format_strings = ','.join(['%s'] * len(conflict_session_ids))
+            sql = f"""
+                SELECT 
+                    sa.SessionID,
+                    sa.CourseCode,
+                    sa.LecturerName,
+                    sa.CohortName,
+                    sa.SessionType,
+                    sa.Duration,
+                    sa.NumberOfEnrollments,
+                    us.DayOfWeek,
+                    TIME_FORMAT(us.StartTime, '%H:%i') AS StartTime,
+                    TIME_FORMAT(us.EndTime, '%H:%i') AS EndTime,
+                    us.RoomName AS CurrentRoom
+                FROM SessionAssignments sa
+                JOIN UpdatedSessionSchedule us ON sa.SessionID = us.SessionID
+                WHERE sa.SessionID IN ({format_strings})
+            """
+            # Convert the set into a tuple of native ints
+            cursor.execute(sql, tuple(conflict_session_ids))
+            conflict_sessions = cursor.fetchall()
+            # For each conflicting session, compute available room alternatives.
+            for session in conflict_sessions:
+                session['available_rooms'] = get_available_rooms_for_session(session)
+    except mysql.connector.Error as err:
+        logging.error(f"Error fetching conflict sessions: {err}")
+        flash(f"Error fetching conflict sessions: {err}", "danger")
+    finally:
+        conn.close()
+    
+    return render_template("room_conflict_resolution.html", conflicts=conflict_sessions)
+
+# --------------------------------------------------------------------
+# AJAX Endpoint: Update the Room Assignment for a Conflict Session
+# --------------------------------------------------------------------
+@app.route('/update_room_assignment', methods=['POST'])
+def update_room_assignment():
+    data = request.json
+    session_id = data.get("SessionID")
+    new_room = data.get("new_room")
+    day_of_week = data.get("DayOfWeek")
+    start_time = data.get("StartTime")
+    end_time = data.get("EndTime")
+    enrollments = data.get("NumberOfEnrollments")
+    
+    if not all([session_id, new_room, day_of_week, start_time, end_time, enrollments]):
+        return jsonify({"message": "Missing parameters."}), 400
+    
+    # Re-check that the selected room is indeed free during the specified timeslot.
+    free_rooms = rooms_free_for_timeslot(day_of_week, start_time, end_time)
+    suitable = [room for room in free_rooms if room['RoomName'] == new_room and room['MaxRoomCapacity'] >= int(enrollments)]
+    if not suitable:
+        return jsonify({"message": "Selected room is no longer available."}), 400
+
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"message": "Database connection failed."}), 500
+    try:
+        with conn.cursor() as cursor:
+            update_sql = "UPDATE UpdatedSessionSchedule SET RoomName = %s WHERE SessionID = %s"
+            cursor.execute(update_sql, (new_room, session_id))
+            conn.commit()
+        return jsonify({"message": "Room updated successfully!"}), 200
+    except mysql.connector.Error as err:
+        conn.rollback()
+        logging.error(f"Database error during room update: {err}")
+        return jsonify({"message": f"Database error: {err}"}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/')
 def index():
     return redirect(url_for('homepage')) 

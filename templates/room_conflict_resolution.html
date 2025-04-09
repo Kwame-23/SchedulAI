@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2 class="mb-4">Room Conflict Resolution</h2>
+  {% if conflicts %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+          <tr>
+            <th>Session ID</th>
+            <th>Course Code</th>
+            <th>Lecturer</th>
+            <th>Cohort</th>
+            <th>Session Type</th>
+            <th>Duration</th>
+            <th>Enrollments</th>
+            <th>Day</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Current Room</th>
+            <th>Available Rooms</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sess in conflicts %}
+          <tr>
+            <td>{{ sess.SessionID }}</td>
+            <td>{{ sess.CourseCode }}</td>
+            <td>{{ sess.LecturerName }}</td>
+            <td>{{ sess.CohortName }}</td>
+            <td>{{ sess.SessionType }}</td>
+            <td>{{ sess.Duration }}</td>
+            <td>{{ sess.NumberOfEnrollments }}</td>
+            <td>{{ sess.DayOfWeek }}</td>
+            <td>{{ sess.StartTime }}</td>
+            <td>{{ sess.EndTime }}</td>
+            <td>{{ sess.CurrentRoom }}</td>
+            <td>
+              <select id="room_select_{{ sess.SessionID }}" class="form-select">
+                <option value="">--Select Room--</option>
+                {% for room in sess.available_rooms %}
+                  <option value="{{ room.RoomName }}">{{ room.RoomName }} (Cap: {{ room.MaxRoomCapacity }})</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <button class="btn btn-primary"
+                      onclick="updateRoom({{ sess.SessionID }}, '{{ sess.DayOfWeek }}', '{{ sess.StartTime }}', '{{ sess.EndTime }}', {{ sess.NumberOfEnrollments }})">
+                Update Room
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">No room conflicts detected.</p>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function updateRoom(sessionID, dayOfWeek, startTime, endTime, enrollments) {
+    var selectElem = document.getElementById("room_select_" + sessionID);
+    var selectedRoom = selectElem.value;
+    if (!selectedRoom) {
+      alert("Please select a room.");
+      return;
+    }
+    var payload = {
+      "SessionID": sessionID,
+      "new_room": selectedRoom,
+      "DayOfWeek": dayOfWeek,
+      "StartTime": startTime,
+      "EndTime": endTime,
+      "NumberOfEnrollments": enrollments
+    };
+    fetch("/update_room_assignment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      alert(data.message);
+      if (data.message.indexOf("successfully") !== -1) {
+          location.reload();
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("An error occurred while updating the room.");
+    });
+  }
+</script>
+{% endblock %}
