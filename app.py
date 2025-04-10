@@ -24,6 +24,9 @@ from jinja2 import Template
 from sqlalchemy import create_engine
 from urllib.parse import quote_plus
 from flask_socketio import SocketIO, emit
+from flask import request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+
 
 
 # Local module imports
@@ -3587,6 +3590,104 @@ def check_existing_data():
         return jsonify({"count": 0})
     finally:
         conn.close()
+
+
+
+def normalize_duration_str(duration_str: str) -> str:
+    duration_str = duration_str.strip()
+    if 'days' in duration_str.lower():
+        parts = duration_str.split()
+        if len(parts) >= 3 and parts[1].lower() == 'days':
+            duration_str = ' '.join(parts[2:])
+    return duration_str
+
+def import_session_assignments_from_csv(csv_file_path: str):
+    """
+    Imports session assignment rows from a CSV into the SessionAssignments table.
+    
+    The CSV file should have headers corresponding to:
+      SessionID, CourseCode, CohortName, LecturerName, SessionType, Duration, NumberOfEnrollments
+    """
+    try:
+        df = pd.read_csv(csv_file_path)
+    except Exception as e:
+        print("Error reading CSV file:", e)
+        return
+
+    # Normalize the Duration column.
+    df['Duration'] = df['Duration'].apply(lambda x: normalize_duration_str(str(x)))
+    
+    # Make sure enrollments is an integer.
+    if 'NumberOfEnrollments' in df.columns:
+        df['NumberOfEnrollments'] = pd.to_numeric(df['NumberOfEnrollments'], errors='coerce').fillna(0).astype(int)
+    
+    rows_to_insert = []
+    for index, row in df.iterrows():
+        rows_to_insert.append((
+            row['SessionID'],
+            row['CourseCode'],
+            row['CohortName'],
+            row['LecturerName'],
+            row['SessionType'],
+            row['Duration'],
+            row['NumberOfEnrollments']
+        ))
+
+    conn = get_db_connection()
+    if conn is None:
+        print("Could not connect to the database.")
+        return
+    cursor = conn.cursor()
+    insert_sql = """
+        INSERT INTO SessionAssignments 
+        (SessionID, CourseCode, CohortName, LecturerName, SessionType, Duration, NumberOfEnrollments)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+    
+    try:
+        cursor.executemany(insert_sql, rows_to_insert)
+        conn.commit()
+        print(f"Successfully imported {len(rows_to_insert)} rows from CSV.")
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print("Error inserting data:", err)
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/import_session_assignments', methods=['POST'])
+def import_session_assignments():
+    # Ensure a file was sent with the form
+    if 'csv_file' not in request.files:
+        flash("No file part in request", "danger")
+        return redirect(url_for('assign_sessions'))
+
+    file = request.files['csv_file']
+    if file.filename == "":
+        flash("No selected file", "danger")
+        return redirect(url_for('assign_sessions'))
+
+    if file and file.filename.lower().endswith('.csv'):
+        # Optionally, save the file to a temporary location
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(os.getcwd(), 'temp', filename)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        file.save(filepath)
+        
+        # Call your function to import from CSV
+        try:
+            import_session_assignments_from_csv(filepath)
+            flash("CSV imported successfully!", "success")
+        except Exception as e:
+            flash(f"Error importing CSV: {e}", "danger")
+        
+        # Remove the temporary file (optional)
+        os.remove(filepath)
+        
+        return redirect(url_for('assign_sessions'))
+    else:
+        flash("Invalid file format. Please upload a CSV file.", "danger")
+        return redirect(url_for('assign_sessions'))
 
 
 @app.route('/')
