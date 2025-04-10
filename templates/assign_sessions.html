@@ -14,6 +14,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons (Optional) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mark.js/dist/mark.min.js"></script>
 
   <style>
     /* Reset & Base Styles */
@@ -35,6 +36,12 @@
       display: flex;
       height: 100vh;
       overflow: hidden;
+    }
+
+    /* Highlight style for search results */
+    .highlight {
+      background-color: green;
+      /* You can adjust the color, padding, etc., as needed */
     }
     
     /* SIDEBAR */
@@ -155,7 +162,7 @@
     <!-- MAIN CONTENT with Tabs -->
     <main class="main-content">
       <header class="top-bar">
-        <input type="text" placeholder="Search" />
+        <input type="text" id="searchInput" placeholder="Search" />
       </header>
       
       <div class="content">
@@ -384,7 +391,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js" defer></script>
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
+
   <script>
     // Data from Flask, JSON-encoded
     const coursesData      = JSON.parse('{{ courses|tojson|safe }}');
@@ -572,6 +579,43 @@
       rows.forEach(row => {
         const rowText = row.textContent.toLowerCase();
         row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+      });
+    });
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Select the search input in your top bar.
+      const searchInput = document.querySelector('.top-bar input[type="text"]');
+      // Define the context in which to search (in this case, the entire body)
+      const context = document.body;
+      
+      // Create a Mark instance on the chosen context.
+      const markInstance = new Mark(context);
+      
+      // Listen for input changes on the search box.
+      searchInput.addEventListener('input', function() {
+        const query = searchInput.value.trim();
+        // Clear previous highlights first.
+        markInstance.unmark({
+          done: function() {
+            // If the query is non-empty, highlight all matches.
+            if (query) {
+              markInstance.mark(query, {
+                element: "span",           // Wrap matches in a <span>
+                className: "highlight",    // Use our defined highlight style
+                separateWordSearch: false,
+                acrossElements: true,      // Allow highlighting across multiple elements
+                done: function() {
+                  // After marking is complete, scroll to the first match
+                  const firstMatch = document.querySelector('.highlight');
+                  if (firstMatch) {
+                    firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+              });
+            }
+          }
+        });
       });
     });
   </script>
