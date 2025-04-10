@@ -278,8 +278,8 @@ def manage_rooms():
     return render_template('manage_rooms.html', rooms=rooms)
 
 
-@app.route('/manage-lectures', methods=['GET', 'POST'])
-def manage_lectures():
+@app.route('/manage-lecturers', methods=['GET', 'POST'])
+def manage_lecturers():
     if 'user' not in session:
         flash("Please log in first.", "warning")
         return redirect(url_for('login'))
@@ -287,7 +287,7 @@ def manage_lectures():
     conn = get_db_connection()
     if conn is None:
         flash("Database connection failed.", "danger")
-        return render_template('manage_lectures.html', lecturers=[], faculty_types=[])
+        return render_template('manage_lecturers.html', lecturers=[], faculty_types=[])
     
     try:
         with conn.cursor(dictionary=True) as cursor:
@@ -306,7 +306,7 @@ def manage_lectures():
                             faculty_type_id = int(faculty_type_id)
                         except ValueError:
                             flash("Faculty Type ID must be an integer.", "warning")
-                            return redirect(url_for('manage_lectures'))
+                            return redirect(url_for('manage_lecturers'))
                         sql = "INSERT INTO Lecturer (LecturerName, FacultyTypeID, ActiveFlag) VALUES (%s, %s, 1)"
                         cursor.execute(sql, (lecturer_name, faculty_type_id))
                         conn.commit()
@@ -325,7 +325,7 @@ def manage_lectures():
                             faculty_type_id = int(faculty_type_id)
                         except ValueError:
                             flash("Faculty Type ID must be an integer.", "warning")
-                            return redirect(url_for('manage_lectures'))
+                            return redirect(url_for('manage_lecturers'))
                         sql = "UPDATE Lecturer SET LecturerName = %s, FacultyTypeID = %s WHERE LecturerID = %s"
                         cursor.execute(sql, (lecturer_name, faculty_type_id, lecturer_id))
                         conn.commit()
@@ -354,14 +354,14 @@ def manage_lectures():
             faculty_types = cursor.fetchall()
     except mysql.connector.Error as err:
         conn.rollback()
-        logging.error(f"Error in manage_lectures: {err}")
+        logging.error(f"Error in manage_lecturers: {err}")
         flash(f"Database error: {err}", "danger")
         lecturers = []
         faculty_types = []
     finally:
         conn.close()
     
-    return render_template('manage_lectures.html', lecturers=lecturers, faculty_types=faculty_types)
+    return render_template('manage_lecturers.html', lecturers=lecturers, faculty_types=faculty_types)
 
 
 @app.route('/manage-courses', methods=['GET', 'POST'])
