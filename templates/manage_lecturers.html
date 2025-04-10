@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <!-- Bootstrap CSS (Use the CDN if not already included) -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mark.js/dist/mark.min.js"></script>
   <style>
     /* Reset and basic global styling */
     * {
@@ -64,6 +65,13 @@
       text-decoration: none;
       transition: background 0.3s;
     }
+
+    /* Highlight style for search results */
+    .highlight {
+      background-color: green;
+      /* You can adjust the color, padding, etc., as needed */
+    }
+
     .menu a:hover {
       background-color: #00bf63;
     }
@@ -202,7 +210,7 @@
       <nav class="menu">
         <ul>
           <li><a href="{{ url_for('manage_rooms') }}">Manage Rooms</a></li>
-          <li><a href="{{ url_for('manage_lectures') }}" class="active">Manage Lectures</a></li>
+          <li><a href="{{ url_for('manage_lecturers') }}" class="active">Manage Lecturers</a></li>
           <li><a href="{{ url_for('manage_courses') }}">Manage Courses</a></li>
           <li><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
           <li><a href="{{ url_for('manage_preferences') }}">Manage Preferences</a></li>
@@ -230,7 +238,7 @@
           <h1>Manage Lectures</h1>
           
           <!-- Form to add a new lecturer -->
-          <form method="POST" action="{{ url_for('manage_lectures') }}">
+          <form method="POST" action="{{ url_for('manage_lecturers') }}">
             <input type="hidden" name="action" value="add" />
             <input type="text" name="lecturer_name" placeholder="Lecturer Name" required />
             <select name="faculty_type_id" required>
@@ -243,7 +251,7 @@
           </form>
           
           <!-- Table listing existing lecturers -->
-          <table>
+          <table id="lecturersTable">
             <thead>
               <tr>
                 <th>ID</th>
@@ -255,7 +263,7 @@
             <tbody>
               {% for lecturer in lecturers %}
               <tr>
-                <form method="POST" action="{{ url_for('manage_lectures') }}">
+                <form method="POST" action="{{ url_for('manage_lecturers') }}">
                   <td>{{ lecturer.LecturerID }}</td>
                   <td>
                     <input type="text" name="lecturer_name" value="{{ lecturer.LecturerName }}" required />
@@ -352,5 +360,42 @@
       }
     }
   </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Select the search input. (Be sure the input also has a unique identifier if needed.)
+    const searchInput = document.getElementById('searchInput'); // assume you added id="searchInput" in your top bar
+    // Narrow the search context to the lecturers table.
+    const context = document.getElementById('lecturersTable');
+    
+    // Create a Mark instance on the specified context.
+    const markInstance = new Mark(context);
+    
+    // Listen for input changes on the search box.
+    searchInput.addEventListener('input', function() {
+      const query = searchInput.value.trim();
+      // Clear previous highlights within the table.
+      markInstance.unmark({
+        done: function() {
+          // If a query exists, highlight all matches inside the table.
+          if (query) {
+            markInstance.mark(query, {
+              element: "span",         // Wrap matches in a <span>
+              className: "highlight",  // Uses your defined CSS
+              separateWordSearch: false,
+              acrossElements: true,    // Allows matching across element boundaries
+              done: function() {
+                // Scroll to the first highlighted element within the context.
+                const firstMatch = context.querySelector('.highlight');
+                if (firstMatch) {
+                  firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }
+            });
+          }
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>
