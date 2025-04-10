@@ -135,6 +135,53 @@
       margin: 0;
       font-weight: 300;
     }
+    .drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.3s, border-color 0.3s;
+      margin: 1rem auto;  /* centers the dropzone horizontally */
+      width: 1000px;
+    }
+
+    .drop-zone:hover {
+      border-color: #888;
+    }
+
+    .drop-zone.dragover {
+      background-color: #f2f8ff;  /* Light bluish highlight while dragging */
+      border-color: #339cff;
+    }
+
+    .drop-zone p {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .drop-zone .browse {
+      color: #007bff;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .drop-zone img {
+      max-width: 100px;
+      height: 100px;
+      margin-bottom: 0.5rem;
+    }
+
+    .drop-zone .small {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .btn-container {
+      text-align: center;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -196,6 +243,12 @@
           <li class="nav-item" role="presentation">
             <button class="nav-link" id="edit-sessions-tab" data-bs-toggle="tab" data-bs-target="#edit-sessions" type="button" role="tab" aria-controls="edit-sessions" aria-selected="false">
               Edit Sessions
+            </button>
+          </li>
+          <!-- New Tab for CSV Import -->
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="csv-import-tab" data-bs-toggle="tab" data-bs-target="#csv-import" type="button" role="tab" aria-controls="csv-import" aria-selected="false">
+              Import CSV
             </button>
           </li>
         </ul>
@@ -381,6 +434,38 @@
               <button type="submit" class="btn btn-success">Save Changes</button>
             </form>
           </div>
+
+          <!-- New Tab 4: Import CSV -->
+          <div class="tab-pane fade" id="csv-import" role="tabpanel" aria-labelledby="csv-import-tab">
+
+            <p>
+              Download the CSV template, fill it out, and upload the completed file to import sessions into the database.
+            </p>
+            <!-- Download Template Button -->
+            <div class="btn-container"></div>
+            <a href="{{ url_for('static', filename='timetable_template.csv') }}" class="btn btn-primary mb-3" download>
+              Download CSV Template
+            </a>
+          
+
+            <!-- Upload Form -->
+            <form method="POST" action="{{ url_for('import_session_assignments') }}" enctype="multipart/form-data">
+              <!-- Drag & Drop Zone -->
+              <div class="drop-zone" id="dropZone">
+                <!-- Optional icon (SVG, PNG, etc.) -->
+                <img src="{{ url_for('static', filename='images/upload_icon.svg') }}" alt="Upload Icon" />
+                <p><strong>Drag & Drop</strong> or <span class="browse">browse</span></p>
+                <p class="small text-muted">Supports: <code>.csv</code></p>
+                <!-- The hidden file input -->
+                <input type="file" name="csv_file" id="csvFile" accept=".csv" hidden required>
+              </div>
+
+              <div class="btn-container">
+                <button type="submit" class="btn btn-success">Import CSV</button>
+              </div>
+            </form>
+          </div>
+        </div>
         </div>
       </div>
       </div>
@@ -619,5 +704,46 @@
       });
     });
   </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('csvFile');
+    
+      // Highlight on drag-over
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+    
+      // Un-highlight on drag-leave
+      dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      });
+    
+      // Handle dropped file
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+    
+        // If a file is dropped, assign it to the hidden input
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+        }
+      });
+    
+      // Also allow click to open file dialog
+      dropZone.addEventListener('click', () => {
+        fileInput.click();
+      });
+    
+      // You could optionally show file name after selecting
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+          dropZone.querySelector('p').textContent = fileInput.files[0].name;
+        }
+      });
+    });
+    </script>
 </body>
 </html>
