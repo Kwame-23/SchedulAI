@@ -18,6 +18,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
+import re
 import base64
 from jinja2 import Template
 from sqlalchemy import create_engine
@@ -65,6 +66,24 @@ def get_db_connection():
     except mysql.connector.Error as err:
         logging.error(f"Database connection failed: {err}")
         return None
+    
+
+
+def escapejs_filter(s):
+    if s is None:
+        return ""
+    s = str(s)
+    # A simple escape function for JavaScript strings:
+    # Replace backslashes, quotes, and newlines.
+    s = s.replace('\\', '\\\\')
+    s = s.replace('"', '\\"')
+    s = s.replace("'", "\\'")
+    s = re.sub(r'\n', '\\n', s)
+    s = re.sub(r'\r', '', s)
+    return s
+
+# Register the custom filter
+app.jinja_env.filters['escapejs'] = escapejs_filter
 
 # ------------------------------
 # Authentication Routes
@@ -3320,6 +3339,213 @@ def update_room_assignment():
         return jsonify({"message": f"Database error: {err}"}), 500
     finally:
         conn.close()
+
+@app.route('/edit_session_assignments', methods=['GET', 'POST'])
+def edit_session_assignments():
+    """
+    This route provides an interface to edit, delete, and then save updates for
+    sessions stored in the SessionAssignments table.
+    On a GET request:
+      - It fetches all session rows from the database.
+      - It also fetches session types and durations dynamically from the SessionType and Duration tables.
+      - Then it renders the edit page (edit_sessions.html).
+    On a POST request:
+      - It processes form data for each session.
+      - If the delete checkbox is checked for a session, that session is deleted.
+      - Otherwise, the session is updated with the new values.
+    """
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return redirect(url_for('assign_sessions'))
+
+    if request.method == 'POST':
+        try:
+            # Extract all keys that start with "session_id_"
+            session_ids = [key.split('_')[-1] for key in request.form.keys() if key.startswith("session_id_")]
+            
+            with conn.cursor() as cursor:
+                for sid in session_ids:
+                    # Get updated values for the session.
+                    course_code   = request.form.get(f"course_code_{sid}", "").strip()
+                    lecturer_name = request.form.get(f"lecturer_name_{sid}", "").strip()
+                    cohort_name   = request.form.get(f"cohort_name_{sid}", "").strip()
+                    session_type  = request.form.get(f"session_type_{sid}", "").strip()
+                    duration      = request.form.get(f"duration_{sid}", "").strip()
+                    enrollments_str = request.form.get(f"enrollments_{sid}", "0").strip()
+                    delete_flag   = request.form.get(f"delete_{sid}")
+                    
+                    try:
+                        enrollments = int(enrollments_str)
+                    except ValueError:
+                        enrollments = 0
+
+                    if delete_flag:
+                        # Delete the session if the delete checkbox is checked.
+                        cursor.execute("DELETE FROM SessionAssignments WHERE SessionID = %s", (sid,))
+                    else:
+                        # Update the session with new values.
+                        update_sql = """
+                            UPDATE SessionAssignments
+                            SET CourseCode = %s,
+                                LecturerName = %s,
+                                CohortName = %s,
+                                SessionType = %s,
+                                Duration = %s,
+                                NumberOfEnrollments = %s
+                            WHERE SessionID = %s
+                        """
+                        cursor.execute(update_sql, (
+                            course_code,
+                            lecturer_name,
+                            cohort_name,
+                            session_type,
+                            duration,
+                            enrollments,
+                            sid
+                        ))
+            conn.commit()
+            flash("Session assignments updated successfully.", "success")
+        except mysql.connector.Error as err:
+            conn.rollback()
+            logging.error(f"Error updating session assignments: {err}")
+            flash("An error occurred while updating session assignments.", "danger")
+        finally:
+            conn.close()
+        return redirect(url_for('assign_sessions'))
+
+    # For GET request: Fetch all sessions and the dynamic lists.
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            # Fetch all session assignments.
+            cursor.execute("""
+                SELECT SessionID, CourseCode, LecturerName, CohortName,
+                       SessionType, Duration, NumberOfEnrollments
+                FROM SessionAssignments
+            """)
+            all_sessions = cursor.fetchall()
+
+            # Fetch session types from the SessionType table.
+            cursor.execute("SELECT SessionTypeName FROM SessionType ORDER BY SessionTypeID")
+            session_types_raw = cursor.fetchall()
+            session_types = [row['SessionTypeName'] for row in session_types_raw]
+
+            # Fetch durations from the Duration table.
+            cursor.execute("SELECT Duration FROM Duration ORDER BY DurationID")
+            durations_raw = cursor.fetchall()
+            # Convert each TIME value to a string (e.g., "01:00:00")
+            durations = [str(row['Duration']) for row in durations_raw]
+    except mysql.connector.Error as err:
+        logging.error(f"Error fetching session assignments or selection lists: {err}")
+        flash("An error occurred while fetching session data.", "danger")
+        all_sessions = []
+        session_types = []
+        durations = []
+    finally:
+        conn.close()
+
+    return render_template("edit_sessions.html", 
+                           all_sessions=all_sessions, 
+                           session_types=session_types, 
+                           durations=durations)
+
+
+@app.route('/manage_sessions_schedule', methods=['GET', 'POST'])
+def manage_sessions_schedule():
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return redirect(url_for('dashboard'))
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            if request.method == 'POST':
+                action = request.form.get('action')
+                if action == 'add':
+                    # Create a new schedule entry. Get values from the form.
+                    session_id = request.form.get('session_id')
+                    day_of_week = request.form.get('day_of_week')
+                    start_time = request.form.get('start_time')
+                    end_time = request.form.get('end_time')
+                    room_name = request.form.get('room_name')
+                    
+                    if not (session_id and day_of_week and start_time and end_time and room_name):
+                        flash("All fields are required for adding a new schedule entry.", "warning")
+                    else:
+                        sql = """
+                            INSERT INTO UpdatedSessionSchedule (SessionID, DayOfWeek, StartTime, EndTime, RoomName)
+                            VALUES (%s, %s, %s, %s, %s)
+                        """
+                        cursor.execute(sql, (session_id, day_of_week, start_time, end_time, room_name))
+                        conn.commit()
+                        flash("Schedule entry added successfully.", "success")
+                
+                elif action == 'update':
+                    # Update an existing schedule entry.
+                    schedule_id = request.form.get('schedule_id')
+                    day_of_week = request.form.get('day_of_week')
+                    start_time = request.form.get('start_time')
+                    end_time = request.form.get('end_time')
+                    room_name = request.form.get('room_name')
+                    
+                    if not schedule_id:
+                        flash("Schedule ID is missing for update.", "warning")
+                    else:
+                        sql = """
+                            UPDATE UpdatedSessionSchedule
+                            SET DayOfWeek=%s, StartTime=%s, EndTime=%s, RoomName=%s
+                            WHERE ScheduleID=%s
+                        """
+                        cursor.execute(sql, (day_of_week, start_time, end_time, room_name, schedule_id))
+                        conn.commit()
+                        flash("Schedule entry updated successfully.", "success")
+                
+                elif action == 'delete':
+                    # Delete an existing schedule entry.
+                    schedule_id = request.form.get('schedule_id')
+                    if not schedule_id:
+                        flash("Schedule ID is required for deletion.", "warning")
+                    else:
+                        sql = "DELETE FROM UpdatedSessionSchedule WHERE ScheduleID=%s"
+                        cursor.execute(sql, (schedule_id,))
+                        conn.commit()
+                        flash("Schedule entry deleted successfully.", "success")
+            
+            # For display, join UpdatedSessionSchedule with SessionAssignments.
+            sql_select = """
+                SELECT 
+                  us.ScheduleID,
+                  us.SessionID,
+                  us.DayOfWeek,
+                  TIME_FORMAT(us.StartTime, '%H:%i') AS StartTime,
+                  TIME_FORMAT(us.EndTime, '%H:%i') AS EndTime,
+                  us.RoomName,
+                  sa.CourseCode,
+                  sa.LecturerName,
+                  sa.CohortName,
+                  sa.SessionType,
+                  TIME_FORMAT(sa.Duration, '%H:%i') AS Duration,
+                  sa.NumberOfEnrollments
+                FROM UpdatedSessionSchedule us
+                JOIN SessionAssignments sa ON us.SessionID = sa.SessionID
+                ORDER BY us.ScheduleID
+            """
+            cursor.execute(sql_select)
+            schedule_entries = cursor.fetchall()
+            
+            # For new entries, get list of available SessionAssignments (to choose session details)
+            cursor.execute("SELECT SessionID, CourseCode, LecturerName FROM SessionAssignments")
+            session_assignments = cursor.fetchall()
+    except Exception as err:
+        conn.rollback()
+        flash(f"Database error: {err}", "danger")
+        schedule_entries = []
+        session_assignments = []
+    finally:
+        conn.close()
+    
+    return render_template('manage_sessions_schedule.html', 
+                           schedule_entries=schedule_entries,
+                           session_assignments=session_assignments)
 
 
 @app.route('/')
