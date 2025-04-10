@@ -3548,6 +3548,47 @@ def manage_sessions_schedule():
                            session_assignments=session_assignments)
 
 
+@app.route('/delete_existing_data', methods=['POST'])
+def delete_existing_data():
+    conn = get_db_connection()
+    if conn is None:
+        flash("Database connection failed.", "danger")
+        return redirect(url_for('schedule_builder'))
+    try:
+        with conn.cursor() as cursor:
+            # Delete from child table first if constraints exist
+            cursor.execute("DELETE FROM SessionSchedule;")      # Child table (references SessionAssignments)
+            cursor.execute("DELETE FROM SessionAssignments;")   # Parent table
+            cursor.execute("DELETE FROM StudentCourseSelection;")
+            cursor.execute("DELETE FROM UnassignedSessions;")
+            cursor.execute("DELETE FROM UpdatedSessionSchedule;")
+            conn.commit()
+            flash("Existing timetable data deleted successfully.", "success")
+        return jsonify({"message": "Data deleted."}), 200
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error deleting data: {e}")
+        return jsonify({"message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/check_existing_data', methods=['GET'])
+def check_existing_data():
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"count": 0})
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM UpdatedSessionSchedule")
+            count = cursor.fetchone()[0]
+        return jsonify({"count": count})
+    except Exception as e:
+        logging.error(f"Error checking existing data: {e}")
+        return jsonify({"count": 0})
+    finally:
+        conn.close()
+
+
 @app.route('/')
 def index():
     return redirect(url_for('homepage')) 
