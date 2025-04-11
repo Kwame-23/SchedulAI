@@ -475,17 +475,24 @@ def is_valid_duration(duration):
 # Utility: Convert time objects -> "HH:MM"
 # ----------------------------------------------------
 def convert_time_to_hhmm(time_obj):
-    """
-    Converts a datetime.time or datetime.timedelta object to "HH:MM" string.
-    """
-    if isinstance(time_obj, timedelta):
-        total_seconds = int(time_obj.total_seconds())
-        hours = total_seconds // 3600
-        minutes = (total_seconds % 3600) // 60
-        return f"{hours:02d}:{minutes:02d}"
-    elif isinstance(time_obj, time):
-        return time_obj.strftime("%H:%M")
-    else:
+    try:
+        if isinstance(time_obj, timedelta):
+            total_seconds = int(time_obj.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            return f"{hours:02d}:{minutes:02d}"
+        elif isinstance(time_obj, time):
+            return time_obj.strftime("%H:%M")
+        elif isinstance(time_obj, str):
+            # If the string is in the form "HH:MM:SS", return "HH:MM"
+            if len(time_obj) >= 5:
+                return time_obj[:5]
+            else:
+                return time_obj
+        else:
+            return "00:00"
+    except Exception as e:
+        logging.error("Error in convert_time_to_hhmm: " + str(e))
         return "00:00"
 
 # ----------------------------------------------------
@@ -1758,13 +1765,19 @@ def get_full_plan():
 # ----------------------------------------------------
 # ROUTE: Timetable Page
 # ----------------------------------------------------
-
 @app.route('/timetable', methods=['GET'])
 def timetable():
     logging.info("Accessed /timetable route.")
     try:
         sessions = fetch_sessions_join_schedule_for_updated_schedule()
         logging.info(f"Fetched {len(sessions)} sessions for timetable.")
+        
+        # Convert start, end and (if present) duration to "HH:MM"
+        for sess in sessions:
+            sess["StartTime"] = convert_time_to_hhmm(sess["StartTime"])
+            sess["EndTime"] = convert_time_to_hhmm(sess["EndTime"])
+            if "Duration" in sess:
+                sess["Duration"] = convert_time_to_hhmm(sess["Duration"])
         
         # Fetch all active rooms
         conn = get_db_connection()
@@ -1776,14 +1789,14 @@ def timetable():
             cursor.execute("SELECT Location AS RoomName FROM Room WHERE ActiveFlag = 1 ORDER BY Location")
             rooms_data = cursor.fetchall()
             rooms = [room['RoomName'] for room in rooms_data]
-        
         conn.close()
         
         # Group sessions by RoomName
-        sessions_by_room = defaultdict(list)
+        from collections import defaultdict
+        grouped = defaultdict(list)
         for sess in sessions:
-            room = sess['RoomName']
-            sessions_by_room[room].append(sess)
+            grouped[sess['RoomName']].append(sess)
+        sessions_by_room = dict(grouped)
         
         # Define time slots (every 15 minutes from 08:00 to 19:00)
         time_slots = [
@@ -1801,7 +1814,7 @@ def timetable():
             '19:00'
         ]
         
-        # Optionally, pass course_colors if needed (from your existing function)
+        # Optionally, generate course_colors (if you use them)
         course_colors = generate_course_colors(sessions)
     
     except Exception as e:
@@ -1817,7 +1830,7 @@ def timetable():
         rooms=rooms,
         sessions_by_room=sessions_by_room,
         time_slots=time_slots,
-        course_colors=course_colors  # Pass this if you use dynamic course colors
+        course_colors=course_colors
     )
 
 def generate_course_colors(sessions):
