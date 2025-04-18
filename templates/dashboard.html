@@ -191,13 +191,37 @@
       </div>
       <nav class="menu">
         <ul>
-          <li><a href="{{ url_for('manage_rooms') }}">Manage Rooms</a></li>
-          <li><a href="{{ url_for('manage_lecturers') }}">Manage Lecturers</a></li>
-          <li><a href="{{ url_for('manage_courses') }}">Manage Courses</a></li>
-          <li><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
-          <li><a href="{{ url_for('manage_preferences') }}" class="active">Manage Preferences</a></li>
-          <li><a href="{{ url_for('schedule_builder') }}">Build Timetable</a></li>
-          <li><a href="#">History</a></li>
+          <li>
+            <a href="{{ url_for('manage_rooms') }}">
+              <img src="{{ url_for('static', filename='images/icons8-door-24.png') }}" alt="Manage Rooms Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Rooms
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_lecturers') }}">
+              <img src="{{ url_for('static', filename='images/icons8-teacher-30.png') }}" alt="Manage Lecturers Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Lecturers
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_courses') }}" style="background-color: #00bf63;">
+              <img src="{{ url_for('static', filename='images/icons8-plan-32.png') }}" alt="Manage Courses Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Courses
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_students') }}">
+              <img src="{{ url_for('static', filename='images/icons8-student-24.png') }}" alt="Manage Students Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Students
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_preferences') }}" class="active">
+              <img src="{{ url_for('static', filename='images/icons8-preferences-24.png') }}" alt="Manage Preferences Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Preferences
+            </a>
+          </li>
+          
         </ul>
       </nav>
       <div class="logout-container">

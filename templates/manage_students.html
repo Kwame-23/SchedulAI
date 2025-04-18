@@ -110,16 +110,44 @@
       </div>
       <nav class="menu">
         <ul>
-          <li><a href="{{ url_for('manage_rooms') }}">Manage Rooms</a></li>
-          <li><a href="{{ url_for('manage_lecturers') }}">Manage Lecturers</a></li>
-          <li><a href="{{ url_for('manage_courses') }}">Manage Courses</a></li>
-          <li><a href="{{ url_for('manage_students') }}" class="active">Manage Students</a></li>
-          <li><a href="{{ url_for('manage_preferences') }}">Manage Preferences</a></li>
+          <li>
+            <a href="{{ url_for('manage_rooms') }}" >
+              <img src="{{ url_for('static', filename='images/icons8-door-24.png') }}" alt="Manage Rooms Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Rooms
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_lecturers') }}">
+              <img src="{{ url_for('static', filename='images/icons8-teacher-30.png') }}" alt="Manage Lecturers Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Lecturers
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_courses') }}">
+              <img src="{{ url_for('static', filename='images/icons8-plan-32.png') }}" alt="Manage Courses Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Courses
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_students') }}" class="active">
+              <img src="{{ url_for('static', filename='images/icons8-student-24.png') }}" alt="Manage Students Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Students
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_preferences') }}" >
+              <img src="{{ url_for('static', filename='images/icons8-preferences-24.png') }}" alt="Manage Preferences Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Preferences
+            </a>
+          </li>
           <!-- Updated Build Timetable link -->
           <li>
-            <a href="javascript:void(0);" onclick="checkExistingTimetable();">Build Timetable</a>
+            <a href="javascript:void(0);" onclick="checkExistingTimetable();">
+              <img src="{{ url_for('static', filename='images/icons8-ai-24.png') }}" alt="Build Timetable Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Build Timetable
+            </a>
           </li>
-          <li><a href="#">History</a></li>
+         
         </ul>
       </nav>
       <div class="logout-container">
