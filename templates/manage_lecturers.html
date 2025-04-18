@@ -172,12 +172,12 @@
       transition: background 0.3s ease;
     }
     .update-btn {
-      background: #ffc107;
-      color: #fff;
-    }
-    .update-btn:hover {
-      background: #e0a800;
-    }
+  background: #00bf63;
+  color: #fff;
+}
+.update-btn:hover {
+  background: #009f50;
+}
     .delete-btn {
       background: #dc3545;
       color: #fff;
@@ -197,6 +197,19 @@
     .back-link a:hover {
       text-decoration: underline;
     }
+
+ /* target every table header */
+table thead th {
+  background-color: #00bf63 !important;
+  color: #fff;
+}
+
+/* — or just your lecturers table — */
+
+#lecturersTable thead th {
+  background-color: #00bf63;
+  color: #fff;
+}
   </style>
 </head>
 <body>
@@ -209,16 +222,44 @@
       </div>
       <nav class="menu">
         <ul>
-          <li><a href="{{ url_for('manage_rooms') }}">Manage Rooms</a></li>
-          <li><a href="{{ url_for('manage_lecturers') }}" class="active">Manage Lecturers</a></li>
-          <li><a href="{{ url_for('manage_courses') }}">Manage Courses</a></li>
-          <li><a href="{{ url_for('manage_students') }}">Manage Students</a></li>
-          <li><a href="{{ url_for('manage_preferences') }}">Manage Preferences</a></li>
+          <li>
+            <a href="{{ url_for('manage_rooms') }}">
+              <img src="{{ url_for('static', filename='images/icons8-door-24.png') }}" alt="Manage Rooms Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Rooms
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_lecturers') }}" class="active">
+              <img src="{{ url_for('static', filename='images/icons8-teacher-30.png') }}" alt="Manage Lecturers Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Lecturers
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_courses') }}">
+              <img src="{{ url_for('static', filename='images/icons8-plan-32.png') }}" alt="Manage Courses Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Courses
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_students') }}">
+              <img src="{{ url_for('static', filename='images/icons8-student-24.png') }}" alt="Manage Students Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Students
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_preferences') }}">
+              <img src="{{ url_for('static', filename='images/icons8-preferences-24.png') }}" alt="Manage Preferences Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Preferences
+            </a>
+          </li>
           <!-- Updated Build Timetable link -->
           <li>
-            <a href="javascript:void(0);" onclick="checkExistingTimetable();">Build Timetable</a>
+            <a href="javascript:void(0);" onclick="checkExistingTimetable();">
+              <img src="{{ url_for('static', filename='images/icons8-ai-24.png') }}" alt="Build Timetable Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Build Timetable
+            </a>
           </li>
-          <li><a href="#">History</a></li>
+         
         </ul>
       </nav>
       <div class="logout-container">

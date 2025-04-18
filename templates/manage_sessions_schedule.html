@@ -53,9 +53,9 @@
     <table class="table table-striped table-bordered">
       <thead class="table-dark">
         <tr>
-          <th>Schedule ID</th>
           <th>Session ID</th>
           <th>Course Code</th>
+          <th>Course Name</th> 
           <th>Lecturer</th>
           <th>Cohort</th>
           <th>Session Type</th>
@@ -71,9 +71,9 @@
       <tbody>
         {% for entry in schedule_entries %}
         <tr>
-          <td>{{ entry.ScheduleID }}</td>
           <td>{{ entry.SessionID }}</td>
           <td>{{ entry.CourseCode }}</td>
+          <td>{{ entry.CourseName }}</td>  
           <td>{{ entry.LecturerName }}</td>
           <td>{{ entry.CohortName }}</td>
           <td>{{ entry.SessionType }}</td>

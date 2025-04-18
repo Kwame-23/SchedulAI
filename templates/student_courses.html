@@ -143,6 +143,13 @@
     .content .text-center {
       margin-top: 1rem;
     }
+
+    .menu-icon {
+    width: 20px;          /* or whatever fits your design */
+    height: auto;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
   </style>
 </head>
 <body>
@@ -155,12 +162,54 @@
       </div>
       <nav class="menu">
         <ul>
-          <li><a href="{{ url_for('lecturers') }}">Lecturers</a></li>
-          <li><a href="{{ url_for('courses') }}">Courses</a></li>
-          <li><a href="{{ url_for('student_courses') }}" class="active">Student Courses</a></li>
-          <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
-          <li><a href="{{ url_for('assign_sessions') }}">Assign Sessions</a></li>
-          <li><a href="{{ url_for('run_scheduler_route') }}">Generate Timetable</a></li>
+          <li>
+            <a href="{{ url_for('lecturers') }}">
+              <img src="{{ url_for('static', filename='images/icons8-teacher-30.png') }}"
+                   alt="Lecturers Icon"
+                   class="menu-icon">
+              Lecturers
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('courses') }}">
+              <img src="{{ url_for('static', filename='images/icons8-plan-32.png') }}"
+                   alt="Courses Icon"
+                   class="menu-icon">
+              Courses
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('student_courses') }}" class="active">
+              <img src="{{ url_for('static', filename='images/icons8-student-activity-50.png') }}"
+                   alt="Student Courses Icon"
+                   class="menu-icon">
+              Student Courses
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('rooms') }}">
+              <img src="{{ url_for('static', filename='images/icons8-door-24.png') }}"
+                   alt="Rooms Icon"
+                   class="menu-icon">
+              Rooms
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('assign_sessions') }}">
+              <img src="{{ url_for('static', filename='images/icons8-course-assign-24.png') }}"
+                   alt="Assign Sessions Icon"
+                   class="menu-icon">
+              Assign Sessions
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('run_scheduler_route') }}">
+              <img src="{{ url_for('static', filename='images/icons8-ai-24.png') }}"
+                   alt="Generate Timetable Icon"
+                   class="menu-icon">
+              Generate Timetable
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="logout-container">
