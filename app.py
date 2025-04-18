@@ -88,6 +88,15 @@ def escapejs_filter(s):
 # Register the custom filter
 app.jinja_env.filters['escapejs'] = escapejs_filter
 
+
+def format_duration(td):
+    """Convert a timedelta to a 'HH:MM:SS' string."""
+    total_seconds = int(td.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
 # ------------------------------
 # Authentication Routes
 # ------------------------------
@@ -198,6 +207,9 @@ def dashboard():
 @app.route('/homepage')
 def homepage():
     return render_template('homepage.html')
+
+
+
 
 # ------------------------------
 # Management Pages (Protected)
@@ -868,6 +880,7 @@ def assign_sessions():
                     lecturer_intern = request.form.get(f'lecturer_intern_name_{i}', '').strip()
                     session_type = request.form.get(f'session_type_{i}', '').strip()
                     duration_str = request.form.get(f'duration_{i}', '').strip()
+                    logging.debug("Session row %d duration submitted: %s", i, duration_str)
                     enrollments = request.form.get(f'enrollments_{i}', '0').strip()
     
                     # Validate required inputs
@@ -920,7 +933,7 @@ def assign_sessions():
     
             cursor.execute("SELECT Duration FROM Duration")
             durations_raw = cursor.fetchall()
-            durations_data = [str(row[0]) for row in durations_raw] if durations_raw else ['01:00:00', '01:30:00']
+            durations_data = [format_duration(row[0]) for row in durations_raw] if durations_raw else ['01:00:00', '01:30:00']
     
             # NEW: Use a dictionary cursor for the "View All Sessions" tab.
             dict_cursor = conn.cursor(dictionary=True)
@@ -930,6 +943,11 @@ def assign_sessions():
             """)
             all_sessions = dict_cursor.fetchall()
             dict_cursor.close()
+
+            # Format the Duration field in each session so it matches the 'HH:MM:SS' format.
+            for session in all_sessions:
+                if session['Duration']:
+                    session['Duration'] = format_duration(session['Duration'])
     
     except mysql.connector.Error as err:
         logging.error(f"Error in /assign_sessions route: {err}")
@@ -3528,22 +3546,26 @@ def manage_sessions_schedule():
             
             # For display, join UpdatedSessionSchedule with SessionAssignments.
             sql_select = """
-                SELECT 
-                  us.ScheduleID,
-                  us.SessionID,
-                  us.DayOfWeek,
-                  TIME_FORMAT(us.StartTime, '%H:%i') AS StartTime,
-                  TIME_FORMAT(us.EndTime, '%H:%i') AS EndTime,
-                  us.RoomName,
-                  sa.CourseCode,
-                  sa.LecturerName,
-                  sa.CohortName,
-                  sa.SessionType,
-                  TIME_FORMAT(sa.Duration, '%H:%i') AS Duration,
-                  sa.NumberOfEnrollments
-                FROM UpdatedSessionSchedule us
-                JOIN SessionAssignments sa ON us.SessionID = sa.SessionID
-                ORDER BY us.ScheduleID
+            SELECT 
+            us.ScheduleID,
+            us.SessionID,
+            sa.CourseCode,
+            c.CourseName,
+            sa.LecturerName,
+            sa.CohortName,
+            sa.SessionType,
+            TIME_FORMAT(sa.Duration, '%H:%i') AS Duration,
+            sa.NumberOfEnrollments,
+            us.DayOfWeek,
+            TIME_FORMAT(us.StartTime, '%H:%i') AS StartTime,
+            TIME_FORMAT(us.EndTime, '%H:%i') AS EndTime,
+            us.RoomName
+            FROM UpdatedSessionSchedule us
+            JOIN SessionAssignments sa 
+                ON us.SessionID = sa.SessionID
+            JOIN Course c 
+                ON sa.CourseCode = c.CourseCode
+            ORDER BY us.ScheduleID
             """
             cursor.execute(sql_select)
             schedule_entries = cursor.fetchall()

@@ -130,6 +130,13 @@
       max-width: 300px;
       margin-bottom: 20px;
     }
+
+    .menu-icon {
+    width: 20px;          /* or whatever fits your design */
+    height: auto;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
   </style>
 </head>
 <body>
@@ -140,14 +147,57 @@
         <!-- Replace with your logo path -->
        <img src="{{ url_for('static', filename='schedulai.svg') }}" alt="SchedulAI Logo">
       </div>
+      
       <nav class="menu">
         <ul>
-          <li><a href="{{ url_for('lecturers') }}">Lecturers</a></li>
-          <li><a href="{{ url_for('courses') }}">Courses</a></li>
-          <li><a href="{{ url_for('student_courses') }}">Student Course Selection</a></li>
-          <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
-          <li><a href="{{ url_for('assign_sessions') }}">Assign Sessions</a></li>
-          <li><a href="{{ url_for('run_scheduler_route') }}" style="background-color: #00bf63;">Generate Timetable</a></li>
+          <li>
+            <a href="{{ url_for('lecturers') }}">
+              <img src="{{ url_for('static', filename='images/icons8-teacher-30.png') }}"
+                   alt="Lecturers Icon"
+                   class="menu-icon">
+              Lecturers
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('courses') }}">
+              <img src="{{ url_for('static', filename='images/icons8-plan-32.png') }}"
+                   alt="Courses Icon"
+                   class="menu-icon">
+              Courses
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('student_courses') }}">
+              <img src="{{ url_for('static', filename='images/icons8-student-activity-50.png') }}"
+                   alt="Student Course Selection Icon"
+                   class="menu-icon">
+              Student Course Selection
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('rooms') }}">
+              <img src="{{ url_for('static', filename='images/icons8-door-24.png') }}"
+                   alt="Rooms Icon"
+                   class="menu-icon">
+              Rooms
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('assign_sessions') }}">
+              <img src="{{ url_for('static', filename='images/icons8-course-assign-24.png') }}"
+                   alt="Assign Sessions Icon"
+                   class="menu-icon">
+              Assign Sessions
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('run_scheduler_route') }}" style="background-color: #00bf63;">
+              <img src="{{ url_for('static', filename='images/icons8-ai-24.png') }}"
+                   alt="Generate Timetable Icon"
+                   class="menu-icon">
+              Generate Timetable
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="logout-container">
@@ -157,10 +207,6 @@
     
     <!-- MAIN CONTENT -->
     <main class="main-content">
-      <!-- Optional Top Bar -->
-      <header class="top-bar">
-        <input type="text" placeholder="Search" />
-      </header>
       
       <!-- CONTENT AREA -->
       <div class="content">
@@ -178,7 +224,11 @@
         
         <div class="content-wrapper">
           <!-- Centered robot image -->
-          <img src="{{ url_for('static', filename='robot.png') }}" alt="Robot" class="robot-img img-fluid">
+          <img src="{{ url_for('static', filename='robot.gif') }}" alt="Robot" class="robot-img img-fluid">
+
+          <p style="color: black; font-weight: bold; font-style: italic; text-align: center;">
+            As Leonardo da Vinci said, "Simplicity is the ultimate sophistication." <br>Click "Start Scheduling" to experience the ease of automated timetable creation.
+        </p>
           
           {% if scheduled %}
             <!-- After scheduling is done, show the View Timetable button -->
@@ -186,7 +236,7 @@
           {% else %}
             <!-- Before scheduling, show the Start Scheduling button -->
             <form method="POST">
-              <button type="submit" class="btn btn-primary btn-lg">Start Scheduling</button>
+              <button type="submit" class="btn btn-primary btn-lg" style="background-color: #00bf63; border-color: #00bf63;">Start Scheduling</button>
             </form>
           {% endif %}
         </div>

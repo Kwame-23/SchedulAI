@@ -145,18 +145,60 @@
       </div>
       <nav class="menu">
         <ul>
-          <!-- Example links: update or reorder as you like -->
-          <li><a href="{{ url_for('conflicts') }}">Conflict Resolution</a></li>
-          <li><a href="{{ url_for('resolve_room_conflicts') }}">Room Conflict Resolution</a></li>
-          <li><a href="{{ url_for('manage_sessions_schedule') }}">Manage Sessions</a></li>
-          <li><a href="{{ url_for('analyze_timetable') }}">Analysis</a></li>
-          <li><a href="{{ url_for('feasibility') }}">Student Feasibility Check</a></li>
-          <li><a href="{{ url_for('conflict_free_matrix') }}">Conflict Free Matrix</a></li>
-          <li><a href="{{ url_for('student_timetables') }}">Student Timetables</a></li>
-          <li><a href="{{ url_for('timetable') }}">Room Timetable</a></li>
-          <li><a href="{{ url_for('export_csv') }}">Export CSV</a></li>
-          <!-- Add or remove items as needed -->
-          <!-- <li><a href="#">Export CSV</a></li> -->
+          <li>
+            <a href="{{ url_for('conflicts') }}">
+              <img src="{{ url_for('static', filename='images/icons8-conflict-24.png') }}" alt="Conflict Resolution Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Conflict Resolution
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('resolve_room_conflicts') }}">
+              <img src="{{ url_for('static', filename='images/icons8-door-24.png') }}" alt="Room Conflict Resolution Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Room Conflict Resolution
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('manage_sessions_schedule') }}">
+              <img src="{{ url_for('static', filename='images/icons8-manage-48.png') }}" alt="Manage Sessions Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Manage Sessions
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('analyze_timetable') }}">
+              <img src="{{ url_for('static', filename='images/icons8-analysis-24.png') }}" alt="Analysis Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Analysis
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('feasibility') }}">
+              <img src="{{ url_for('static', filename='images/icons8-student-48.png') }}" alt="Student Feasibility Check Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Student Feasibility Check
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('conflict_free_matrix') }}">
+              <img src="{{ url_for('static', filename='images/icons8-matrix-48.png') }}" alt="Conflict Free Matrix Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Conflict Free Matrix
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('student_timetables') }}">
+              <img src="{{ url_for('static', filename='images/icons8-student-activity-50.png') }}" alt="Student Timetables Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Student Timetables
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('timetable') }}">
+              <img src="{{ url_for('static', filename='images/icons8-office-30.png') }}" alt="Room Timetable Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Room Timetable
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('export_csv') }}">
+              <img src="{{ url_for('static', filename='images/icons8-export-24.png') }}" alt="Export CSV Icon" style="width:20px; vertical-align:middle; margin-right:10px;">
+              Export CSV
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="logout-container">
