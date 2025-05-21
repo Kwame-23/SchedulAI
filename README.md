@@ -20,7 +20,7 @@ SchedulAi follows a **microservices architecture**:
 - **Backend**: Flask + Flask-SocketIO
 - **Database**: MySQL
 - **Scheduler Engine**: Greedy Heuristic & Genetic Algorithm via PyGAD
-- **Deployment**: Dockerized on AWS EC2
+- **Deployment**: Dockerized on AWS EC2 (https://github.com/Malottey1/schedulaiapp.git)
 
 ## 📦 Installation
 
